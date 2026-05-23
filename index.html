@@ -52,17 +52,18 @@
         td input[type="text"]:focus, td input[type="number"]:focus { border-color: #f1c40f; }
         .btn-save-row { background: #f39c12; color: #000; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .btn-save-row:hover { background: #d35400; color: white; }
+        .fecha-badge { background: #444; padding: 4px 8px; border-radius: 4px; font-size: 0.85em; color: #ccc; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- Navegación de Fechas y Título Editable -->
+    <!-- Navegación de Fechas (Basado en fecha_creacion) -->
     <div class="date-nav">
         <button onclick="changeDate(-1)">◀ Día Anterior</button>
         <input type="date" id="current-date" onchange="loadData()">
         <button onclick="changeDate(1)">Día Siguiente ▶</button>
-        <button class="btn-save-global" onclick="saveAuditDate()">💾 Guardar Fecha en Asignación</button>
+        <button class="btn-save-global" id="btn-global-save" onclick="saveAuditDate()">💾 Guardar Fecha en Asignación</button>
     </div>
 
     <!-- Pestañas -->
@@ -71,7 +72,7 @@
         <div class="tab" onclick="switchTab('sin-consumo')">Digitadores sin consumo</div>
     </div>
 
-    <!-- Pestaña: Con Consumo -->
+    <!-- Pestaña: Con Consumo (Con Inputs y Botones) -->
     <div id="consumo" class="tab-content active">
         <div class="chart-container">
             <canvas id="chartConsumo"></canvas>
@@ -83,6 +84,7 @@
                     <th>Digitador</th>
                     <th>Composición Armado</th>
                     <th style="width: 150px;">Cant. Pre-Asignación</th>
+                    <th>Fecha Asignada</th>
                     <th style="width: 100px;">Acción</th>
                 </tr>
             </thead>
@@ -92,7 +94,7 @@
         </table>
     </div>
 
-    <!-- Pestaña: Sin Consumo -->
+    <!-- Pestaña: Sin Consumo (Solo Lectura) -->
     <div id="sin-consumo" class="tab-content">
         <div class="chart-container">
             <canvas id="chartSinConsumo"></canvas>
@@ -104,7 +106,7 @@
                     <th>Digitador</th>
                     <th>Composición Armado</th>
                     <th style="width: 150px;">Cant. Pre-Asignación</th>
-                    <th style="width: 100px;">Acción</th>
+                    <th>Fecha Asignada</th>
                 </tr>
             </thead>
             <tbody id="table-sin-consumo">
@@ -141,6 +143,10 @@
         event.target.classList.add('active');
         document.getElementById(tabId).classList.add('active');
         currentTab = tabId;
+        
+        // Ocultar el botón global de guardar en la pestaña sin consumo si lo deseas
+        document.getElementById('btn-global-save').style.display = tabId === 'consumo' ? 'inline-block' : 'none';
+        
         loadData();
     }
 
@@ -169,54 +175,76 @@
         chartSinConsumoInstance = new Chart(ctxSinConsumo, config);
     }
 
-    // Cargar Datos desde Supabase
+    // Cargar Datos desde Supabase (Filtrando por fecha_creacion)
     async function loadData() {
         const selectedDate = document.getElementById('current-date').value;
         if (!selectedDate) return;
 
         try {
+            // Filtramos por fecha_creacion usando un rango para abarcar todo el día
             const { data, error } = await supabase
                 .from('registros')
                 .select(`
-                    id, Resp_Aud_Digi, FechaAuditoria,
+                    id, Resp_Aud_Digi, fecha_creacion,
                     asignacion ( id, FechaAuditoriaDigitadores, FechaAuditoriaSinConsumo, CantidadPreAsignacion, ComposicionArmado )
                 `)
-                .eq('FechaAuditoria', selectedDate);
+                .gte('fecha_creacion', `${selectedDate}T00:00:00`)
+                .lte('fecha_creacion', `${selectedDate}T23:59:59`);
 
             if (error) throw error;
 
             // Agrupar por digitador
             const counts = {};
             const asigData = {};
-            digitadores.forEach(d => { counts[d] = 0; asigData[d] = { comp: '', cant: 0 }; });
+            digitadores.forEach(d => { counts[d] = 0; asigData[d] = { comp: '', cant: 0, fecha: '' }; });
 
             data.forEach(row => {
                 const digi = row.Resp_Aud_Digi;
                 if (digitadores.includes(digi)) {
                     counts[digi]++;
-                    // Tomar el primer valor de asignación que encontremos para rellenar los inputs
                     if (row.asignacion && row.asignacion.length > 0) {
                         if(row.asignacion[0].ComposicionArmado) asigData[digi].comp = row.asignacion[0].ComposicionArmado;
                         if(row.asignacion[0].CantidadPreAsignacion) asigData[digi].cant = row.asignacion[0].CantidadPreAsignacion;
+                        
+                        const fechaGuardada = currentTab === 'consumo' ? row.asignacion[0].FechaAuditoriaDigitadores : row.asignacion[0].FechaAuditoriaSinConsumo;
+                        if(fechaGuardada) asigData[digi].fecha = fechaGuardada;
                     }
                 }
             });
 
-            // Generar HTML de la tabla
+            // Generar HTML de la tabla dependiendo de la pestaña
             let tableHTML = '';
             digitadores.forEach((digi, index) => {
                 if (counts[digi] > 0) {
-                    tableHTML += `
-                    <tr>
-                        <td><strong>${digi}</strong> <span style="color:#aaa; font-size:0.85em;">(${counts[digi]} reg)</span></td>
-                        <td><input type="text" id="comp-${currentTab}-${index}" value="${asigData[digi].comp}" placeholder="Ej: Armado A"></td>
-                        <td><input type="number" id="cant-${currentTab}-${index}" value="${asigData[digi].cant}" min="0"></td>
-                        <td><button class="btn-save-row" onclick="saveRowData('${digi}', 'comp-${currentTab}-${index}', 'cant-${currentTab}-${index}')">Guardar</button></td>
-                    </tr>`;
+                    const fechaDisplay = asigData[digi].fecha ? `<span class="fecha-badge">${asigData[digi].fecha}</span>` : '<span style="color:#777;">Sin asignar</span>';
+                    
+                    if (currentTab === 'consumo') {
+                        // Con inputs y botón
+                        tableHTML += `
+                        <tr>
+                            <td><strong>${digi}</strong> <span style="color:#aaa; font-size:0.85em;">(${counts[digi]} reg)</span></td>
+                            <td><input type="text" id="comp-${currentTab}-${index}" value="${asigData[digi].comp}" placeholder="Ej: Armado A"></td>
+                            <td><input type="number" id="cant-${currentTab}-${index}" value="${asigData[digi].cant}" min="0"></td>
+                            <td>${fechaDisplay}</td>
+                            <td><button class="btn-save-row" onclick="saveRowData('${digi}', 'comp-${currentTab}-${index}', 'cant-${currentTab}-${index}')">Guardar</button></td>
+                        </tr>`;
+                    } else {
+                        // Solo lectura
+                        tableHTML += `
+                        <tr>
+                            <td><strong>${digi}</strong> <span style="color:#aaa; font-size:0.85em;">(${counts[digi]} reg)</span></td>
+                            <td>${asigData[digi].comp || '-'}</td>
+                            <td>${asigData[digi].cant || '0'}</td>
+                            <td>${fechaDisplay}</td>
+                        </tr>`;
+                    }
                 }
             });
 
-            if(tableHTML === '') tableHTML = '<tr><td colspan="4" style="text-align:center;">No hay registros para esta fecha</td></tr>';
+            if(tableHTML === '') {
+                const colSpan = currentTab === 'consumo' ? 5 : 4;
+                tableHTML = `<tr><td colspan="${colSpan}" style="text-align:center;">No hay registros creados en esta fecha</td></tr>`;
+            }
 
             // Actualizar Gráfico y Tabla
             const chartData = digitadores.map(d => counts[d]);
@@ -235,24 +263,24 @@
         }
     }
 
-    // Guardar datos de una fila específica (Composición y Cantidad)
+    // Guardar datos de una fila específica (Solo disponible en 'consumo')
     async function saveRowData(digitador, compId, cantId) {
         const compValue = document.getElementById(compId).value;
         const cantValue = document.getElementById(cantId).value;
         const selectedDate = document.getElementById('current-date').value;
 
         try {
-            // 1. Obtener todos los registros de este digitador en esta fecha
+            // Buscar registros creados en esa fecha para ese digitador
             const { data: registros } = await supabase
                 .from('registros')
                 .select('id')
-                .eq('FechaAuditoria', selectedDate)
+                .gte('fecha_creacion', `${selectedDate}T00:00:00`)
+                .lte('fecha_creacion', `${selectedDate}T23:59:59`)
                 .eq('Resp_Aud_Digi', digitador);
 
             if (!registros || registros.length === 0) return alert("No se encontraron registros para actualizar.");
             const registroIds = registros.map(r => r.id);
 
-            // 2. Buscar si ya existen en la tabla asignacion
             const { data: existingAsig } = await supabase
                 .from('asignacion')
                 .select('id, registro_id')
@@ -261,14 +289,13 @@
             const existingMap = {};
             if (existingAsig) existingAsig.forEach(a => existingMap[a.registro_id] = a.id);
 
-            // 3. Preparar los datos para Upsert (Insertar o Actualizar)
             const upsertData = registroIds.map(rid => {
                 const payload = {
                     registro_id: rid,
                     ComposicionArmado: compValue,
                     CantidadPreAsignacion: cantValue || 0
                 };
-                if (existingMap[rid]) payload.id = existingMap[rid]; // Si ya existe, le pasamos el ID para que actualice
+                if (existingMap[rid]) payload.id = existingMap[rid]; 
                 return payload;
             });
 
@@ -276,6 +303,7 @@
             if (error) throw error;
 
             alert(`✅ Datos guardados correctamente para ${digitador}`);
+            loadData(); 
         } catch (err) {
             alert("Error al guardar: " + err.message);
         }
@@ -289,12 +317,16 @@
         const fieldToUpdate = currentTab === 'consumo' ? 'FechaAuditoriaDigitadores' : 'FechaAuditoriaSinConsumo';
 
         try {
-            const { data: registros } = await supabase.from('registros').select('id').eq('FechaAuditoria', selectedDate);
-            if (!registros || registros.length === 0) return alert("No hay registros en esta fecha para actualizar.");
+            const { data: registros } = await supabase
+                .from('registros')
+                .select('id')
+                .gte('fecha_creacion', `${selectedDate}T00:00:00`)
+                .lte('fecha_creacion', `${selectedDate}T23:59:59`);
+                
+            if (!registros || registros.length === 0) return alert("No hay registros creados en esta fecha para actualizar.");
 
             const registroIds = registros.map(r => r.id);
 
-            // Buscar existentes para hacer upsert seguro
             const { data: existingAsig } = await supabase.from('asignacion').select('id, registro_id').in('registro_id', registroIds);
             const existingMap = {};
             if (existingAsig) existingAsig.forEach(a => existingMap[a.registro_id] = a.id);
@@ -309,6 +341,7 @@
             if (error) throw error;
 
             alert(`✅ Fecha guardada correctamente en ${fieldToUpdate}.`);
+            loadData(); 
         } catch (err) {
             alert("Error al guardar la fecha: " + err.message);
         }
