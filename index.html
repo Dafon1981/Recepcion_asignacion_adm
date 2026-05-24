@@ -4,87 +4,56 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Estación de Trabajo - Auditoría</title>
-    
-    <!-- Bibliotecas requeridas -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #121212; color: #ffffff; padding: 20px; }
         .container { max-width: 1100px; margin: 0 auto; background: #1e1e1e; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5 ); }
-        
-        /* Header / Navegación */
         .header-nav { display: flex; justify-content: space-between; align-items: center; background: #2a2a2a; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; }
         .nav-left, .nav-right { display: flex; gap: 10px; align-items: center; }
         .nav-center { text-align: center; flex-grow: 1; }
-        
         .header-nav button { background: #3498db; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 15px; }
         .header-nav button:hover { background: #2980b9; }
         .btn-save-global { background: #2ecc71 !important; }
         .btn-save-global:hover { background: #27ae60 !important; }
-        
-        /* Fecha Grande al Centro */
         .big-date { font-size: 26px; font-weight: bold; padding: 10px 20px; border-radius: 8px; border: 2px solid #555; background: #111; color: #f1c40f; text-align: center; outline: none; cursor: pointer; }
-        .big-date:focus { border-color: #f1c40f; }
-
-        /* Pestañas */
         .tabs { display: flex; border-bottom: 2px solid #333; margin-bottom: 20px; }
         .tab { padding: 12px 20px; cursor: pointer; font-weight: bold; color: #888; border-bottom: 3px solid transparent; transition: 0.3s; font-size: 16px; }
         .tab.active { color: #f1c40f; border-bottom-color: #f1c40f; }
-        .tab:hover:not(.active) { color: #ddd; }
-
-        /* Contenido */
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .tab-subtitle { color: #aaa; margin-bottom: 20px; font-size: 18px; text-align: center; background: #252525; padding: 10px; border-radius: 5px; }
         .tab-subtitle span { color: #2ecc71; font-weight: bold; }
-        
-        /* Gráfico y Tabla */
-        .chart-container { width: 100%; max-width: 900px; margin: 0 auto 30px auto; background: #252525; padding: 20px; border-radius: 8px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #252525; border-radius: 8px; overflow: hidden; }
+        .chart-container { width: 100%; max-width: 900px; margin: 30px auto 0 auto; background: #252525; padding: 20px; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background: #252525; border-radius: 8px; overflow: hidden; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #444; vertical-align: middle; }
         th { background: #333; color: #f1c40f; }
-        tr:hover { background: #2a2a2a; }
-
-        /* Inputs dentro de la tabla (Solo para consumo) */
         td input[type="text"], td input[type="number"] { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #555; background: #1a1a1a; color: white; outline: none; }
-        td input[type="text"]:focus, td input[type="number"]:focus { border-color: #f1c40f; }
-        .btn-save-row { background: #f39c12; color: #000; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .btn-save-row:hover { background: #d35400; color: white; }
+        .btn-save-row { background: #f39c12; color: #000; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- Navegación Superior -->
     <div class="header-nav">
-        <div class="nav-left">
-            <button onclick="changeDate(-1)">◀ Día Anterior</button>
-        </div>
-        <div class="nav-center">
-            <input type="date" id="current-date" class="big-date" onchange="manualDateChange()">
-        </div>
+        <div class="nav-left"><button onclick="changeDate(-1)">◀ Día Anterior</button></div>
+        <div class="nav-center"><input type="date" id="current-date" class="big-date" onchange="manualDateChange()"></div>
         <div class="nav-right">
             <button onclick="changeDate(1)">Día Siguiente ▶</button>
             <button class="btn-save-global" id="btn-global-save" onclick="saveAuditDate()">💾 Guardar Asignación</button>
         </div>
     </div>
 
-    <!-- Pestañas -->
     <div class="tabs">
         <div class="tab active" onclick="switchTab('consumo')">Digitadores con consumo</div>
         <div class="tab" onclick="switchTab('sin-consumo')">Digitadores sin consumo</div>
     </div>
 
-    <!-- Pestaña: Con Consumo -->
     <div id="consumo" class="tab-content active">
         <div class="tab-subtitle">FechaAuditoriaDigitadores: <span id="subtitle-consumo">--</span></div>
         
-        <div class="chart-container">
-            <canvas id="chartConsumo"></canvas>
-        </div>
-        
+        <!-- TABLA ARRIBA -->
         <h3>Sección de Composición (Con Consumo)</h3>
         <table>
             <thead>
@@ -95,20 +64,17 @@
                     <th style="width: 100px;">Acción</th>
                 </tr>
             </thead>
-            <tbody id="table-consumo">
-                <!-- Datos dinámicos -->
-            </tbody>
+            <tbody id="table-consumo"></tbody>
         </table>
+
+        <!-- GRÁFICO ABAJO -->
+        <div class="chart-container"><canvas id="chartConsumo"></canvas></div>
     </div>
 
-    <!-- Pestaña: Sin Consumo -->
     <div id="sin-consumo" class="tab-content">
         <div class="tab-subtitle">FechaAuditoriaSinConsumo: <span id="subtitle-sin-consumo">--</span></div>
         
-        <div class="chart-container">
-            <canvas id="chartSinConsumo"></canvas>
-        </div>
-        
+        <!-- TABLA ARRIBA -->
         <h3>Sección de Composición (Sin Consumo)</h3>
         <table>
             <thead>
@@ -118,14 +84,15 @@
                     <th style="width: 150px;">Cant. Pre-Asignación</th>
                 </tr>
             </thead>
-            <tbody id="table-sin-consumo">
-                <!-- Datos dinámicos -->
-            </tbody>
+            <tbody id="table-sin-consumo"></tbody>
         </table>
+
+        <!-- GRÁFICO ABAJO -->
+        <div class="chart-container"><canvas id="chartSinConsumo"></canvas></div>
     </div>
 </div>
+
 <script>
-    // Configuración de Supabase
     const supabaseUrl = 'https://esiklpxyectbekxvajnw.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzaWtscHh5ZWN0YmVreHZham53Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2OTI1MjEsImV4cCI6MjA3NzI2ODUyMX0.mtQnqUrTmhmN1DQxOAUnGpizhYZobStHDH0cz_XfKGU';
     const supabase = window.supabase.createClient(supabaseUrl, supabaseKey );
@@ -133,78 +100,55 @@
     let currentTab = 'consumo';
     let chartConsumoInstance = null;
     let chartSinConsumoInstance = null;
-    
-    // Listas dinámicas de digitadores
     let digitadoresConConsumo = [];
     let digitadoresSinConsumo = [];
-    
     let pollingTimer = null;
 
-    // Inicializar la aplicación
     document.addEventListener('DOMContentLoaded', async () => {
-        // 1. Probar conexión primero
         await testConnection();
-
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('current-date').value = today;
-        
         await cargarDigitadores();
         initCharts();
         await loadData();
-        
-        // Iniciar el temporizador (se actualiza cada 10 segundos)
         iniciarTemporizador();
     });
 
-    // --- DETECTOR DE CONEXIÓN (Puedes borrar esta función luego) ---
     async function testConnection() {
         const toast = document.createElement('div');
         toast.style.cssText = "position:fixed; top:20px; right:20px; padding:10px 20px; border-radius:5px; color:white; font-weight:bold; z-index:9999; background:#f39c12; transition: 0.3s;";
         toast.innerText = "⏳ Verificando conexión...";
         document.body.appendChild(toast);
-
         try {
             const { error } = await supabase.from('digitadores').select('id').limit(1);
             if (error) throw error;
             toast.style.background = "#2ecc71";
-            toast.innerText = "✅ Conexión exitosa a Supabase";
-            setTimeout(() => toast.remove(), 3000); // Desaparece en 3 segundos
+            toast.innerText = "✅ Conexión exitosa";
+            setTimeout(() => toast.remove(), 3000);
         } catch (err) {
             toast.style.background = "#e74c3c";
-            toast.innerText = "❌ Error de conexión: " + err.message;
+            toast.innerText = "❌ Error: " + err.message;
         }
     }
-    // ---------------------------------------------------------------
 
-    // Cargar digitadores desde la base de datos
     async function cargarDigitadores() {
-        try {
-            const { data, error } = await supabase.from('digitadores').select('*');
-            if (error) throw error;
-
+        const { data } = await supabase.from('digitadores').select('*');
+        if (data) {
             digitadoresConConsumo = data.filter(d => d.condicion === 'con consumo').map(d => d.nombre);
             digitadoresSinConsumo = data.filter(d => d.condicion === 'sin consumo').map(d => d.nombre);
-        } catch (err) {
-            console.error("Error al cargar digitadores:", err);
         }
     }
 
-    // Cambiar Pestañas
     function switchTab(tabId) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        
         event.target.classList.add('active');
         document.getElementById(tabId).classList.add('active');
         currentTab = tabId;
-        
-        // Mostrar/Ocultar botón global de guardar
         document.getElementById('btn-global-save').style.display = tabId === 'consumo' ? 'inline-block' : 'none';
-        
         loadData();
     }
 
-    // Navegación de días
     function changeDate(days) {
         const dateInput = document.getElementById('current-date');
         const currentDate = new Date(dateInput.value);
@@ -213,82 +157,42 @@
         manualDateChange();
     }
 
-    function manualDateChange() {
-        loadData();
-        iniciarTemporizador(); // Reiniciar el temporizador al cambiar de fecha
-    }
+    function manualDateChange() { loadData(); iniciarTemporizador(); }
 
     function iniciarTemporizador() {
         if (pollingTimer) clearInterval(pollingTimer);
         pollingTimer = setInterval(() => {
-            // Solo actualizamos si el usuario no está escribiendo en un input para no interrumpirlo
-            if (document.activeElement.tagName !== 'INPUT') {
-                loadData();
-            }
-        }, 10000); // 10000 ms = 10 segundos
+            if (document.activeElement.tagName !== 'INPUT') loadData();
+        }, 10000);
     }
 
-    // Inicializar Gráficos
     function initCharts() {
         const ctxConsumo = document.getElementById('chartConsumo').getContext('2d');
         const ctxSinConsumo = document.getElementById('chartSinConsumo').getContext('2d');
-        
-        const configBase = {
-            type: 'bar',
-            options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { color: '#fff' } }, x: { ticks: { color: '#fff' } } }, plugins: { legend: { labels: { color: '#fff' } } } }
-        };
-
-        chartConsumoInstance = new Chart(ctxConsumo, {
-            ...configBase,
-            data: { labels: digitadoresConConsumo, datasets: [{ label: 'Cantidad de Registros', data: [], backgroundColor: '#3498db' }] }
-        });
-
-        chartSinConsumoInstance = new Chart(ctxSinConsumo, {
-            ...configBase,
-            data: { labels: digitadoresSinConsumo, datasets: [{ label: 'Cantidad de Registros', data: [], backgroundColor: '#e74c3c' }] }
-        });
+        const configBase = { type: 'bar', options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { color: '#fff' } }, x: { ticks: { color: '#fff' } } }, plugins: { legend: { labels: { color: '#fff' } } } } };
+        chartConsumoInstance = new Chart(ctxConsumo, { ...configBase, data: { labels: digitadoresConConsumo, datasets: [{ label: 'Cantidad de Registros', data: [], backgroundColor: '#3498db' }] } });
+        chartSinConsumoInstance = new Chart(ctxSinConsumo, { ...configBase, data: { labels: digitadoresSinConsumo, datasets: [{ label: 'Cantidad de Registros', data: [], backgroundColor: '#e74c3c' }] } });
     }
 
-    // Cargar Datos y Estadísticas
     async function loadData() {
         const selectedDate = document.getElementById('current-date').value;
         if (!selectedDate) return;
 
-        try {
-            // Buscar registros creados en la fecha seleccionada
-            const { data, error } = await supabase
-                .from('registros')
-                .select(`
-                    id, Resp_Aud_Digi, fecha_creacion,
-                    asignacion ( id, FechaAuditoriaDigitadores, FechaAuditoriaSinConsumo, CantidadPreAsignacion, ComposicionArmado )
-                `)
-                .eq('fecha_creacion', selectedDate);
+        const { data } = await supabase.from('registros').select(`id, Resp_Aud_Digi, asignacion ( id, FechaAuditoriaDigitadores, FechaAuditoriaSinConsumo, CantidadPreAsignacion, ComposicionArmado )`).eq('fecha_creacion', selectedDate);
+        
+        let fechaAsignadaConsumo = '--', fechaAsignadaSinConsumo = '--';
+        const digitadoresActuales = currentTab === 'consumo' ? digitadoresConConsumo : digitadoresSinConsumo;
+        const counts = {}; const asigData = {};
+        
+        digitadoresActuales.forEach(d => { counts[d] = 0; asigData[d] = { comp: '', cant: 0 }; });
 
-            if (error) throw error;
-
-            // Variables para subtítulos
-            let fechaAsignadaConsumo = '--';
-            let fechaAsignadaSinConsumo = '--';
-
-            // Procesar datos para la pestaña actual
-            const digitadoresActuales = currentTab === 'consumo' ? digitadoresConConsumo : digitadoresSinConsumo;
-            const counts = {};
-            const asigData = {};
-            
-            digitadoresActuales.forEach(d => { 
-                counts[d] = 0; 
-                asigData[d] = { comp: '', cant: 0 }; 
-            });
-
+        if (data) {
             data.forEach(row => {
                 const digi = row.Resp_Aud_Digi;
-                
-                // Capturar fechas globales de asignación si existen
                 if (row.asignacion && row.asignacion.length > 0) {
                     if (row.asignacion[0].FechaAuditoriaDigitadores) fechaAsignadaConsumo = row.asignacion[0].FechaAuditoriaDigitadores;
                     if (row.asignacion[0].FechaAuditoriaSinConsumo) fechaAsignadaSinConsumo = row.asignacion[0].FechaAuditoriaSinConsumo;
                 }
-
                 if (digitadoresActuales.includes(digi)) {
                     counts[digi]++;
                     if (row.asignacion && row.asignacion.length > 0) {
@@ -297,122 +201,91 @@
                     }
                 }
             });
+        }
 
-            // Actualizar Subtítulos
-            document.getElementById('subtitle-consumo').innerText = fechaAsignadaConsumo;
-            document.getElementById('subtitle-sin-consumo').innerText = fechaAsignadaSinConsumo;
+        document.getElementById('subtitle-consumo').innerText = fechaAsignadaConsumo;
+        document.getElementById('subtitle-sin-consumo').innerText = fechaAsignadaSinConsumo;
 
-            // Generar HTML de la tabla
-            let tableHTML = '';
-            digitadoresActuales.forEach((digi, index) => {
-                if (counts[digi] > 0) {
-                    if (currentTab === 'consumo') {
-                        tableHTML += `
-                        <tr>
-                            <td><strong>${digi}</strong> <span style="color:#aaa; font-size:0.85em;">(${counts[digi]} reg)</span></td>
-                            <td><input type="text" id="comp-${index}" value="${asigData[digi].comp}" placeholder="Ej: Armado A"></td>
-                            <td><input type="number" id="cant-${index}" value="${asigData[digi].cant}" min="0"></td>
-                            <td><button class="btn-save-row" onclick="saveRowData('${digi}', 'comp-${index}', 'cant-${index}')">Guardar</button></td>
-                        </tr>`;
-                    } else {
-                        tableHTML += `
-                        <tr>
-                            <td><strong>${digi}</strong> <span style="color:#aaa; font-size:0.85em;">(${counts[digi]} reg)</span></td>
-                            <td>${asigData[digi].comp || '-'}</td>
-                            <td>${asigData[digi].cant || '0'}</td>
-                        </tr>`;
-                    }
+        let tableHTML = '';
+        digitadoresActuales.forEach((digi, index) => {
+            if (counts[digi] > 0) {
+                if (currentTab === 'consumo') {
+                    tableHTML += `<tr>
+                        <td><strong>${digi}</strong> <span style="color:#aaa; font-size:0.85em;">(${counts[digi]} reg)</span></td>
+                        <td><input type="text" id="comp-${index}" value="${asigData[digi].comp}" placeholder="Ej: Armado A"></td>
+                        <td><input type="number" id="cant-${index}" value="${asigData[digi].cant}" min="0"></td>
+                        <td><button class="btn-save-row" onclick="saveRowData('${digi}', 'comp-${index}', 'cant-${index}')">Guardar</button></td>
+                    </tr>`;
+                } else {
+                    tableHTML += `<tr>
+                        <td><strong>${digi}</strong> <span style="color:#aaa; font-size:0.85em;">(${counts[digi]} reg)</span></td>
+                        <td>${asigData[digi].comp || '-'}</td>
+                        <td>${asigData[digi].cant || '0'}</td>
+                    </tr>`;
                 }
-            });
-
-            if(tableHTML === '') {
-                const colSpan = currentTab === 'consumo' ? 4 : 3;
-                tableHTML = `<tr><td colspan="${colSpan}" style="text-align:center;">No hay registros creados en esta fecha</td></tr>`;
             }
+        });
 
-            // Actualizar Gráfico y Tabla
-            const chartData = digitadoresActuales.map(d => counts[d]);
-            if (currentTab === 'consumo') {
-                chartConsumoInstance.data.datasets[0].data = chartData;
-                chartConsumoInstance.update();
-                document.getElementById('table-consumo').innerHTML = tableHTML;
-            } else {
-                chartSinConsumoInstance.data.datasets[0].data = chartData;
-                chartSinConsumoInstance.update();
-                document.getElementById('table-sin-consumo').innerHTML = tableHTML;
-            }
+        if(tableHTML === '') tableHTML = `<tr><td colspan="${currentTab === 'consumo' ? 4 : 3}" style="text-align:center;">No hay registros creados en esta fecha</td></tr>`;
 
-        } catch (err) {
-            console.error("Error cargando datos:", err);
+        const chartData = digitadoresActuales.map(d => counts[d]);
+        if (currentTab === 'consumo') {
+            chartConsumoInstance.data.datasets[0].data = chartData;
+            chartConsumoInstance.update();
+            document.getElementById('table-consumo').innerHTML = tableHTML;
+        } else {
+            chartSinConsumoInstance.data.datasets[0].data = chartData;
+            chartSinConsumoInstance.update();
+            document.getElementById('table-sin-consumo').innerHTML = tableHTML;
         }
     }
 
-    // Guardar datos de una fila específica (Solo en 'consumo')
     async function saveRowData(digitador, compId, cantId) {
         const compValue = document.getElementById(compId).value;
         const cantValue = document.getElementById(cantId).value;
         const selectedDate = document.getElementById('current-date').value;
 
-        try {
-            const { data: registros } = await supabase
-                .from('registros')
-                .select('id')
-                .eq('fecha_creacion', selectedDate)
-                .eq('Resp_Aud_Digi', digitador);
+        const { data: registros } = await supabase.from('registros').select('id').eq('fecha_creacion', selectedDate).eq('Resp_Aud_Digi', digitador);
+        if (!registros || registros.length === 0) return alert("No se encontraron registros.");
+        
+        const registroIds = registros.map(r => r.id);
+        const { data: existingAsig } = await supabase.from('asignacion').select('id, registro_id').in('registro_id', registroIds);
+        const existingMap = {};
+        if (existingAsig) existingAsig.forEach(a => existingMap[a.registro_id] = a.id);
 
-            if (!registros || registros.length === 0) return alert("No se encontraron registros para actualizar.");
-            const registroIds = registros.map(r => r.id);
+        const upsertData = registroIds.map(rid => {
+            const payload = { registro_id: rid, ComposicionArmado: compValue, CantidadPreAsignacion: cantValue || 0 };
+            if (existingMap[rid]) payload.id = existingMap[rid]; 
+            return payload;
+        });
 
-            const { data: existingAsig } = await supabase.from('asignacion').select('id, registro_id').in('registro_id', registroIds);
-            const existingMap = {};
-            if (existingAsig) existingAsig.forEach(a => existingMap[a.registro_id] = a.id);
-
-            const upsertData = registroIds.map(rid => {
-                const payload = { registro_id: rid, ComposicionArmado: compValue, CantidadPreAsignacion: cantValue || 0 };
-                if (existingMap[rid]) payload.id = existingMap[rid]; 
-                return payload;
-            });
-
-            const { error } = await supabase.from('asignacion').upsert(upsertData);
-            if (error) throw error;
-
-            alert(`Datos guardados correctamente para ${digitador}`);
-            loadData(); 
-        } catch (err) {
-            alert("Error al guardar: " + err.message);
-        }
+        await supabase.from('asignacion').upsert(upsertData);
+        alert(`Datos guardados para ${digitador}`);
+        loadData(); 
     }
 
-    // Guardar la fecha global en la tabla asignacion
     async function saveAuditDate() {
         const selectedDate = document.getElementById('current-date').value;
-        if (!selectedDate) return alert("Selecciona una fecha primero.");
-
         const fieldToUpdate = currentTab === 'consumo' ? 'FechaAuditoriaDigitadores' : 'FechaAuditoriaSinConsumo';
 
-        try {
-            const { data: registros } = await supabase.from('registros').select('id').eq('fecha_creacion', selectedDate);
-            if (!registros || registros.length === 0) return alert("No hay registros creados en esta fecha para actualizar.");
+        const { data: registros } = await supabase.from('registros').select('id').eq('fecha_creacion', selectedDate);
+        if (!registros || registros.length === 0) return alert("No hay registros en esta fecha.");
 
-            const registroIds = registros.map(r => r.id);
+        const registroIds = registros.map(r => r.id);
+        const { data: existingAsig } = await supabase.from('asignacion').select('id, registro_id').in('registro_id', registroIds);
+        const existingMap = {};
+        if (existingAsig) existingAsig.forEach(a => existingMap[a.registro_id] = a.id);
 
-            const { data: existingAsig } = await supabase.from('asignacion').select('id, registro_id').in('registro_id', registroIds);
-            const existingMap = {};
-            if (existingAsig) existingAsig.forEach(a => existingMap[a.registro_id] = a.id);
+        const upsertData = registroIds.map(rid => {
+            const payload = { registro_id: rid, [fieldToUpdate]: selectedDate };
+            if (existingMap[rid]) payload.id = existingMap[rid];
+            return payload;
+        });
 
-            const upsertData = registroIds.map(rid => {
-                const payload = { registro_id: rid, [fieldToUpdate]: selectedDate };
-                if (existingMap[rid]) payload.id = existingMap[rid];
-                return payload;
-            });
-
-            const { error } = await supabase.from('asignacion').upsert(upsertData);
-            if (error) throw error;
-
-            alert(`Fecha guardada correctamente en ${fieldToUpdate}.`);
-            loadData(); 
-        } catch (err) {
-            alert("Error al guardar la fecha: " + err.message);
-        }
+        await supabase.from('asignacion').upsert(upsertData);
+        alert(`Fecha guardada en ${fieldToUpdate}.`);
+        loadData(); 
     }
 </script>
+</body>
+</html>
