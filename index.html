@@ -8,7 +8,6 @@
     <!-- Bibliotecas -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Nueva biblioteca para mostrar los números en las barras del gráfico -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 
     <style>
@@ -42,19 +41,23 @@
         .tab-subtitle { color: #aaa; margin-bottom: 20px; font-size: 18px; text-align: center; background: #252525; padding: 10px; border-radius: 5px; }
         .tab-subtitle span { color: #2ecc71; font-weight: bold; }
         
+        /* Panel Global de Composición */
+        .global-panel { display: flex; align-items: center; gap: 15px; background: #252525; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #f39c12; }
+        .global-panel .input-group { display: flex; flex-direction: column; gap: 5px; flex-grow: 1; }
+        .global-panel label { font-size: 14px; color: #ccc; font-weight: bold; }
+        .global-panel input { padding: 10px; border-radius: 5px; border: 1px solid #555; background: #1a1a1a; color: white; outline: none; font-size: 15px; }
+        .global-panel input:focus { border-color: #f1c40f; }
+        .btn-save-panel { background: #f39c12; color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 15px; height: 42px; margin-top: 22px; }
+        .btn-save-panel:hover { background: #d35400; color: white; }
+        .badge-prov { background: #8e44ad; color: white; font-size: 0.75em; padding: 4px 8px; border-radius: 4px; margin-left: 10px; vertical-align: middle; display: none; }
+
         /* Gráfico y Tabla */
         .chart-container { width: 100%; max-width: 900px; margin: 30px auto 0 auto; background: #252525; padding: 20px; border-radius: 8px; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background: #252525; border-radius: 8px; overflow: hidden; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #444; vertical-align: middle; }
         th { background: #333; color: #f1c40f; }
         tr:hover { background: #2a2a2a; }
-
-        /* Inputs dentro de la tabla */
-        td input[type="text"], td input[type="number"] { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #555; background: #1a1a1a; color: white; outline: none; }
-        td input[type="text"]:focus, td input[type="number"]:focus { border-color: #f1c40f; }
-        .btn-save-row { background: #f39c12; color: #000; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .btn-save-row:hover { background: #d35400; color: white; }
-        .badge-prov { background: #8e44ad; color: white; font-size: 0.75em; padding: 2px 6px; border-radius: 4px; margin-left: 5px; }
+        .reg-count { color: #3498db; font-weight: bold; font-size: 1.1em; }
     </style>
 </head>
 <body>
@@ -84,14 +87,26 @@
     <div id="consumo" class="tab-content active">
         <div class="tab-subtitle">FechaAuditoriaDigitadores: <span id="subtitle-consumo">--</span></div>
         
-        <h3>Sección de Composición (Con Consumo)</h3>
+        <!-- PANEL ÚNICO DE COMPOSICIÓN -->
+        <div class="global-panel">
+            <div class="input-group">
+                <label>Composición Armado Global</label>
+                <input type="text" id="global-comp" placeholder="Ej: Armado A">
+            </div>
+            <div class="input-group" style="max-width: 200px;">
+                <label>Cant. Pre-Asignación</label>
+                <input type="number" id="global-cant" min="0" value="0">
+            </div>
+            <button class="btn-save-panel" onclick="saveGlobalComposition()">Guardar Datos</button>
+            <span id="badge-prov-global" class="badge-prov">Provisional</span>
+        </div>
+
+        <!-- TABLA LIMPIA -->
         <table>
             <thead>
                 <tr>
                     <th>Digitador</th>
-                    <th>Composición Armado</th>
-                    <th style="width: 150px;">Cant. Pre-Asignación</th>
-                    <th style="width: 100px;">Acción</th>
+                    <th style="width: 200px; text-align: center;">Registros del Día</th>
                 </tr>
             </thead>
             <tbody id="table-consumo">
@@ -108,13 +123,12 @@
     <div id="sin-consumo" class="tab-content">
         <div class="tab-subtitle">FechaAuditoriaSinConsumo: <span id="subtitle-sin-consumo">--</span></div>
         
-        <h3>Sección de Composición (Sin Consumo)</h3>
+        <!-- TABLA LIMPIA -->
         <table>
             <thead>
                 <tr>
                     <th>Digitador</th>
-                    <th>Composición Armado</th>
-                    <th style="width: 150px;">Cant. Pre-Asignación</th>
+                    <th style="width: 200px; text-align: center;">Registros del Día</th>
                 </tr>
             </thead>
             <tbody id="table-sin-consumo">
@@ -217,14 +231,14 @@
                 responsive: true, 
                 scales: { y: { beginAtZero: true, ticks: { color: '#fff' } }, x: { ticks: { color: '#fff' } } }, 
                 plugins: { 
-                    legend: { labels: { color: '#fff' } },
-                    datalabels: { color: '#fff', anchor: 'end', align: 'top', font: { weight: 'bold', size: 14 } } // Números en las barras
+                    legend: { display: false }, // Ocultamos la leyenda para que sea más limpio
+                    datalabels: { color: '#fff', anchor: 'end', align: 'top', font: { weight: 'bold', size: 14 } }
                 } 
             } 
         };
         
-        chartConsumoInstance = new Chart(ctxConsumo, { ...configBase, data: { labels: digitadoresConConsumo, datasets: [{ label: 'Cantidad de Registros', data: [], backgroundColor: '#3498db' }] } });
-        chartSinConsumoInstance = new Chart(ctxSinConsumo, { ...configBase, data: { labels: digitadoresSinConsumo, datasets: [{ label: 'Cantidad de Registros', data: [], backgroundColor: '#e74c3c' }] } });
+        chartConsumoInstance = new Chart(ctxConsumo, { ...configBase, data: { labels: digitadoresConConsumo, datasets: [{ data: [], backgroundColor: '#3498db', borderRadius: 4 }] } });
+        chartSinConsumoInstance = new Chart(ctxSinConsumo, { ...configBase, data: { labels: digitadoresSinConsumo, datasets: [{ data: [], backgroundColor: '#e74c3c', borderRadius: 4 }] } });
     }
 
     async function loadData() {
@@ -235,75 +249,87 @@
         
         let fechaAsignadaConsumo = '--', fechaAsignadaSinConsumo = '--';
         const digitadoresActuales = currentTab === 'consumo' ? digitadoresConConsumo : digitadoresSinConsumo;
-        const counts = {}; const asigData = {};
+        const counts = {}; 
         
-        // Inicializar a todos los digitadores (incluso si tienen 0)
-        digitadoresActuales.forEach(d => { counts[d] = 0; asigData[d] = { comp: '', cant: 0, isProv: false }; });
+        // Variables para el panel global
+        let globalComp = '';
+        let globalCant = 0;
+        let totalRegistrosConsumo = 0;
+        
+        digitadoresActuales.forEach(d => { counts[d] = 0; });
 
         if (data) {
             data.forEach(row => {
                 const digi = row.Resp_Aud_Digi;
+                
+                // Capturar fechas globales
                 if (row.asignacion && row.asignacion.length > 0) {
                     if (row.asignacion[0].FechaAuditoriaDigitadores) fechaAsignadaConsumo = row.asignacion[0].FechaAuditoriaDigitadores;
                     if (row.asignacion[0].FechaAuditoriaSinConsumo) fechaAsignadaSinConsumo = row.asignacion[0].FechaAuditoriaSinConsumo;
                 }
+
                 if (digitadoresActuales.includes(digi)) {
                     counts[digi]++;
-                    if (row.asignacion && row.asignacion.length > 0) {
-                        if(row.asignacion[0].ComposicionArmado) asigData[digi].comp = row.asignacion[0].ComposicionArmado;
-                        if(row.asignacion[0].CantidadPreAsignacion) asigData[digi].cant = row.asignacion[0].CantidadPreAsignacion;
+                    if (currentTab === 'consumo') totalRegistrosConsumo++;
+                    
+                    // Si encontramos datos de asignación en la BD, los usamos para el panel global
+                    if (currentTab === 'consumo' && row.asignacion && row.asignacion.length > 0) {
+                        if(row.asignacion[0].ComposicionArmado) globalComp = row.asignacion[0].ComposicionArmado;
+                        if(row.asignacion[0].CantidadPreAsignacion) globalCant = row.asignacion[0].CantidadPreAsignacion;
                     }
                 }
             });
         }
 
-        // Revisar Memoria Provisional (LocalStorage) y Sincronizar
-        for (const digi of digitadoresActuales) {
-            const localKey = `prov_${selectedDate}_${digi}`;
+        // Lógica de Memoria Provisional Global (Solo para consumo)
+        if (currentTab === 'consumo') {
+            const localKey = `prov_global_${selectedDate}`;
             const localData = localStorage.getItem(localKey);
+            const badgeProv = document.getElementById('badge-prov-global');
 
-            if (counts[digi] === 0 && localData) {
-                // Si no hay registros, cargar lo provisional para mostrarlo
+            if (totalRegistrosConsumo === 0 && localData) {
+                // No hay registros, pero hay datos provisionales guardados
                 const parsed = JSON.parse(localData);
-                asigData[digi].comp = parsed.comp;
-                asigData[digi].cant = parsed.cant;
-                asigData[digi].isProv = true;
-            } else if (counts[digi] > 0 && localData) {
-                // Si ya llegaron registros y hay datos provisionales, sincronizar automáticamente
+                globalComp = parsed.comp;
+                globalCant = parsed.cant;
+                badgeProv.style.display = 'inline-block';
+            } else if (totalRegistrosConsumo > 0 && localData) {
+                // Ya entraron registros y teníamos datos provisionales -> Sincronizar automáticamente
                 const parsed = JSON.parse(localData);
-                if (!asigData[digi].comp && asigData[digi].cant === 0) {
-                    asigData[digi].comp = parsed.comp;
-                    asigData[digi].cant = parsed.cant;
-                    syncProvisionalToSupabase(digi, parsed.comp, parsed.cant, selectedDate);
+                if (!globalComp && globalCant === 0) {
+                    globalComp = parsed.comp;
+                    globalCant = parsed.cant;
+                    syncProvisionalGlobal(parsed.comp, parsed.cant, selectedDate);
                 }
-                localStorage.removeItem(localKey); // Limpiar memoria
+                localStorage.removeItem(localKey);
+                badgeProv.style.display = 'none';
+            } else {
+                badgeProv.style.display = 'none';
+            }
+
+            // Actualizar los inputs globales si el usuario no los está editando
+            if (document.activeElement.id !== 'global-comp' && document.activeElement.id !== 'global-cant') {
+                document.getElementById('global-comp').value = globalComp;
+                document.getElementById('global-cant').value = globalCant;
             }
         }
 
+        // Actualizar Subtítulos
         document.getElementById('subtitle-consumo').innerText = fechaAsignadaConsumo;
         document.getElementById('subtitle-sin-consumo').innerText = fechaAsignadaSinConsumo;
 
-        // Renderizar Tabla (Mostrando a todos)
+        // Renderizar Tabla Limpia
         let tableHTML = '';
-        digitadoresActuales.forEach((digi, index) => {
-            const provBadge = asigData[digi].isProv ? `<span class="badge-prov">Provisional</span>` : '';
-            
-            if (currentTab === 'consumo') {
-                tableHTML += `<tr>
-                    <td><strong>${digi}</strong> <span style="color:#aaa; font-size:0.85em;">(${counts[digi]} reg)</span> ${provBadge}</td>
-                    <td><input type="text" id="comp-${index}" value="${asigData[digi].comp}" placeholder="Ej: Armado A"></td>
-                    <td><input type="number" id="cant-${index}" value="${asigData[digi].cant}" min="0"></td>
-                    <td><button class="btn-save-row" onclick="saveRowData('${digi}', 'comp-${index}', 'cant-${index}')">Guardar</button></td>
-                </tr>`;
-            } else {
-                tableHTML += `<tr>
-                    <td><strong>${digi}</strong> <span style="color:#aaa; font-size:0.85em;">(${counts[digi]} reg)</span></td>
-                    <td>${asigData[digi].comp || '-'}</td>
-                    <td>${asigData[digi].cant || '0'}</td>
-                </tr>`;
-            }
+        digitadoresActuales.forEach(digi => {
+            tableHTML += `<tr>
+                <td><strong>${digi}</strong></td>
+                <td style="text-align: center;"><span class="reg-count">${counts[digi]}</span></td>
+            </tr>`;
         });
 
+        if(tableHTML === '') tableHTML = `<tr><td colspan="2" style="text-align:center;">No hay digitadores configurados</td></tr>`;
+
+        // Actualizar Gráfico y Tabla
         const chartData = digitadoresActuales.map(d => counts[d]);
         if (currentTab === 'consumo') {
             chartConsumoInstance.data.datasets[0].data = chartData;
@@ -316,23 +342,29 @@
         }
     }
 
-    async function saveRowData(digitador, compId, cantId) {
-        const compValue = document.getElementById(compId).value;
-        const cantValue = document.getElementById(cantId).value;
+    // Guardar Composición Global
+    async function saveGlobalComposition() {
+        const compValue = document.getElementById('global-comp').value;
+        const cantValue = document.getElementById('global-cant').value;
         const selectedDate = document.getElementById('current-date').value;
 
-        const { data: registros } = await supabase.from('registros').select('id').eq('fecha_creacion', selectedDate).eq('Resp_Aud_Digi', digitador);
+        // Buscar todos los registros de la fecha que pertenezcan a digitadores "con consumo"
+        const { data: registros } = await supabase
+            .from('registros')
+            .select('id')
+            .eq('fecha_creacion', selectedDate)
+            .in('Resp_Aud_Digi', digitadoresConConsumo);
         
-        // Si no hay registros, guardar en memoria provisional
+        // Si no hay registros en absoluto, guardar en memoria provisional
         if (!registros || registros.length === 0) {
-            const localKey = `prov_${selectedDate}_${digitador}`;
+            const localKey = `prov_global_${selectedDate}`;
             localStorage.setItem(localKey, JSON.stringify({ comp: compValue, cant: cantValue }));
-            alert(`Guardado en memoria provisional para ${digitador}. Se asignará cuando ingresen sus registros.`);
+            alert(`Guardado en memoria provisional. Se asignará a todos cuando ingresen los registros del día.`);
             loadData();
             return;
         }
         
-        // Si hay registros, guardar normal en Supabase
+        // Si hay registros, guardar normal en Supabase para TODOS esos registros
         const registroIds = registros.map(r => r.id);
         const { data: existingAsig } = await supabase.from('asignacion').select('id, registro_id').in('registro_id', registroIds);
         const existingMap = {};
@@ -345,13 +377,13 @@
         });
 
         await supabase.from('asignacion').upsert(upsertData);
-        alert(`Datos guardados en base de datos para ${digitador}`);
+        alert(`Datos globales guardados en la base de datos para todos los registros del día.`);
         loadData(); 
     }
 
-    // Función oculta para sincronizar lo provisional automáticamente
-    async function syncProvisionalToSupabase(digitador, compValue, cantValue, selectedDate) {
-        const { data: registros } = await supabase.from('registros').select('id').eq('fecha_creacion', selectedDate).eq('Resp_Aud_Digi', digitador);
+    // Sincronización automática oculta
+    async function syncProvisionalGlobal(compValue, cantValue, selectedDate) {
+        const { data: registros } = await supabase.from('registros').select('id').eq('fecha_creacion', selectedDate).in('Resp_Aud_Digi', digitadoresConConsumo);
         if (!registros || registros.length === 0) return;
         
         const registroIds = registros.map(r => r.id);
@@ -366,14 +398,16 @@
         });
 
         await supabase.from('asignacion').upsert(upsertData);
-        console.log(`Sincronización automática completada para ${digitador}`);
+        console.log(`Sincronización global automática completada.`);
     }
 
+    // Guardar la fecha global en la tabla asignacion
     async function saveAuditDate() {
         const selectedDate = document.getElementById('current-date').value;
         const fieldToUpdate = currentTab === 'consumo' ? 'FechaAuditoriaDigitadores' : 'FechaAuditoriaSinConsumo';
+        const digitadoresFiltro = currentTab === 'consumo' ? digitadoresConConsumo : digitadoresSinConsumo;
 
-        const { data: registros } = await supabase.from('registros').select('id').eq('fecha_creacion', selectedDate);
+        const { data: registros } = await supabase.from('registros').select('id').eq('fecha_creacion', selectedDate).in('Resp_Aud_Digi', digitadoresFiltro);
         if (!registros || registros.length === 0) return alert("No hay registros en esta fecha para asignar.");
 
         const registroIds = registros.map(r => r.id);
