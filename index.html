@@ -142,6 +142,9 @@
 
     // Inicializar la aplicación
     document.addEventListener('DOMContentLoaded', async () => {
+        // 1. Probar conexión primero
+        await testConnection();
+
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('current-date').value = today;
         
@@ -152,6 +155,26 @@
         // Iniciar el temporizador (se actualiza cada 10 segundos)
         iniciarTemporizador();
     });
+
+    // --- DETECTOR DE CONEXIÓN (Puedes borrar esta función luego) ---
+    async function testConnection() {
+        const toast = document.createElement('div');
+        toast.style.cssText = "position:fixed; top:20px; right:20px; padding:10px 20px; border-radius:5px; color:white; font-weight:bold; z-index:9999; background:#f39c12; transition: 0.3s;";
+        toast.innerText = "⏳ Verificando conexión...";
+        document.body.appendChild(toast);
+
+        try {
+            const { error } = await supabase.from('digitadores').select('id').limit(1);
+            if (error) throw error;
+            toast.style.background = "#2ecc71";
+            toast.innerText = "✅ Conexión exitosa a Supabase";
+            setTimeout(() => toast.remove(), 3000); // Desaparece en 3 segundos
+        } catch (err) {
+            toast.style.background = "#e74c3c";
+            toast.innerText = "❌ Error de conexión: " + err.message;
+        }
+    }
+    // ---------------------------------------------------------------
 
     // Cargar digitadores desde la base de datos
     async function cargarDigitadores() {
@@ -393,5 +416,3 @@
         }
     }
 </script>
-</body>
-</html>
