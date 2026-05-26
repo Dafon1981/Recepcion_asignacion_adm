@@ -37,17 +37,12 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         
-        /* Subtítulo con Input de Fecha */
-        .tab-subtitle { display: flex; justify-content: center; align-items: center; gap: 15px; color: #aaa; margin-bottom: 20px; font-size: 16px; background: #252525; padding: 15px; border-radius: 5px; }
-        .tab-subtitle input[type="date"] { padding: 8px; border-radius: 5px; border: 1px solid #555; background: #1a1a1a; color: #2ecc71; font-weight: bold; outline: none; font-size: 15px; }
-        .btn-save-audit { background: #2ecc71; color: #000; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .btn-save-audit:hover { background: #27ae60; color: white; }
-        
-        /* Panel Global de Composición */
-        .global-panel { display: flex; align-items: center; gap: 15px; background: #252525; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #f39c12; }
+        /* Panel Global Unificado */
+        .global-panel { display: flex; align-items: center; gap: 15px; background: #252525; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #f39c12; flex-wrap: wrap; }
         .global-panel .input-group { display: flex; flex-direction: column; gap: 5px; flex-grow: 1; }
         .global-panel label { font-size: 14px; color: #ccc; font-weight: bold; }
         .global-panel input { padding: 10px; border-radius: 5px; border: 1px solid #555; background: #1a1a1a; color: white; outline: none; font-size: 15px; }
+        .global-panel input[type="date"] { color: #2ecc71; font-weight: bold; }
         .global-panel input:focus { border-color: #f1c40f; }
         .btn-save-panel { background: #f39c12; color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 15px; height: 42px; margin-top: 22px; }
         .btn-save-panel:hover { background: #d35400; color: white; }
@@ -91,23 +86,22 @@
 
     <!-- Pestaña: Con Consumo -->
     <div id="consumo" class="tab-content active">
-        <div class="tab-subtitle">
-            <label>FechaAuditoriaDigitadores:</label>
-            <input type="date" id="audit-date-consumo">
-            <button class="btn-save-audit" onclick="saveAuditDateSpecific('consumo')">Guardar Fecha</button>
-        </div>
         
-        <!-- PANEL ÚNICO DE COMPOSICIÓN -->
+        <!-- PANEL ÚNICO (Fecha, Composición y Cantidad) -->
         <div class="global-panel">
+            <div class="input-group" style="max-width: 200px;">
+                <label>Fecha Auditoría Digitadores</label>
+                <input type="date" id="audit-date-consumo">
+            </div>
             <div class="input-group">
                 <label>Composición Armado Global</label>
                 <input type="text" id="global-comp" placeholder="Ej: Armado A">
             </div>
-            <div class="input-group" style="max-width: 200px;">
+            <div class="input-group" style="max-width: 150px;">
                 <label>Cant. Pre-Asignación</label>
                 <input type="number" id="global-cant" min="0" value="0">
             </div>
-            <button class="btn-save-panel" onclick="saveGlobalComposition()">Guardar Datos</button>
+            <button class="btn-save-panel" onclick="saveGlobalData('consumo')">Guardar Datos</button>
         </div>
 
         <!-- TABLA LIMPIA CON CHECKS -->
@@ -131,10 +125,14 @@
 
     <!-- Pestaña: Sin Consumo -->
     <div id="sin-consumo" class="tab-content">
-        <div class="tab-subtitle">
-            <label>FechaAuditoriaSinConsumo:</label>
-            <input type="date" id="audit-date-sin-consumo">
-            <button class="btn-save-audit" onclick="saveAuditDateSpecific('sin-consumo')">Guardar Fecha</button>
+        
+        <!-- PANEL ÚNICO (Solo Fecha) -->
+        <div class="global-panel">
+            <div class="input-group" style="max-width: 250px;">
+                <label>Fecha Auditoría Sin Consumo</label>
+                <input type="date" id="audit-date-sin-consumo">
+            </div>
+            <button class="btn-save-panel" onclick="saveGlobalData('sin-consumo')">Guardar Datos</button>
         </div>
         
         <!-- TABLA LIMPIA CON CHECKS -->
@@ -240,45 +238,53 @@
         const selectedDate = document.getElementById('current-date').value;
         if (!selectedDate) return;
 
-        const { data } = await supabase.from('registros').select(`id, Resp_Aud_Digi, asignacion ( id, FechaAuditoriaDigitadores, FechaAuditoriaSinConsumo, CantidadPreAsignacion, ComposicionArmado )`).eq('fecha_creacion', selectedDate);
+        // 1. Cargar datos independientes de Asignación (usando la fecha seleccionada como referencia)
+        // Nota: Como ahora es independiente, buscaremos si ya existe un registro en 'asignacion' para esta fecha.
+        // Para esto, asumimos que guardamos un registro genérico en 'asignacion' donde 'fecha_creacion' = selectedDate
+        // Si tu tabla 'asignacion' no tiene una columna para identificar el día global, usaremos la fecha de auditoría como referencia.
         
-        let fechaAsignadaConsumo = ''; 
-        let fechaAsignadaSinConsumo = '';
-        const digitadoresActuales = currentTab === 'consumo' ? digitadoresConConsumo : digitadoresSinConsumo;
-        const counts = {}; 
-        
+        const { data: asigData } = await supabase
+            .from('asignacion')
+            .select('*')
+            .or(`FechaAuditoriaDigitadores.eq.${selectedDate},FechaAuditoriaSinConsumo.eq.${selectedDate},fecha_creacion.eq.${selectedDate}`)
+            .limit(1);
+
         let globalComp = '';
         let globalCant = 0;
-        
-        digitadoresActuales.forEach(d => { counts[d] = 0; });
+        let auditDateConsumo = '';
+        let auditDateSinConsumo = '';
 
-        if (data) {
-            data.forEach(row => {
-                const digi = row.Resp_Aud_Digi;
-                
-                if (row.asignacion && row.asignacion.length > 0) {
-                    if (row.asignacion[0].FechaAuditoriaDigitadores) fechaAsignadaConsumo = row.asignacion[0].FechaAuditoriaDigitadores;
-                    if (row.asignacion[0].FechaAuditoriaSinConsumo) fechaAsignadaSinConsumo = row.asignacion[0].FechaAuditoriaSinConsumo;
-                }
-
-                if (digitadoresActuales.includes(digi)) {
-                    counts[digi]++;
-                    if (currentTab === 'consumo' && row.asignacion && row.asignacion.length > 0) {
-                        if(row.asignacion[0].ComposicionArmado) globalComp = row.asignacion[0].ComposicionArmado;
-                        if(row.asignacion[0].CantidadPreAsignacion) globalCant = row.asignacion[0].CantidadPreAsignacion;
-                    }
-                }
-            });
+        if (asigData && asigData.length > 0) {
+            globalComp = asigData[0].ComposicionArmado || '';
+            globalCant = asigData[0].CantidadPreAsignacion || 0;
+            auditDateConsumo = asigData[0].FechaAuditoriaDigitadores || '';
+            auditDateSinConsumo = asigData[0].FechaAuditoriaSinConsumo || '';
         }
 
         // Actualizar inputs si el usuario no los está editando
-        if (currentTab === 'consumo' && document.activeElement.id !== 'global-comp' && document.activeElement.id !== 'global-cant') {
-            document.getElementById('global-comp').value = globalComp;
-            document.getElementById('global-cant').value = globalCant;
+        if (currentTab === 'consumo') {
+            if (document.activeElement.id !== 'global-comp') document.getElementById('global-comp').value = globalComp;
+            if (document.activeElement.id !== 'global-cant') document.getElementById('global-cant').value = globalCant;
+            if (document.activeElement.id !== 'audit-date-consumo') document.getElementById('audit-date-consumo').value = auditDateConsumo;
+        } else {
+            if (document.activeElement.id !== 'audit-date-sin-consumo') document.getElementById('audit-date-sin-consumo').value = auditDateSinConsumo;
         }
 
-        if (document.activeElement.id !== 'audit-date-consumo') document.getElementById('audit-date-consumo').value = fechaAsignadaConsumo;
-        if (document.activeElement.id !== 'audit-date-sin-consumo') document.getElementById('audit-date-sin-consumo').value = fechaAsignadaSinConsumo;
+        // 2. Cargar conteo de Registros
+        const { data: regData } = await supabase.from('registros').select('Resp_Aud_Digi').eq('fecha_creacion', selectedDate);
+        
+        const digitadoresActuales = currentTab === 'consumo' ? digitadoresConConsumo : digitadoresSinConsumo;
+        const counts = {}; 
+        digitadoresActuales.forEach(d => { counts[d] = 0; });
+
+        if (regData) {
+            regData.forEach(row => {
+                const digi = row.Resp_Aud_Digi;
+                if (digitadoresActuales.includes(digi)) {
+                    counts[digi]++;
+                }
+            });
+        }
 
         // Renderizar Tabla con Checks
         let tableHTML = '';
@@ -321,61 +327,49 @@
         }
     }
 
-    // Guardar Composición Global Inmediatamente
-    async function saveGlobalComposition() {
-        const compValue = document.getElementById('global-comp').value;
-        const cantValue = document.getElementById('global-cant').value;
-        const selectedDate = document.getElementById('current-date').value;
-
-        const { data: registros } = await supabase.from('registros').select('id').eq('fecha_creacion', selectedDate).in('Resp_Aud_Digi', digitadoresConConsumo);
+    // Guardar Datos Globales Independientes en la tabla Asignacion
+    async function saveGlobalData(tab) {
+        const selectedDate = document.getElementById('current-date').value; // Usamos la fecha grande como identificador
         
-        if (!registros || registros.length === 0) {
-            return alert(`No hay registros en la fecha ${selectedDate} para guardar la composición.`);
+        let payload = { fecha_creacion: selectedDate }; // Usamos fecha_creacion para identificar el día
+
+        if (tab === 'consumo') {
+            const auditDate = document.getElementById('audit-date-consumo').value;
+            const compValue = document.getElementById('global-comp').value;
+            const cantValue = document.getElementById('global-cant').value;
+            
+            if (auditDate) payload.FechaAuditoriaDigitadores = auditDate;
+            payload.ComposicionArmado = compValue;
+            payload.CantidadPreAsignacion = cantValue || 0;
+        } else {
+            const auditDate = document.getElementById('audit-date-sin-consumo').value;
+            if (auditDate) payload.FechaAuditoriaSinConsumo = auditDate;
         }
-        
-        const registroIds = registros.map(r => r.id);
-        const { data: existingAsig } = await supabase.from('asignacion').select('id, registro_id').in('registro_id', registroIds);
-        const existingMap = {};
-        if (existingAsig) existingAsig.forEach(a => existingMap[a.registro_id] = a.id);
 
-        const upsertData = registroIds.map(rid => {
-            const payload = { registro_id: rid, ComposicionArmado: compValue, CantidadPreAsignacion: cantValue || 0 };
-            if (existingMap[rid]) payload.id = existingMap[rid]; 
-            return payload;
-        });
+        try {
+            // 1. Buscar si ya existe un registro global para este día en la tabla asignacion
+            const { data: existing } = await supabase
+                .from('asignacion')
+                .select('id')
+                .eq('fecha_creacion', selectedDate)
+                .is('registro_id', null) // Asegurarnos de que es el registro global independiente
+                .limit(1);
 
-        await supabase.from('asignacion').upsert(upsertData);
-        alert(`Composición y Cantidad guardadas correctamente en la base de datos.`);
-        loadData(); 
-    }
+            if (existing && existing.length > 0) {
+                // Actualizar el existente
+                payload.id = existing[0].id;
+            }
 
-    // Guardar Fecha de Auditoría Específica Inmediatamente
-    async function saveAuditDateSpecific(tab) {
-        const selectedDate = document.getElementById('current-date').value;
-        const inputId = tab === 'consumo' ? 'audit-date-consumo' : 'audit-date-sin-consumo';
-        const auditDateValue = document.getElementById(inputId).value;
-        const fieldToUpdate = tab === 'consumo' ? 'FechaAuditoriaDigitadores' : 'FechaAuditoriaSinConsumo';
-        const digitadoresFiltro = tab === 'consumo' ? digitadoresConConsumo : digitadoresSinConsumo;
+            // 2. Guardar (Insertar o Actualizar)
+            const { error } = await supabase.from('asignacion').upsert([payload]);
+            if (error) throw error;
 
-        if (!auditDateValue) return alert("Por favor, selecciona una fecha de auditoría primero.");
-
-        const { data: registros } = await supabase.from('registros').select('id').eq('fecha_creacion', selectedDate).in('Resp_Aud_Digi', digitadoresFiltro);
-        if (!registros || registros.length === 0) return alert("No hay registros en esta fecha para asignar la auditoría.");
-
-        const registroIds = registros.map(r => r.id);
-        const { data: existingAsig } = await supabase.from('asignacion').select('id, registro_id').in('registro_id', registroIds);
-        const existingMap = {};
-        if (existingAsig) existingAsig.forEach(a => existingMap[a.registro_id] = a.id);
-
-        const upsertData = registroIds.map(rid => {
-            const payload = { registro_id: rid, [fieldToUpdate]: auditDateValue };
-            if (existingMap[rid]) payload.id = existingMap[rid];
-            return payload;
-        });
-
-        await supabase.from('asignacion').upsert(upsertData);
-        alert(`Fecha de auditoría guardada correctamente.`);
-        loadData(); 
+            alert(`Datos guardados correctamente para el día ${selectedDate}.`);
+            loadData();
+            
+        } catch (err) {
+            alert("Error al guardar: " + err.message);
+        }
     }
 </script>
 </body>
