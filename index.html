@@ -22,8 +22,6 @@
         
         .header-nav button { background: #3498db; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 15px; }
         .header-nav button:hover { background: #2980b9; }
-        .btn-save-global { background: #2ecc71 !important; }
-        .btn-save-global:hover { background: #27ae60 !important; }
         
         /* Fecha Grande al Centro */
         .big-date { font-size: 26px; font-weight: bold; padding: 10px 20px; border-radius: 8px; border: 2px solid #555; background: #111; color: #f1c40f; text-align: center; outline: none; cursor: pointer; }
@@ -38,8 +36,12 @@
         /* Contenido */
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .tab-subtitle { color: #aaa; margin-bottom: 20px; font-size: 18px; text-align: center; background: #252525; padding: 10px; border-radius: 5px; }
-        .tab-subtitle span { color: #2ecc71; font-weight: bold; }
+        
+        /* Subtítulo con Input de Fecha */
+        .tab-subtitle { display: flex; justify-content: center; align-items: center; gap: 15px; color: #aaa; margin-bottom: 20px; font-size: 16px; background: #252525; padding: 15px; border-radius: 5px; }
+        .tab-subtitle input[type="date"] { padding: 8px; border-radius: 5px; border: 1px solid #555; background: #1a1a1a; color: #2ecc71; font-weight: bold; outline: none; font-size: 15px; }
+        .btn-save-audit { background: #2ecc71; color: #000; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-save-audit:hover { background: #27ae60; color: white; }
         
         /* Panel Global de Composición */
         .global-panel { display: flex; align-items: center; gap: 15px; background: #252525; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #f39c12; }
@@ -49,15 +51,20 @@
         .global-panel input:focus { border-color: #f1c40f; }
         .btn-save-panel { background: #f39c12; color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 15px; height: 42px; margin-top: 22px; }
         .btn-save-panel:hover { background: #d35400; color: white; }
-        .badge-prov { background: #8e44ad; color: white; font-size: 0.75em; padding: 4px 8px; border-radius: 4px; margin-left: 10px; vertical-align: middle; display: none; }
 
         /* Gráfico y Tabla */
         .chart-container { width: 100%; max-width: 900px; margin: 30px auto 0 auto; background: #252525; padding: 20px; border-radius: 8px; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background: #252525; border-radius: 8px; overflow: hidden; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #444; vertical-align: middle; }
         th { background: #333; color: #f1c40f; }
+        tr { transition: background-color 0.3s; }
         tr:hover { background: #2a2a2a; }
         .reg-count { color: #3498db; font-weight: bold; font-size: 1.1em; }
+        
+        /* Estilos para el Checkbox y fila verde */
+        .check-cell { width: 50px; text-align: center; }
+        .digitador-check { transform: scale(1.5); cursor: pointer; accent-color: #2ecc71; }
+        .row-checked { background-color: rgba(46, 204, 113, 0.15) !important; border-left: 4px solid #2ecc71; }
     </style>
 </head>
 <body>
@@ -73,7 +80,6 @@
         </div>
         <div class="nav-right">
             <button onclick="changeDate(1)">Día Siguiente ▶</button>
-            <button class="btn-save-global" id="btn-global-save" onclick="saveAuditDate()">💾 Guardar Asignación</button>
         </div>
     </div>
 
@@ -85,7 +91,11 @@
 
     <!-- Pestaña: Con Consumo -->
     <div id="consumo" class="tab-content active">
-        <div class="tab-subtitle">FechaAuditoriaDigitadores: <span id="subtitle-consumo">--</span></div>
+        <div class="tab-subtitle">
+            <label>FechaAuditoriaDigitadores:</label>
+            <input type="date" id="audit-date-consumo">
+            <button class="btn-save-audit" onclick="saveAuditDateSpecific('consumo')">Guardar Fecha</button>
+        </div>
         
         <!-- PANEL ÚNICO DE COMPOSICIÓN -->
         <div class="global-panel">
@@ -98,13 +108,13 @@
                 <input type="number" id="global-cant" min="0" value="0">
             </div>
             <button class="btn-save-panel" onclick="saveGlobalComposition()">Guardar Datos</button>
-            <span id="badge-prov-global" class="badge-prov">Provisional</span>
         </div>
 
-        <!-- TABLA LIMPIA -->
+        <!-- TABLA LIMPIA CON CHECKS -->
         <table>
             <thead>
                 <tr>
+                    <th class="check-cell">✓</th>
                     <th>Digitador</th>
                     <th style="width: 200px; text-align: center;">Registros del Día</th>
                 </tr>
@@ -121,12 +131,17 @@
 
     <!-- Pestaña: Sin Consumo -->
     <div id="sin-consumo" class="tab-content">
-        <div class="tab-subtitle">FechaAuditoriaSinConsumo: <span id="subtitle-sin-consumo">--</span></div>
+        <div class="tab-subtitle">
+            <label>FechaAuditoriaSinConsumo:</label>
+            <input type="date" id="audit-date-sin-consumo">
+            <button class="btn-save-audit" onclick="saveAuditDateSpecific('sin-consumo')">Guardar Fecha</button>
+        </div>
         
-        <!-- TABLA LIMPIA -->
+        <!-- TABLA LIMPIA CON CHECKS -->
         <table>
             <thead>
                 <tr>
+                    <th class="check-cell">✓</th>
                     <th>Digitador</th>
                     <th style="width: 200px; text-align: center;">Registros del Día</th>
                 </tr>
@@ -147,7 +162,6 @@
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzaWtscHh5ZWN0YmVreHZham53Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2OTI1MjEsImV4cCI6MjA3NzI2ODUyMX0.mtQnqUrTmhmN1DQxOAUnGpizhYZobStHDH0cz_XfKGU';
     const supabase = window.supabase.createClient(supabaseUrl, supabaseKey );
 
-    // Registrar el plugin para mostrar números en las barras
     Chart.register(ChartDataLabels);
 
     let currentTab = 'consumo';
@@ -159,7 +173,6 @@
     let pollingTimer = null;
 
     document.addEventListener('DOMContentLoaded', async () => {
-        await testConnection();
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('current-date').value = today;
         
@@ -168,23 +181,6 @@
         await loadData();
         iniciarTemporizador();
     });
-
-    async function testConnection() {
-        const toast = document.createElement('div');
-        toast.style.cssText = "position:fixed; top:20px; right:20px; padding:10px 20px; border-radius:5px; color:white; font-weight:bold; z-index:9999; background:#f39c12; transition: 0.3s;";
-        toast.innerText = "⏳ Verificando conexión...";
-        document.body.appendChild(toast);
-        try {
-            const { error } = await supabase.from('digitadores').select('id').limit(1);
-            if (error) throw error;
-            toast.style.background = "#2ecc71";
-            toast.innerText = "✅ Conexión exitosa";
-            setTimeout(() => toast.remove(), 3000);
-        } catch (err) {
-            toast.style.background = "#e74c3c";
-            toast.innerText = "❌ Error: " + err.message;
-        }
-    }
 
     async function cargarDigitadores() {
         const { data } = await supabase.from('digitadores').select('*');
@@ -200,7 +196,6 @@
         event.target.classList.add('active');
         document.getElementById(tabId).classList.add('active');
         currentTab = tabId;
-        document.getElementById('btn-global-save').style.display = tabId === 'consumo' ? 'inline-block' : 'none';
         loadData();
     }
 
@@ -231,7 +226,7 @@
                 responsive: true, 
                 scales: { y: { beginAtZero: true, ticks: { color: '#fff' } }, x: { ticks: { color: '#fff' } } }, 
                 plugins: { 
-                    legend: { display: false }, // Ocultamos la leyenda para que sea más limpio
+                    legend: { display: false },
                     datalabels: { color: '#fff', anchor: 'end', align: 'top', font: { weight: 'bold', size: 14 } }
                 } 
             } 
@@ -247,14 +242,13 @@
 
         const { data } = await supabase.from('registros').select(`id, Resp_Aud_Digi, asignacion ( id, FechaAuditoriaDigitadores, FechaAuditoriaSinConsumo, CantidadPreAsignacion, ComposicionArmado )`).eq('fecha_creacion', selectedDate);
         
-        let fechaAsignadaConsumo = '--', fechaAsignadaSinConsumo = '--';
+        let fechaAsignadaConsumo = ''; 
+        let fechaAsignadaSinConsumo = '';
         const digitadoresActuales = currentTab === 'consumo' ? digitadoresConConsumo : digitadoresSinConsumo;
         const counts = {}; 
         
-        // Variables para el panel global
         let globalComp = '';
         let globalCant = 0;
-        let totalRegistrosConsumo = 0;
         
         digitadoresActuales.forEach(d => { counts[d] = 0; });
 
@@ -262,7 +256,6 @@
             data.forEach(row => {
                 const digi = row.Resp_Aud_Digi;
                 
-                // Capturar fechas globales
                 if (row.asignacion && row.asignacion.length > 0) {
                     if (row.asignacion[0].FechaAuditoriaDigitadores) fechaAsignadaConsumo = row.asignacion[0].FechaAuditoriaDigitadores;
                     if (row.asignacion[0].FechaAuditoriaSinConsumo) fechaAsignadaSinConsumo = row.asignacion[0].FechaAuditoriaSinConsumo;
@@ -270,9 +263,6 @@
 
                 if (digitadoresActuales.includes(digi)) {
                     counts[digi]++;
-                    if (currentTab === 'consumo') totalRegistrosConsumo++;
-                    
-                    // Si encontramos datos de asignación en la BD, los usamos para el panel global
                     if (currentTab === 'consumo' && row.asignacion && row.asignacion.length > 0) {
                         if(row.asignacion[0].ComposicionArmado) globalComp = row.asignacion[0].ComposicionArmado;
                         if(row.asignacion[0].CantidadPreAsignacion) globalCant = row.asignacion[0].CantidadPreAsignacion;
@@ -281,55 +271,30 @@
             });
         }
 
-        // Lógica de Memoria Provisional Global (Solo para consumo)
-        if (currentTab === 'consumo') {
-            const localKey = `prov_global_${selectedDate}`;
-            const localData = localStorage.getItem(localKey);
-            const badgeProv = document.getElementById('badge-prov-global');
-
-            if (totalRegistrosConsumo === 0 && localData) {
-                // No hay registros, pero hay datos provisionales guardados
-                const parsed = JSON.parse(localData);
-                globalComp = parsed.comp;
-                globalCant = parsed.cant;
-                badgeProv.style.display = 'inline-block';
-            } else if (totalRegistrosConsumo > 0 && localData) {
-                // Ya entraron registros y teníamos datos provisionales -> Sincronizar automáticamente
-                const parsed = JSON.parse(localData);
-                if (!globalComp && globalCant === 0) {
-                    globalComp = parsed.comp;
-                    globalCant = parsed.cant;
-                    syncProvisionalGlobal(parsed.comp, parsed.cant, selectedDate);
-                }
-                localStorage.removeItem(localKey);
-                badgeProv.style.display = 'none';
-            } else {
-                badgeProv.style.display = 'none';
-            }
-
-            // Actualizar los inputs globales si el usuario no los está editando
-            if (document.activeElement.id !== 'global-comp' && document.activeElement.id !== 'global-cant') {
-                document.getElementById('global-comp').value = globalComp;
-                document.getElementById('global-cant').value = globalCant;
-            }
+        // Actualizar inputs si el usuario no los está editando
+        if (currentTab === 'consumo' && document.activeElement.id !== 'global-comp' && document.activeElement.id !== 'global-cant') {
+            document.getElementById('global-comp').value = globalComp;
+            document.getElementById('global-cant').value = globalCant;
         }
 
-        // Actualizar Subtítulos
-        document.getElementById('subtitle-consumo').innerText = fechaAsignadaConsumo;
-        document.getElementById('subtitle-sin-consumo').innerText = fechaAsignadaSinConsumo;
+        if (document.activeElement.id !== 'audit-date-consumo') document.getElementById('audit-date-consumo').value = fechaAsignadaConsumo;
+        if (document.activeElement.id !== 'audit-date-sin-consumo') document.getElementById('audit-date-sin-consumo').value = fechaAsignadaSinConsumo;
 
-        // Renderizar Tabla Limpia
+        // Renderizar Tabla con Checks
         let tableHTML = '';
         digitadoresActuales.forEach(digi => {
-            tableHTML += `<tr>
+            const isChecked = localStorage.getItem(`check_${selectedDate}_${digi}`) === 'true' ? 'checked' : '';
+            const rowClass = isChecked ? 'row-checked' : '';
+            
+            tableHTML += `<tr class="${rowClass}">
+                <td class="check-cell"><input type="checkbox" class="digitador-check" onchange="toggleRowCheck(this, '${digi}')" ${isChecked}></td>
                 <td><strong>${digi}</strong></td>
                 <td style="text-align: center;"><span class="reg-count">${counts[digi]}</span></td>
             </tr>`;
         });
 
-        if(tableHTML === '') tableHTML = `<tr><td colspan="2" style="text-align:center;">No hay digitadores configurados</td></tr>`;
+        if(tableHTML === '') tableHTML = `<tr><td colspan="3" style="text-align:center;">No hay digitadores configurados</td></tr>`;
 
-        // Actualizar Gráfico y Tabla
         const chartData = digitadoresActuales.map(d => counts[d]);
         if (currentTab === 'consumo') {
             chartConsumoInstance.data.datasets[0].data = chartData;
@@ -342,29 +307,32 @@
         }
     }
 
-    // Guardar Composición Global
+    // Función para manejar el Checkbox y pintar la fila
+    function toggleRowCheck(checkbox, digi) {
+        const tr = checkbox.closest('tr');
+        const selectedDate = document.getElementById('current-date').value;
+        
+        if (checkbox.checked) {
+            tr.classList.add('row-checked');
+            localStorage.setItem(`check_${selectedDate}_${digi}`, 'true');
+        } else {
+            tr.classList.remove('row-checked');
+            localStorage.removeItem(`check_${selectedDate}_${digi}`);
+        }
+    }
+
+    // Guardar Composición Global Inmediatamente
     async function saveGlobalComposition() {
         const compValue = document.getElementById('global-comp').value;
         const cantValue = document.getElementById('global-cant').value;
         const selectedDate = document.getElementById('current-date').value;
 
-        // Buscar todos los registros de la fecha que pertenezcan a digitadores "con consumo"
-        const { data: registros } = await supabase
-            .from('registros')
-            .select('id')
-            .eq('fecha_creacion', selectedDate)
-            .in('Resp_Aud_Digi', digitadoresConConsumo);
+        const { data: registros } = await supabase.from('registros').select('id').eq('fecha_creacion', selectedDate).in('Resp_Aud_Digi', digitadoresConConsumo);
         
-        // Si no hay registros en absoluto, guardar en memoria provisional
         if (!registros || registros.length === 0) {
-            const localKey = `prov_global_${selectedDate}`;
-            localStorage.setItem(localKey, JSON.stringify({ comp: compValue, cant: cantValue }));
-            alert(`Guardado en memoria provisional. Se asignará a todos cuando ingresen los registros del día.`);
-            loadData();
-            return;
+            return alert(`No hay registros en la fecha ${selectedDate} para guardar la composición.`);
         }
         
-        // Si hay registros, guardar normal en Supabase para TODOS esos registros
         const registroIds = registros.map(r => r.id);
         const { data: existingAsig } = await supabase.from('asignacion').select('id, registro_id').in('registro_id', registroIds);
         const existingMap = {};
@@ -377,38 +345,22 @@
         });
 
         await supabase.from('asignacion').upsert(upsertData);
-        alert(`Datos globales guardados en la base de datos para todos los registros del día.`);
+        alert(`Composición y Cantidad guardadas correctamente en la base de datos.`);
         loadData(); 
     }
 
-    // Sincronización automática oculta
-    async function syncProvisionalGlobal(compValue, cantValue, selectedDate) {
-        const { data: registros } = await supabase.from('registros').select('id').eq('fecha_creacion', selectedDate).in('Resp_Aud_Digi', digitadoresConConsumo);
-        if (!registros || registros.length === 0) return;
-        
-        const registroIds = registros.map(r => r.id);
-        const { data: existingAsig } = await supabase.from('asignacion').select('id, registro_id').in('registro_id', registroIds);
-        const existingMap = {};
-        if (existingAsig) existingAsig.forEach(a => existingMap[a.registro_id] = a.id);
-
-        const upsertData = registroIds.map(rid => {
-            const payload = { registro_id: rid, ComposicionArmado: compValue, CantidadPreAsignacion: cantValue || 0 };
-            if (existingMap[rid]) payload.id = existingMap[rid]; 
-            return payload;
-        });
-
-        await supabase.from('asignacion').upsert(upsertData);
-        console.log(`Sincronización global automática completada.`);
-    }
-
-    // Guardar la fecha global en la tabla asignacion
-    async function saveAuditDate() {
+    // Guardar Fecha de Auditoría Específica Inmediatamente
+    async function saveAuditDateSpecific(tab) {
         const selectedDate = document.getElementById('current-date').value;
-        const fieldToUpdate = currentTab === 'consumo' ? 'FechaAuditoriaDigitadores' : 'FechaAuditoriaSinConsumo';
-        const digitadoresFiltro = currentTab === 'consumo' ? digitadoresConConsumo : digitadoresSinConsumo;
+        const inputId = tab === 'consumo' ? 'audit-date-consumo' : 'audit-date-sin-consumo';
+        const auditDateValue = document.getElementById(inputId).value;
+        const fieldToUpdate = tab === 'consumo' ? 'FechaAuditoriaDigitadores' : 'FechaAuditoriaSinConsumo';
+        const digitadoresFiltro = tab === 'consumo' ? digitadoresConConsumo : digitadoresSinConsumo;
+
+        if (!auditDateValue) return alert("Por favor, selecciona una fecha de auditoría primero.");
 
         const { data: registros } = await supabase.from('registros').select('id').eq('fecha_creacion', selectedDate).in('Resp_Aud_Digi', digitadoresFiltro);
-        if (!registros || registros.length === 0) return alert("No hay registros en esta fecha para asignar.");
+        if (!registros || registros.length === 0) return alert("No hay registros en esta fecha para asignar la auditoría.");
 
         const registroIds = registros.map(r => r.id);
         const { data: existingAsig } = await supabase.from('asignacion').select('id, registro_id').in('registro_id', registroIds);
@@ -416,13 +368,13 @@
         if (existingAsig) existingAsig.forEach(a => existingMap[a.registro_id] = a.id);
 
         const upsertData = registroIds.map(rid => {
-            const payload = { registro_id: rid, [fieldToUpdate]: selectedDate };
+            const payload = { registro_id: rid, [fieldToUpdate]: auditDateValue };
             if (existingMap[rid]) payload.id = existingMap[rid];
             return payload;
         });
 
         await supabase.from('asignacion').upsert(upsertData);
-        alert(`Fecha guardada en ${fieldToUpdate}.`);
+        alert(`Fecha de auditoría guardada correctamente.`);
         loadData(); 
     }
 </script>
