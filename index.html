@@ -19,7 +19,6 @@
         .header-nav { display: flex; justify-content: space-between; align-items: center; background: #2a2a2a; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; }
         .nav-left, .nav-right { display: flex; gap: 10px; align-items: center; }
         .nav-center { text-align: center; flex-grow: 1; }
-        
         .header-nav button { background: #3498db; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 15px; }
         .header-nav button:hover { background: #2980b9; }
         
@@ -32,8 +31,6 @@
         .tab { padding: 12px 20px; cursor: pointer; font-weight: bold; color: #888; border-bottom: 3px solid transparent; transition: 0.3s; font-size: 16px; }
         .tab.active { color: #f1c40f; border-bottom-color: #f1c40f; }
         .tab:hover:not(.active) { color: #ddd; }
-
-        /* Contenido */
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         
@@ -47,6 +44,22 @@
         .btn-save-panel { background: #f39c12; color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 15px; height: 42px; margin-top: 22px; }
         .btn-save-panel:hover { background: #d35400; color: white; }
 
+        /* Panel FUAs Sueltas */
+        .fua-panel { background: #1a1a1a; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #333; border-left: 4px solid #3498db; }
+        .fua-panel h3 { color: #3498db; margin-top: 0; margin-bottom: 15px; font-size: 18px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .fua-add-section { display: flex; gap: 15px; align-items: flex-end; margin-bottom: 20px; background: #222; padding: 15px; border-radius: 6px; }
+        .btn-add-fua { background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; height: 42px; font-size: 15px; }
+        .btn-add-fua:hover { background: #2980b9; }
+        
+        .fua-list { list-style: none; padding: 0; margin: 0; }
+        .fua-item { display: flex; justify-content: space-between; align-items: center; background: #252525; padding: 12px 15px; border-radius: 5px; margin-bottom: 8px; border-left: 3px solid #e74c3c; }
+        .fua-info { display: flex; gap: 20px; font-size: 15px; }
+        .fua-info span { color: #aaa; }
+        .fua-info strong { color: #fff; font-size: 16px; }
+        .fua-status { color: #e74c3c; font-weight: bold; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-resolve { background: #2ecc71; color: #000; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.2s; }
+        .btn-resolve:hover { background: #27ae60; color: white; }
+
         /* Gráfico y Tabla */
         .chart-container { width: 100%; max-width: 900px; margin: 30px auto 0 auto; background: #252525; padding: 20px; border-radius: 8px; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background: #252525; border-radius: 8px; overflow: hidden; }
@@ -55,8 +68,6 @@
         tr { transition: background-color 0.3s; }
         tr:hover { background: #2a2a2a; }
         .reg-count { color: #3498db; font-weight: bold; font-size: 1.1em; }
-        
-        /* Estilos para el Checkbox y fila verde */
         .check-cell { width: 50px; text-align: center; }
         .digitador-check { transform: scale(1.5); cursor: pointer; accent-color: #2ecc71; }
         .row-checked { background-color: rgba(46, 204, 113, 0.15) !important; border-left: 4px solid #2ecc71; }
@@ -65,20 +76,12 @@
 <body>
 
 <div class="container">
-    <!-- Navegación Superior -->
     <div class="header-nav">
-        <div class="nav-left">
-            <button onclick="changeDate(-1)">◀ Día Anterior</button>
-        </div>
-        <div class="nav-center">
-            <input type="date" id="current-date" class="big-date" onchange="manualDateChange()">
-        </div>
-        <div class="nav-right">
-            <button onclick="changeDate(1)">Día Siguiente ▶</button>
-        </div>
+        <div class="nav-left"><button onclick="changeDate(-1)">◀ Día Anterior</button></div>
+        <div class="nav-center"><input type="date" id="current-date" class="big-date" onchange="manualDateChange()"></div>
+        <div class="nav-right"><button onclick="changeDate(1)">Día Siguiente ▶</button></div>
     </div>
 
-    <!-- Pestañas -->
     <div class="tabs">
         <div class="tab active" onclick="switchTab('consumo')">Digitadores con consumo</div>
         <div class="tab" onclick="switchTab('sin-consumo')">Digitadores sin consumo</div>
@@ -87,6 +90,29 @@
     <!-- Pestaña: Con Consumo -->
     <div id="consumo" class="tab-content active">
         
+        <!-- SECCIÓN FUAS SUELTAS -->
+        <div class="fua-panel">
+            <h3>FUAs Sueltas por Empaquetar</h3>
+            
+            <!-- Cuadro para agregar nueva FUA -->
+            <div class="fua-add-section">
+                <div class="input-group">
+                    <label>Nro FUA</label>
+                    <input type="number" id="fua-nro-consumo" placeholder="Ej: 123456" min="0">
+                </div>
+                <div class="input-group">
+                    <label>Fecha FUA</label>
+                    <input type="date" id="fua-fecha-consumo">
+                </div>
+                <button class="btn-add-fua" onclick="addFua('consumo')">Guardar</button>
+            </div>
+            
+            <!-- Lista de pendientes -->
+            <ul class="fua-list" id="fua-list-consumo">
+                <!-- Datos dinámicos -->
+            </ul>
+        </div>
+
         <!-- PANEL ÚNICO (Fecha, Composición y Cantidad) -->
         <div class="global-panel">
             <div class="input-group" style="max-width: 200px;">
@@ -104,7 +130,6 @@
             <button class="btn-save-panel" onclick="saveGlobalData('consumo')">Guardar Datos</button>
         </div>
 
-        <!-- TABLA LIMPIA CON CHECKS -->
         <table>
             <thead>
                 <tr>
@@ -113,19 +138,37 @@
                     <th style="width: 200px; text-align: center;">Registros del Día</th>
                 </tr>
             </thead>
-            <tbody id="table-consumo">
-                <!-- Datos dinámicos -->
-            </tbody>
+            <tbody id="table-consumo"></tbody>
         </table>
-
-        <div class="chart-container">
-            <canvas id="chartConsumo"></canvas>
-        </div>
+        <div class="chart-container"><canvas id="chartConsumo"></canvas></div>
     </div>
 
     <!-- Pestaña: Sin Consumo -->
     <div id="sin-consumo" class="tab-content">
         
+        <!-- SECCIÓN FUAS SUELTAS -->
+        <div class="fua-panel">
+            <h3>FUAs Sueltas por Empaquetar</h3>
+            
+            <!-- Cuadro para agregar nueva FUA -->
+            <div class="fua-add-section">
+                <div class="input-group">
+                    <label>Nro FUA</label>
+                    <input type="number" id="fua-nro-sin-consumo" placeholder="Ej: 123456" min="0">
+                </div>
+                <div class="input-group">
+                    <label>Fecha FUA</label>
+                    <input type="date" id="fua-fecha-sin-consumo">
+                </div>
+                <button class="btn-add-fua" onclick="addFua('sin-consumo')">Guardar</button>
+            </div>
+            
+            <!-- Lista de pendientes -->
+            <ul class="fua-list" id="fua-list-sin-consumo">
+                <!-- Datos dinámicos -->
+            </ul>
+        </div>
+
         <!-- PANEL ÚNICO (Solo Fecha) -->
         <div class="global-panel">
             <div class="input-group" style="max-width: 250px;">
@@ -135,7 +178,6 @@
             <button class="btn-save-panel" onclick="saveGlobalData('sin-consumo')">Guardar Datos</button>
         </div>
         
-        <!-- TABLA LIMPIA CON CHECKS -->
         <table>
             <thead>
                 <tr>
@@ -144,14 +186,9 @@
                     <th style="width: 200px; text-align: center;">Registros del Día</th>
                 </tr>
             </thead>
-            <tbody id="table-sin-consumo">
-                <!-- Datos dinámicos -->
-            </tbody>
+            <tbody id="table-sin-consumo"></tbody>
         </table>
-
-        <div class="chart-container">
-            <canvas id="chartSinConsumo"></canvas>
-        </div>
+        <div class="chart-container"><canvas id="chartSinConsumo"></canvas></div>
     </div>
 </div>
 <script>
@@ -238,15 +275,16 @@
         const selectedDate = document.getElementById('current-date').value;
         if (!selectedDate) return;
 
-        // 1. Cargar datos independientes de Asignación (usando la fecha seleccionada como referencia)
-        // Nota: Como ahora es independiente, buscaremos si ya existe un registro en 'asignacion' para esta fecha.
-        // Para esto, asumimos que guardamos un registro genérico en 'asignacion' donde 'fecha_creacion' = selectedDate
-        // Si tu tabla 'asignacion' no tiene una columna para identificar el día global, usaremos la fecha de auditoría como referencia.
-        
+        // 1. Cargar FUAs Sueltas Pendientes
+        await loadFuas(selectedDate);
+
+        // 2. Cargar datos globales de Asignación
         const { data: asigData } = await supabase
             .from('asignacion')
             .select('*')
-            .or(`FechaAuditoriaDigitadores.eq.${selectedDate},FechaAuditoriaSinConsumo.eq.${selectedDate},fecha_creacion.eq.${selectedDate}`)
+            .eq('fecha_creacion', selectedDate)
+            .is('registro_id', null)
+            .is('nrofuasuelta', null) // Excluir las filas que son de FUAs sueltas
             .limit(1);
 
         let globalComp = '';
@@ -261,7 +299,6 @@
             auditDateSinConsumo = asigData[0].FechaAuditoriaSinConsumo || '';
         }
 
-        // Actualizar inputs si el usuario no los está editando
         if (currentTab === 'consumo') {
             if (document.activeElement.id !== 'global-comp') document.getElementById('global-comp').value = globalComp;
             if (document.activeElement.id !== 'global-cant') document.getElementById('global-cant').value = globalCant;
@@ -270,7 +307,7 @@
             if (document.activeElement.id !== 'audit-date-sin-consumo') document.getElementById('audit-date-sin-consumo').value = auditDateSinConsumo;
         }
 
-        // 2. Cargar conteo de Registros
+        // 3. Cargar conteo de Registros
         const { data: regData } = await supabase.from('registros').select('Resp_Aud_Digi').eq('fecha_creacion', selectedDate);
         
         const digitadoresActuales = currentTab === 'consumo' ? digitadoresConConsumo : digitadoresSinConsumo;
@@ -313,7 +350,98 @@
         }
     }
 
-    // Función para manejar el Checkbox y pintar la fila
+    // --- LÓGICA DE FUAS SUELTAS ---
+
+    async function addFua(tab) {
+        const selectedDate = document.getElementById('current-date').value;
+        const nroInput = document.getElementById(`fua-nro-${tab}`);
+        const fechaInput = document.getElementById(`fua-fecha-${tab}`);
+        
+        const nroValue = nroInput.value.trim();
+        const fechaValue = fechaInput.value;
+
+        if (!nroValue || !fechaValue) {
+            return alert("Por favor, ingresa el número de FUA y selecciona su fecha.");
+        }
+
+        try {
+            const payload = {
+                fecha_creacion: selectedDate, // Se vincula al día actual de la app
+                nrofuasuelta: nroValue,
+                fechafuasuelta: fechaValue,
+                condicionfuasuelta: 'pendiente'
+            };
+
+            const { error } = await supabase.from('asignacion').insert([payload]);
+            if (error) throw error;
+
+            // Limpiar inputs
+            nroInput.value = '';
+            fechaInput.value = '';
+            
+            // Recargar lista
+            loadFuas(selectedDate);
+            
+        } catch (err) {
+            alert("Error al guardar la FUA: " + err.message);
+        }
+    }
+
+    async function loadFuas(selectedDate) {
+        try {
+            const { data, error } = await supabase
+                .from('asignacion')
+                .select('id, nrofuasuelta, fechafuasuelta, condicionfuasuelta')
+                .eq('fecha_creacion', selectedDate)
+                .eq('condicionfuasuelta', 'pendiente')
+                .not('nrofuasuelta', 'is', null);
+
+            if (error) throw error;
+
+            let listHTML = '';
+            if (data && data.length > 0) {
+                data.forEach(fua => {
+                    listHTML += `
+                    <li class="fua-item">
+                        <div class="fua-info">
+                            <span>Nro FUA: <strong>${fua.nrofuasuelta}</strong></span>
+                            <span>Fecha: <strong>${fua.fechafuasuelta}</strong></span>
+                            <span class="fua-status">Pendiente</span>
+                        </div>
+                        <button class="btn-resolve" onclick="resolveFua(${fua.id})">✓ Resuelto</button>
+                    </li>`;
+                });
+            } else {
+                listHTML = `<li style="color:#888; padding:10px; text-align:center;">No hay FUAs pendientes para este día.</li>`;
+            }
+
+            document.getElementById(`fua-list-${currentTab}`).innerHTML = listHTML;
+
+        } catch (err) {
+            console.error("Error al cargar FUAs:", err);
+        }
+    }
+
+    async function resolveFua(id) {
+        try {
+            const { error } = await supabase
+                .from('asignacion')
+                .update({ condicionfuasuelta: 'resuelto' })
+                .eq('id', id);
+
+            if (error) throw error;
+            
+            // Recargar la lista para que desaparezca
+            const selectedDate = document.getElementById('current-date').value;
+            loadFuas(selectedDate);
+            
+        } catch (err) {
+            alert("Error al resolver la FUA: " + err.message);
+        }
+    }
+
+    // --- FIN LÓGICA FUAS ---
+
     function toggleRowCheck(checkbox, digi) {
         const tr = checkbox.closest('tr');
         const selectedDate = document.getElementById('current-date').value;
@@ -327,11 +455,9 @@
         }
     }
 
-    // Guardar Datos Globales Independientes en la tabla Asignacion
     async function saveGlobalData(tab) {
-        const selectedDate = document.getElementById('current-date').value; // Usamos la fecha grande como identificador
-        
-        let payload = { fecha_creacion: selectedDate }; // Usamos fecha_creacion para identificar el día
+        const selectedDate = document.getElementById('current-date').value; 
+        let payload = { fecha_creacion: selectedDate }; 
 
         if (tab === 'consumo') {
             const auditDate = document.getElementById('audit-date-consumo').value;
@@ -347,20 +473,18 @@
         }
 
         try {
-            // 1. Buscar si ya existe un registro global para este día en la tabla asignacion
             const { data: existing } = await supabase
                 .from('asignacion')
                 .select('id')
                 .eq('fecha_creacion', selectedDate)
-                .is('registro_id', null) // Asegurarnos de que es el registro global independiente
+                .is('registro_id', null)
+                .is('nrofuasuelta', null) // Asegurarnos de que es el registro global, no una FUA
                 .limit(1);
 
             if (existing && existing.length > 0) {
-                // Actualizar el existente
                 payload.id = existing[0].id;
             }
 
-            // 2. Guardar (Insertar o Actualizar)
             const { error } = await supabase.from('asignacion').upsert([payload]);
             if (error) throw error;
 
