@@ -52,13 +52,16 @@
         .btn-add-fua:hover { background: #2980b9; }
         
         .fua-list { list-style: none; padding: 0; margin: 0; }
-        .fua-item { display: flex; justify-content: space-between; align-items: center; background: #252525; padding: 12px 15px; border-radius: 5px; margin-bottom: 8px; border-left: 3px solid #e74c3c; }
-        .fua-info { display: flex; gap: 20px; font-size: 15px; }
+        .fua-item { display: flex; justify-content: space-between; align-items: center; background: #252525; padding: 12px 15px; border-radius: 5px; margin-bottom: 8px; border-left: 3px solid #e74c3c; transition: all 0.3s ease; }
+        .fua-info { display: flex; gap: 20px; font-size: 15px; align-items: center; }
         .fua-info span { color: #aaa; }
         .fua-info strong { color: #fff; font-size: 16px; }
-        .fua-status { color: #e74c3c; font-weight: bold; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
-        .btn-resolve { background: #2ecc71; color: #000; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.2s; }
-        .btn-resolve:hover { background: #27ae60; color: white; }
+        .fua-status { color: #e74c3c; font-weight: bold; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; background: rgba(231, 76, 60, 0.1); padding: 4px 8px; border-radius: 4px; }
+        
+        /* Botón Resolver */
+        .btn-resolve { background: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.3s; }
+        .btn-resolve:hover { background: #2980b9; }
+        .btn-resolve.resolved { background: #2ecc71 !important; color: #000 !important; }
 
         /* Gráfico y Tabla */
         .chart-container { width: 100%; max-width: 900px; margin: 30px auto 0 auto; background: #252525; padding: 20px; border-radius: 8px; }
@@ -92,9 +95,8 @@
         
         <!-- SECCIÓN FUAS SUELTAS -->
         <div class="fua-panel">
-            <h3>FUAs Sueltas por Empaquetar</h3>
+            <h3>FUAs Sueltas por Empaquetar (Globales)</h3>
             
-            <!-- Cuadro para agregar nueva FUA -->
             <div class="fua-add-section">
                 <div class="input-group">
                     <label>Nro FUA</label>
@@ -107,13 +109,12 @@
                 <button class="btn-add-fua" onclick="addFua('consumo')">Guardar</button>
             </div>
             
-            <!-- Lista de pendientes -->
             <ul class="fua-list" id="fua-list-consumo">
                 <!-- Datos dinámicos -->
             </ul>
         </div>
 
-        <!-- PANEL ÚNICO (Fecha, Composición y Cantidad) -->
+        <!-- PANEL ÚNICO -->
         <div class="global-panel">
             <div class="input-group" style="max-width: 200px;">
                 <label>Fecha Auditoría Digitadores</label>
@@ -148,9 +149,8 @@
         
         <!-- SECCIÓN FUAS SUELTAS -->
         <div class="fua-panel">
-            <h3>FUAs Sueltas por Empaquetar</h3>
+            <h3>FUAs Sueltas por Empaquetar (Globales)</h3>
             
-            <!-- Cuadro para agregar nueva FUA -->
             <div class="fua-add-section">
                 <div class="input-group">
                     <label>Nro FUA</label>
@@ -163,13 +163,12 @@
                 <button class="btn-add-fua" onclick="addFua('sin-consumo')">Guardar</button>
             </div>
             
-            <!-- Lista de pendientes -->
             <ul class="fua-list" id="fua-list-sin-consumo">
                 <!-- Datos dinámicos -->
             </ul>
         </div>
 
-        <!-- PANEL ÚNICO (Solo Fecha) -->
+        <!-- PANEL ÚNICO -->
         <div class="global-panel">
             <div class="input-group" style="max-width: 250px;">
                 <label>Fecha Auditoría Sin Consumo</label>
@@ -275,16 +274,16 @@
         const selectedDate = document.getElementById('current-date').value;
         if (!selectedDate) return;
 
-        // 1. Cargar FUAs Sueltas Pendientes
-        await loadFuas(selectedDate);
+        // 1. Cargar FUAs Sueltas Pendientes (Globales, sin importar la fecha seleccionada)
+        await loadFuas();
 
-        // 2. Cargar datos globales de Asignación
+        // 2. Cargar datos globales de Asignación para la fecha seleccionada
         const { data: asigData } = await supabase
             .from('asignacion')
             .select('*')
             .eq('fecha_creacion', selectedDate)
             .is('registro_id', null)
-            .is('nrofuasuelta', null) // Excluir las filas que son de FUAs sueltas
+            .is('nrofuasuelta', null) 
             .limit(1);
 
         let globalComp = '';
@@ -366,7 +365,7 @@
 
         try {
             const payload = {
-                fecha_creacion: selectedDate, // Se vincula al día actual de la app
+                fecha_creacion: selectedDate, 
                 nrofuasuelta: nroValue,
                 fechafuasuelta: fechaValue,
                 condicionfuasuelta: 'pendiente'
@@ -375,26 +374,25 @@
             const { error } = await supabase.from('asignacion').insert([payload]);
             if (error) throw error;
 
-            // Limpiar inputs
             nroInput.value = '';
             fechaInput.value = '';
             
-            // Recargar lista
-            loadFuas(selectedDate);
+            loadFuas(); // Recargar lista global
             
         } catch (err) {
             alert("Error al guardar la FUA: " + err.message);
         }
     }
 
-    async function loadFuas(selectedDate) {
+    async function loadFuas() {
         try {
+            // Ya no filtramos por fecha_creacion, traemos TODAS las pendientes
             const { data, error } = await supabase
                 .from('asignacion')
                 .select('id, nrofuasuelta, fechafuasuelta, condicionfuasuelta')
-                .eq('fecha_creacion', selectedDate)
                 .eq('condicionfuasuelta', 'pendiente')
-                .not('nrofuasuelta', 'is', null);
+                .not('nrofuasuelta', 'is', null)
+                .order('id', { ascending: false });
 
             if (error) throw error;
 
@@ -402,17 +400,17 @@
             if (data && data.length > 0) {
                 data.forEach(fua => {
                     listHTML += `
-                    <li class="fua-item">
+                    <li class="fua-item" id="fua-item-${fua.id}">
                         <div class="fua-info">
                             <span>Nro FUA: <strong>${fua.nrofuasuelta}</strong></span>
                             <span>Fecha: <strong>${fua.fechafuasuelta}</strong></span>
-                            <span class="fua-status">Pendiente</span>
+                            <span class="fua-status">PENDIENTE</span>
                         </div>
-                        <button class="btn-resolve" onclick="resolveFua(${fua.id})">✓ Resuelto</button>
+                        <button class="btn-resolve" onclick="resolveFua(${fua.id}, this)">Resolver</button>
                     </li>`;
                 });
             } else {
-                listHTML = `<li style="color:#888; padding:10px; text-align:center;">No hay FUAs pendientes para este día.</li>`;
+                listHTML = `<li style="color:#888; padding:10px; text-align:center;">No hay FUAs pendientes. ¡Todo al día!</li>`;
             }
 
             document.getElementById(`fua-list-${currentTab}`).innerHTML = listHTML;
@@ -422,22 +420,30 @@
         }
     }
 
-    async function resolveFua(id) {
-        try {
-            const { error } = await supabase
-                .from('asignacion')
-                .update({ condicionfuasuelta: 'resuelto' })
-                .eq('id', id);
+    async function resolveFua(id, btnElement) {
+        // Efecto visual inmediato
+        btnElement.classList.add('resolved');
+        btnElement.innerText = 'Resuelto ✓';
+        
+        // Esperar medio segundo para que el usuario vea el cambio a verde
+        setTimeout(async () => {
+            try {
+                const { error } = await supabase
+                    .from('asignacion')
+                    .update({ condicionfuasuelta: 'resuelto' })
+                    .eq('id', id);
 
-            if (error) throw error;
-            
-            // Recargar la lista para que desaparezca
-            const selectedDate = document.getElementById('current-date').value;
-            loadFuas(selectedDate);
-            
-        } catch (err) {
-            alert("Error al resolver la FUA: " + err.message);
-        }
+                if (error) throw error;
+                
+                loadFuas(); // Recargar la lista para que desaparezca
+                
+            } catch (err) {
+                alert("Error al resolver la FUA: " + err.message);
+                // Si hay error, revertir el botón
+                btnElement.classList.remove('resolved');
+                btnElement.innerText = 'Resolver';
+            }
+        }, 500);
     }
 
     // --- FIN LÓGICA FUAS ---
@@ -478,7 +484,7 @@
                 .select('id')
                 .eq('fecha_creacion', selectedDate)
                 .is('registro_id', null)
-                .is('nrofuasuelta', null) // Asegurarnos de que es el registro global, no una FUA
+                .is('nrofuasuelta', null) 
                 .limit(1);
 
             if (existing && existing.length > 0) {
