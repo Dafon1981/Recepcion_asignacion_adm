@@ -47,15 +47,31 @@
         /* Panel FUAs Sueltas */
         .fua-panel { background: #1a1a1a; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #333; border-left: 4px solid #3498db; }
         .fua-panel h3 { color: #3498db; margin-top: 0; margin-bottom: 15px; font-size: 18px; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .fua-add-section { display: flex; gap: 15px; align-items: flex-end; margin-bottom: 20px; background: #222; padding: 15px; border-radius: 6px; }
-        .btn-add-fua { background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; height: 42px; font-size: 15px; }
+        .fua-add-section { display: flex; gap: 15px; align-items: flex-end; margin-bottom: 20px; background: #222; padding: 15px; border-radius: 6px; flex-wrap: wrap; }
+        
+        /* ESTILOS NUEVOS PARA INPUTS DE FUA (Fondo negro, letra amarilla grande) */
+        .fua-add-section input, .fua-add-section select {
+            background-color: #000000 !important;
+            color: #f1c40f !important;
+            font-size: 18px !important;
+            font-weight: bold;
+            border: 1px solid #555;
+            padding: 10px;
+            border-radius: 5px;
+            outline: none;
+        }
+        .fua-add-section input::placeholder { color: #666; font-weight: normal; font-size: 15px; }
+        .fua-add-section input:focus, .fua-add-section select:focus { border-color: #3498db; }
+
+        .btn-add-fua { background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; height: 44px; font-size: 16px; }
         .btn-add-fua:hover { background: #2980b9; }
         
         .fua-list { list-style: none; padding: 0; margin: 0; }
         .fua-item { display: flex; justify-content: space-between; align-items: center; background: #252525; padding: 12px 15px; border-radius: 5px; margin-bottom: 8px; border-left: 3px solid #e74c3c; transition: all 0.3s ease; }
-        .fua-info { display: flex; gap: 20px; font-size: 15px; align-items: center; }
+        .fua-info { display: flex; gap: 20px; font-size: 15px; align-items: center; flex-wrap: wrap; }
         .fua-info span { color: #aaa; }
         .fua-info strong { color: #fff; font-size: 16px; }
+        .fua-condicion-badge { color: #f39c12; font-weight: bold; font-size: 14px; background: rgba(243, 156, 18, 0.1); padding: 4px 8px; border-radius: 4px; }
         .fua-status { color: #e74c3c; font-weight: bold; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; background: rgba(231, 76, 60, 0.1); padding: 4px 8px; border-radius: 4px; }
         
         /* Botón Resolver */
@@ -105,6 +121,13 @@
                 <div class="input-group">
                     <label>Fecha FUA</label>
                     <input type="date" id="fua-fecha-consumo">
+                </div>
+                <div class="input-group">
+                    <label>Condición</label>
+                    <select id="fua-condicion-consumo">
+                        <option value="Con Consumo">Con Consumo</option>
+                        <option value="Sin Consumo">Sin Consumo</option>
+                    </select>
                 </div>
                 <button class="btn-add-fua" onclick="addFua('consumo')">Guardar</button>
             </div>
@@ -159,6 +182,13 @@
                 <div class="input-group">
                     <label>Fecha FUA</label>
                     <input type="date" id="fua-fecha-sin-consumo">
+                </div>
+                <div class="input-group">
+                    <label>Condición</label>
+                    <select id="fua-condicion-sin-consumo">
+                        <option value="Sin Consumo">Sin Consumo</option>
+                        <option value="Con Consumo">Con Consumo</option>
+                    </select>
                 </div>
                 <button class="btn-add-fua" onclick="addFua('sin-consumo')">Guardar</button>
             </div>
@@ -259,7 +289,7 @@
     function iniciarTemporizador() {
         if (pollingTimer) clearInterval(pollingTimer);
         pollingTimer = setInterval(() => {
-            if (document.activeElement.tagName !== 'INPUT') loadData();
+            if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'SELECT') loadData();
         }, 10000);
     }
 
@@ -368,9 +398,11 @@
         const selectedDate = document.getElementById('current-date').value;
         const nroInput = document.getElementById(`fua-nro-${tab}`);
         const fechaInput = document.getElementById(`fua-fecha-${tab}`);
+        const condicionInput = document.getElementById(`fua-condicion-${tab}`);
         
         const nroValue = nroInput.value.trim();
         const fechaValue = fechaInput.value;
+        const condicionValue = condicionInput.value;
 
         if (!nroValue || !fechaValue) {
             return alert("Por favor, ingresa el número de FUA y selecciona su fecha.");
@@ -381,7 +413,8 @@
                 fecha_creacion: selectedDate, 
                 nrofuasuelta: nroValue,
                 fechafuasuelta: fechaValue,
-                condicionfuasuelta: 'pendiente'
+                condicionfuasuelta: 'pendiente',
+                condicion_consumo: condicionValue // Guardamos la nueva condición
             };
 
             const { error } = await supabase.from('asignacion').insert([payload]);
@@ -401,7 +434,7 @@
         try {
             const { data, error } = await supabase
                 .from('asignacion')
-                .select('id, nrofuasuelta, fechafuasuelta, condicionfuasuelta')
+                .select('id, nrofuasuelta, fechafuasuelta, condicionfuasuelta, condicion_consumo')
                 .eq('condicionfuasuelta', 'pendiente')
                 .not('nrofuasuelta', 'is', null)
                 .order('id', { ascending: false });
@@ -411,11 +444,14 @@
             let listHTML = '';
             if (data && data.length > 0) {
                 data.forEach(fua => {
+                    const condicionBadge = fua.condicion_consumo ? `<span class="fua-condicion-badge">${fua.condicion_consumo}</span>` : '';
+                    
                     listHTML += `
                     <li class="fua-item" id="fua-item-${fua.id}">
                         <div class="fua-info">
                             <span>Nro FUA: <strong>${fua.nrofuasuelta}</strong></span>
                             <span>Fecha: <strong>${fua.fechafuasuelta}</strong></span>
+                            ${condicionBadge}
                             <span class="fua-status">PENDIENTE</span>
                         </div>
                         <button class="btn-resolve" onclick="resolveFua(${fua.id}, this)">Resolver</button>
