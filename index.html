@@ -217,10 +217,23 @@
     });
 
     async function cargarDigitadores() {
-        const { data } = await supabase.from('digitadores').select('*');
-        if (data) {
-            digitadoresConConsumo = data.filter(d => d.condicion === 'con consumo').map(d => d.nombre);
-            digitadoresSinConsumo = data.filter(d => d.condicion === 'sin consumo').map(d => d.nombre);
+        try {
+            const { data, error } = await supabase.from('digitadores').select('*');
+            
+            if (error) {
+                console.error("Error de Supabase:", error);
+                alert("⚠️ Error al cargar digitadores: " + error.message + "\n\nPosible causa: Faltan permisos (RLS) en la tabla 'digitadores'. Ejecuta el código SQL para permitir SELECT.");
+                return;
+            }
+
+            if (data && data.length > 0) {
+                digitadoresConConsumo = data.filter(d => d.condicion === 'con consumo').map(d => d.nombre);
+                digitadoresSinConsumo = data.filter(d => d.condicion === 'sin consumo').map(d => d.nombre);
+            } else {
+                alert("La tabla 'digitadores' está vacía. Por favor, agrega los nombres en Supabase.");
+            }
+        } catch (err) {
+            alert("Error inesperado al conectar con Supabase: " + err.message);
         }
     }
 
@@ -274,10 +287,10 @@
         const selectedDate = document.getElementById('current-date').value;
         if (!selectedDate) return;
 
-        // 1. Cargar FUAs Sueltas Pendientes (Globales, sin importar la fecha seleccionada)
+        // 1. Cargar FUAs Sueltas Pendientes (Globales)
         await loadFuas();
 
-        // 2. Cargar datos globales de Asignación para la fecha seleccionada
+        // 2. Cargar datos globales de Asignación
         const { data: asigData } = await supabase
             .from('asignacion')
             .select('*')
@@ -377,7 +390,7 @@
             nroInput.value = '';
             fechaInput.value = '';
             
-            loadFuas(); // Recargar lista global
+            loadFuas(); 
             
         } catch (err) {
             alert("Error al guardar la FUA: " + err.message);
@@ -386,7 +399,6 @@
 
     async function loadFuas() {
         try {
-            // Ya no filtramos por fecha_creacion, traemos TODAS las pendientes
             const { data, error } = await supabase
                 .from('asignacion')
                 .select('id, nrofuasuelta, fechafuasuelta, condicionfuasuelta')
@@ -421,11 +433,9 @@
     }
 
     async function resolveFua(id, btnElement) {
-        // Efecto visual inmediato
         btnElement.classList.add('resolved');
         btnElement.innerText = 'Resuelto ✓';
         
-        // Esperar medio segundo para que el usuario vea el cambio a verde
         setTimeout(async () => {
             try {
                 const { error } = await supabase
@@ -435,11 +445,10 @@
 
                 if (error) throw error;
                 
-                loadFuas(); // Recargar la lista para que desaparezca
+                loadFuas(); 
                 
             } catch (err) {
                 alert("Error al resolver la FUA: " + err.message);
-                // Si hay error, revertir el botón
                 btnElement.classList.remove('resolved');
                 btnElement.innerText = 'Resolver';
             }
