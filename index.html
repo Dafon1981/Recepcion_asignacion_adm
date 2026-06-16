@@ -50,12 +50,14 @@
         .btn-add-fua:hover { background: #2980b9; }
         
         /* Pestañas de 10 días */
-        .fua-tabs-container { display: flex; overflow-x: auto; gap: 10px; margin-bottom: 15px; padding-bottom: 5px; }
+        .fua-tabs-container { display: flex; overflow-x: auto; gap: 10px; margin-bottom: 15px; padding-bottom: 10px; }
+        .fua-tabs-container::-webkit-scrollbar { height: 8px; }
+        .fua-tabs-container::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
         .fua-day-tab { padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 8px; transition: 0.3s; white-space: nowrap; }
         .fua-day-tab.has-fuas { background-color: #e74c3c; color: white; }
         .fua-day-tab.no-fuas { background-color: #2ecc71; color: #000; }
-        .fua-day-tab.active { outline: 3px solid #f1c40f; outline-offset: 2px; }
-        .fua-badge { background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+        .fua-day-tab.active { outline: 3px solid #f1c40f; outline-offset: 2px; transform: scale(1.05); }
+        .fua-badge { background: rgba(0,0,0,0.4); padding: 2px 8px; border-radius: 12px; font-size: 12px; color: white; }
         
         /* Botón Copiar */
         .btn-copy-fuas { background: #e67e22; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; margin-bottom: 15px; display: flex; align-items: center; gap: 5px; transition: 0.3s; }
@@ -102,7 +104,7 @@
     <!-- Pestaña: Con Consumo -->
     <div id="consumo" class="tab-content active">
         <div class="fua-panel">
-            <h3>FUAs Sueltas por Empaquetar (Últimos 10 días)</h3>
+            <h3>FUAs Sueltas por Empaquetar (Ventana de 10 días)</h3>
             <div class="fua-add-section">
                 <div class="input-group">
                     <label>Nro FUA</label>
@@ -159,7 +161,7 @@
     <!-- Pestaña: Sin Consumo -->
     <div id="sin-consumo" class="tab-content">
         <div class="fua-panel">
-            <h3>FUAs Sueltas por Empaquetar (Últimos 10 días)</h3>
+            <h3>FUAs Sueltas por Empaquetar (Ventana de 10 días)</h3>
             <div class="fua-add-section">
                 <div class="input-group">
                     <label>Nro FUA</label>
@@ -206,7 +208,6 @@
     </div>
 </div>
 <script>
-    // Configuración de Supabase
     const supabaseUrl = 'https://esiklpxyectbekxvajnw.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzaWtscHh5ZWN0YmVreHZham53Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2OTI1MjEsImV4cCI6MjA3NzI2ODUyMX0.mtQnqUrTmhmN1DQxOAUnGpizhYZobStHDH0cz_XfKGU';
     const supabase = window.supabase.createClient(supabaseUrl, supabaseKey );
@@ -221,7 +222,6 @@
     let digitadoresSinConsumo = [];
     let pollingTimer = null;
 
-    // Variables globales para FUAs
     window.allFuas = [];
     window.selectedFuaDate_consumo = '';
     window.selectedFuaDate_sin_consumo = '';
@@ -260,7 +260,22 @@
 
     function changeDate(days) {
         const dateInput = document.getElementById('current-date');
-        const currentDate = new Date(dateInput.value);
+        const currentDate = new Date(dateInput.value + 'T00:00:00');
+
+        // Alerta si se va a borrar el día más antiguo con FUAs pendientes
+        if (days > 0) {
+            const oldestDate = new Date(currentDate);
+            oldestDate.setDate(oldestDate.getDate() - 9);
+            const oldestDateStr = oldestDate.toISOString().split('T')[0];
+
+            const hasPending = window.allFuas.some(f => f.fechafuasuelta === oldestDateStr && f.condicionfuasuelta === 'pendiente');
+            if (hasPending) {
+                if (!confirm(`¡ALERTA! Hay FUAs pendientes del día ${oldestDateStr}.\n\nSi avanzas, este día saldrá de la ventana de 10 días y las FUAs se borrarán permanentemente.\n\n¿Deseas continuar?`)) {
+                    return; 
+                }
+            }
+        }
+
         currentDate.setDate(currentDate.getDate() + days);
         dateInput.value = currentDate.toISOString().split('T')[0];
         manualDateChange();
@@ -378,22 +393,26 @@
 
     async function loadFuas() {
         try {
-            // 1. Borrar FUAs con más de 10 días de antigüedad
-            const tenDaysAgo = new Date();
-            tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
-            const limitDateStr = tenDaysAgo.toISOString().split('T')[0];
+            const baseDateStr = document.getElementById('current-date').value;
+            const baseDate = new Date(baseDateStr + 'T00:00:00');
             
+            const limitDate = new Date(baseDate);
+            limitDate.setDate(limitDate.getDate() - 9);
+            const limitDateStr = limitDate.toISOString().split('T')[0];
+            
+            // Borrar FUAs que quedaron fuera de la ventana de 10 días
             await supabase.from('asignacion')
                 .delete()
                 .not('nrofuasuelta', 'is', null)
-                .lt('fecha_creacion', limitDateStr);
+                .lt('fechafuasuelta', limitDateStr);
 
-            // 2. Cargar todas las FUAs pendientes de los últimos 10 días
+            // Cargar FUAs pendientes dentro de la ventana
             const { data, error } = await supabase.from('asignacion')
-                .select('id, nrofuasuelta, fechafuasuelta, condicionfuasuelta, condicion_consumo, fecha_creacion')
+                .select('id, nrofuasuelta, fechafuasuelta, condicionfuasuelta, condicion_consumo')
                 .eq('condicionfuasuelta', 'pendiente')
                 .not('nrofuasuelta', 'is', null)
-                .gte('fecha_creacion', limitDateStr)
+                .gte('fechafuasuelta', limitDateStr)
+                .lte('fechafuasuelta', baseDateStr)
                 .order('id', { ascending: false });
 
             if (error) throw error;
@@ -410,24 +429,23 @@
     function renderFuaTabs(tab) {
         const container = document.getElementById(`fua-tabs-${tab}`);
         const baseDateStr = document.getElementById('current-date').value;
-        const baseDate = new Date(baseDateStr);
+        const baseDate = new Date(baseDateStr + 'T00:00:00');
         
         let tabsHTML = '';
         
-        for (let i = 0; i < 10; i++) {
+        // Generar 10 días de izquierda (más antiguo) a derecha (actual)
+        for (let i = 9; i >= 0; i--) {
             const d = new Date(baseDate);
             d.setDate(d.getDate() - i);
             const dateStr = d.toISOString().split('T')[0];
             
-            // Contar FUAs para este día y esta pestaña (Consumo / Sin Consumo)
             const condicionFiltro = tab === 'consumo' ? 'Con Consumo' : 'Sin Consumo';
-            const fuasDelDia = window.allFuas.filter(f => f.fecha_creacion === dateStr && f.condicion_consumo === condicionFiltro);
+            const fuasDelDia = window.allFuas.filter(f => f.fechafuasuelta === dateStr && f.condicion_consumo === condicionFiltro);
             const count = fuasDelDia.length;
             
             const statusClass = count > 0 ? 'has-fuas' : 'no-fuas';
             const activeClass = (tab === 'consumo' ? window.selectedFuaDate_consumo : window.selectedFuaDate_sin_consumo) === dateStr ? 'active' : '';
             
-            // Formato DD/MM
             const displayDate = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
             
             tabsHTML += `
@@ -452,7 +470,7 @@
         const selectedDate = tab === 'consumo' ? window.selectedFuaDate_consumo : window.selectedFuaDate_sin_consumo;
         const condicionFiltro = tab === 'consumo' ? 'Con Consumo' : 'Sin Consumo';
         
-        const fuasToShow = window.allFuas.filter(f => f.fecha_creacion === selectedDate && f.condicion_consumo === condicionFiltro);
+        const fuasToShow = window.allFuas.filter(f => f.fechafuasuelta === selectedDate && f.condicion_consumo === condicionFiltro);
         
         let listHTML = '';
         if (fuasToShow.length > 0) {
@@ -478,7 +496,7 @@
         const selectedDate = tab === 'consumo' ? window.selectedFuaDate_consumo : window.selectedFuaDate_sin_consumo;
         const condicionFiltro = tab === 'consumo' ? 'Con Consumo' : 'Sin Consumo';
         
-        const fuasToCopy = window.allFuas.filter(f => f.fecha_creacion === selectedDate && f.condicion_consumo === condicionFiltro);
+        const fuasToCopy = window.allFuas.filter(f => f.fechafuasuelta === selectedDate && f.condicion_consumo === condicionFiltro);
         
         if (fuasToCopy.length === 0) return alert("No hay FUAs para copiar en este día.");
         
