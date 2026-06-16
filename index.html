@@ -226,6 +226,9 @@
     window.selectedFuaDate_consumo = '';
     window.selectedFuaDate_sin_consumo = '';
 
+    // FECHA BASE ESTRICTA: 15 de Junio de 2026
+    const MIN_START_DATE = new Date('2026-06-15T00:00:00');
+
     document.addEventListener('DOMContentLoaded', async () => {
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('current-date').value = today;
@@ -262,16 +265,28 @@
         const dateInput = document.getElementById('current-date');
         const currentDate = new Date(dateInput.value + 'T00:00:00');
 
-        // Alerta si se va a borrar el día más antiguo con FUAs pendientes
+        // Lógica de Alerta al avanzar el día (si un día con FUAs va a desaparecer)
         if (days > 0) {
-            const oldestDate = new Date(currentDate);
-            oldestDate.setDate(oldestDate.getDate() - 9);
-            const oldestDateStr = oldestDate.toISOString().split('T')[0];
+            const nextDate = new Date(currentDate);
+            nextDate.setDate(nextDate.getDate() + days);
 
-            const hasPending = window.allFuas.some(f => f.fechafuasuelta === oldestDateStr && f.condicionfuasuelta === 'pendiente');
-            if (hasPending) {
-                if (!confirm(`¡ALERTA! Hay FUAs pendientes del día ${oldestDateStr}.\n\nSi avanzas, este día saldrá de la ventana de 10 días y las FUAs se borrarán permanentemente.\n\n¿Deseas continuar?`)) {
-                    return; 
+            let currentWindowStart = new Date(currentDate);
+            currentWindowStart.setDate(currentWindowStart.getDate() - 9);
+            if (currentWindowStart < MIN_START_DATE) currentWindowStart = new Date(MIN_START_DATE);
+
+            let nextWindowStart = new Date(nextDate);
+            nextWindowStart.setDate(nextWindowStart.getDate() - 9);
+            if (nextWindowStart < MIN_START_DATE) nextWindowStart = new Date(MIN_START_DATE);
+
+            // Si la ventana de inicio avanza, significa que un día se va a borrar
+            if (nextWindowStart > currentWindowStart) {
+                const fallingOffDateStr = currentWindowStart.toISOString().split('T')[0];
+                const hasPending = window.allFuas.some(f => f.fechafuasuelta === fallingOffDateStr && f.condicionfuasuelta === 'pendiente');
+                
+                if (hasPending) {
+                    if (!confirm(`¡ALERTA! Hay FUAs pendientes del día ${fallingOffDateStr}.\n\nSi avanzas, este día saldrá de la ventana de 10 días y las FUAs se borrarán permanentemente.\n\n¿Deseas continuar?`)) {
+                        return; // Cancela el avance
+                    }
                 }
             }
         }
@@ -396,17 +411,21 @@
             const baseDateStr = document.getElementById('current-date').value;
             const baseDate = new Date(baseDateStr + 'T00:00:00');
             
-            const limitDate = new Date(baseDate);
+            let limitDate = new Date(baseDate);
             limitDate.setDate(limitDate.getDate() - 9);
+            
+            // Nunca buscar ni borrar antes del 15 de Junio de 2026
+            if (limitDate < MIN_START_DATE) limitDate = new Date(MIN_START_DATE);
+            
             const limitDateStr = limitDate.toISOString().split('T')[0];
             
-            // Borrar FUAs que quedaron fuera de la ventana de 10 días
+            // Borrar FUAs que quedaron fuera de la ventana (más antiguas que limitDateStr)
             await supabase.from('asignacion')
                 .delete()
                 .not('nrofuasuelta', 'is', null)
                 .lt('fechafuasuelta', limitDateStr);
 
-            // Cargar FUAs pendientes dentro de la ventana
+            // Cargar FUAs pendientes dentro de la ventana permitida
             const { data, error } = await supabase.from('asignacion')
                 .select('id, nrofuasuelta, fechafuasuelta, condicionfuasuelta, condicion_consumo')
                 .eq('condicionfuasuelta', 'pendiente')
@@ -431,13 +450,16 @@
         const baseDateStr = document.getElementById('current-date').value;
         const baseDate = new Date(baseDateStr + 'T00:00:00');
         
+        let limitDate = new Date(baseDate);
+        limitDate.setDate(limitDate.getDate() - 9);
+        if (limitDate < MIN_START_DATE) limitDate = new Date(MIN_START_DATE);
+
         let tabsHTML = '';
         
-        // Generar 10 días de izquierda (más antiguo) a derecha (actual)
-        for (let i = 9; i >= 0; i--) {
-            const d = new Date(baseDate);
-            d.setDate(d.getDate() - i);
-            const dateStr = d.toISOString().split('T')[0];
+        // Generar pestañas de izquierda (más antiguo) a derecha (actual)
+        let iterDate = new Date(limitDate);
+        while (iterDate <= baseDate) {
+            const dateStr = iterDate.toISOString().split('T')[0];
             
             const condicionFiltro = tab === 'consumo' ? 'Con Consumo' : 'Sin Consumo';
             const fuasDelDia = window.allFuas.filter(f => f.fechafuasuelta === dateStr && f.condicion_consumo === condicionFiltro);
@@ -446,13 +468,15 @@
             const statusClass = count > 0 ? 'has-fuas' : 'no-fuas';
             const activeClass = (tab === 'consumo' ? window.selectedFuaDate_consumo : window.selectedFuaDate_sin_consumo) === dateStr ? 'active' : '';
             
-            const displayDate = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+            const displayDate = `${String(iterDate.getDate()).padStart(2, '0')}/${String(iterDate.getMonth() + 1).padStart(2, '0')}`;
             
             tabsHTML += `
                 <div class="fua-day-tab ${statusClass} ${activeClass}" onclick="selectFuaTab('${tab}', '${dateStr}')">
                     ${displayDate} <span class="fua-badge">${count}</span>
                 </div>
             `;
+            
+            iterDate.setDate(iterDate.getDate() + 1);
         }
         container.innerHTML = tabsHTML;
     }
@@ -570,5 +594,6 @@
         } catch (err) { alert("Error al guardar: " + err.message); }
     }
 </script>
+
 </body>
 </html>
