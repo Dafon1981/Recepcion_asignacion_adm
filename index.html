@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Estación de Trabajo - Auditoría</title>
     
-    <!-- Bibliotecas -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -15,18 +14,15 @@
         body { background-color: #121212; color: #ffffff; padding: 20px; }
         .container { max-width: 1100px; margin: 0 auto; background: #1e1e1e; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5 ); }
         
-        /* Header / Navegación */
         .header-nav { display: flex; justify-content: space-between; align-items: center; background: #2a2a2a; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; }
         .nav-left, .nav-right { display: flex; gap: 10px; align-items: center; }
         .nav-center { text-align: center; flex-grow: 1; }
         .header-nav button { background: #3498db; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 15px; }
         .header-nav button:hover { background: #2980b9; }
         
-        /* Fecha Grande al Centro */
         .big-date { font-size: 26px; font-weight: bold; padding: 10px 20px; border-radius: 8px; border: 2px solid #555; background: #111; color: #f1c40f; text-align: center; outline: none; cursor: pointer; }
         .big-date:focus { border-color: #f1c40f; }
 
-        /* Pestañas */
         .tabs { display: flex; border-bottom: 2px solid #333; margin-bottom: 20px; }
         .tab { padding: 12px 20px; cursor: pointer; font-weight: bold; color: #888; border-bottom: 3px solid transparent; transition: 0.3s; font-size: 16px; }
         .tab.active { color: #f1c40f; border-bottom-color: #f1c40f; }
@@ -34,7 +30,6 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         
-        /* Panel Global Unificado */
         .global-panel { display: flex; align-items: center; gap: 15px; background: #252525; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #f39c12; flex-wrap: wrap; }
         .global-panel .input-group { display: flex; flex-direction: column; gap: 5px; flex-grow: 1; }
         .global-panel label { font-size: 14px; color: #ccc; font-weight: bold; }
@@ -44,28 +39,28 @@
         .btn-save-panel { background: #f39c12; color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 15px; height: 42px; margin-top: 22px; }
         .btn-save-panel:hover { background: #d35400; color: white; }
 
-        /* Panel FUAs Sueltas */
         .fua-panel { background: #1a1a1a; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #333; border-left: 4px solid #3498db; }
         .fua-panel h3 { color: #3498db; margin-top: 0; margin-bottom: 15px; font-size: 18px; border-bottom: 1px solid #333; padding-bottom: 10px; }
         .fua-add-section { display: flex; gap: 15px; align-items: flex-end; margin-bottom: 20px; background: #222; padding: 15px; border-radius: 6px; flex-wrap: wrap; }
         
-        /* ESTILOS NUEVOS PARA INPUTS DE FUA (Fondo negro, letra amarilla grande) */
-        .fua-add-section input, .fua-add-section select {
-            background-color: #000000 !important;
-            color: #f1c40f !important;
-            font-size: 18px !important;
-            font-weight: bold;
-            border: 1px solid #555;
-            padding: 10px;
-            border-radius: 5px;
-            outline: none;
-        }
+        .fua-add-section input, .fua-add-section select { background-color: #000000 !important; color: #f1c40f !important; font-size: 18px !important; font-weight: bold; border: 1px solid #555; padding: 10px; border-radius: 5px; outline: none; }
         .fua-add-section input::placeholder { color: #666; font-weight: normal; font-size: 15px; }
         .fua-add-section input:focus, .fua-add-section select:focus { border-color: #3498db; }
-
         .btn-add-fua { background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; height: 44px; font-size: 16px; }
         .btn-add-fua:hover { background: #2980b9; }
         
+        /* Pestañas de 10 días */
+        .fua-tabs-container { display: flex; overflow-x: auto; gap: 10px; margin-bottom: 15px; padding-bottom: 5px; }
+        .fua-day-tab { padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 8px; transition: 0.3s; white-space: nowrap; }
+        .fua-day-tab.has-fuas { background-color: #e74c3c; color: white; }
+        .fua-day-tab.no-fuas { background-color: #2ecc71; color: #000; }
+        .fua-day-tab.active { outline: 3px solid #f1c40f; outline-offset: 2px; }
+        .fua-badge { background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+        
+        /* Botón Copiar */
+        .btn-copy-fuas { background: #e67e22; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; margin-bottom: 15px; display: flex; align-items: center; gap: 5px; transition: 0.3s; }
+        .btn-copy-fuas:hover { background: #d35400; }
+
         .fua-list { list-style: none; padding: 0; margin: 0; }
         .fua-item { display: flex; justify-content: space-between; align-items: center; background: #252525; padding: 12px 15px; border-radius: 5px; margin-bottom: 8px; border-left: 3px solid #e74c3c; transition: all 0.3s ease; }
         .fua-info { display: flex; gap: 20px; font-size: 15px; align-items: center; flex-wrap: wrap; }
@@ -74,12 +69,10 @@
         .fua-condicion-badge { color: #f39c12; font-weight: bold; font-size: 14px; background: rgba(243, 156, 18, 0.1); padding: 4px 8px; border-radius: 4px; }
         .fua-status { color: #e74c3c; font-weight: bold; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; background: rgba(231, 76, 60, 0.1); padding: 4px 8px; border-radius: 4px; }
         
-        /* Botón Resolver */
         .btn-resolve { background: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.3s; }
         .btn-resolve:hover { background: #2980b9; }
         .btn-resolve.resolved { background: #2ecc71 !important; color: #000 !important; }
 
-        /* Gráfico y Tabla */
         .chart-container { width: 100%; max-width: 900px; margin: 30px auto 0 auto; background: #252525; padding: 20px; border-radius: 8px; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background: #252525; border-radius: 8px; overflow: hidden; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #444; vertical-align: middle; }
@@ -108,11 +101,8 @@
 
     <!-- Pestaña: Con Consumo -->
     <div id="consumo" class="tab-content active">
-        
-        <!-- SECCIÓN FUAS SUELTAS -->
         <div class="fua-panel">
-            <h3>FUAs Sueltas por Empaquetar (Globales)</h3>
-            
+            <h3>FUAs Sueltas por Empaquetar (Últimos 10 días)</h3>
             <div class="fua-add-section">
                 <div class="input-group">
                     <label>Nro FUA</label>
@@ -132,12 +122,11 @@
                 <button class="btn-add-fua" onclick="addFua('consumo')">Guardar</button>
             </div>
             
-            <ul class="fua-list" id="fua-list-consumo">
-                <!-- Datos dinámicos -->
-            </ul>
+            <div class="fua-tabs-container" id="fua-tabs-consumo"></div>
+            <button class="btn-copy-fuas" onclick="copyFuas('consumo')">📋 Copiar FUAs de esta pestaña</button>
+            <ul class="fua-list" id="fua-list-consumo"></ul>
         </div>
 
-        <!-- PANEL ÚNICO -->
         <div class="global-panel">
             <div class="input-group" style="max-width: 200px;">
                 <label>Fecha Auditoría Digitadores</label>
@@ -169,11 +158,8 @@
 
     <!-- Pestaña: Sin Consumo -->
     <div id="sin-consumo" class="tab-content">
-        
-        <!-- SECCIÓN FUAS SUELTAS -->
         <div class="fua-panel">
-            <h3>FUAs Sueltas por Empaquetar (Globales)</h3>
-            
+            <h3>FUAs Sueltas por Empaquetar (Últimos 10 días)</h3>
             <div class="fua-add-section">
                 <div class="input-group">
                     <label>Nro FUA</label>
@@ -193,12 +179,11 @@
                 <button class="btn-add-fua" onclick="addFua('sin-consumo')">Guardar</button>
             </div>
             
-            <ul class="fua-list" id="fua-list-sin-consumo">
-                <!-- Datos dinámicos -->
-            </ul>
+            <div class="fua-tabs-container" id="fua-tabs-sin-consumo"></div>
+            <button class="btn-copy-fuas" onclick="copyFuas('sin-consumo')">📋 Copiar FUAs de esta pestaña</button>
+            <ul class="fua-list" id="fua-list-sin-consumo"></ul>
         </div>
 
-        <!-- PANEL ÚNICO -->
         <div class="global-panel">
             <div class="input-group" style="max-width: 250px;">
                 <label>Fecha Auditoría Sin Consumo</label>
@@ -236,9 +221,16 @@
     let digitadoresSinConsumo = [];
     let pollingTimer = null;
 
+    // Variables globales para FUAs
+    window.allFuas = [];
+    window.selectedFuaDate_consumo = '';
+    window.selectedFuaDate_sin_consumo = '';
+
     document.addEventListener('DOMContentLoaded', async () => {
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('current-date').value = today;
+        window.selectedFuaDate_consumo = today;
+        window.selectedFuaDate_sin_consumo = today;
         
         await cargarDigitadores();
         initCharts();
@@ -249,22 +241,12 @@
     async function cargarDigitadores() {
         try {
             const { data, error } = await supabase.from('digitadores').select('*');
-            
-            if (error) {
-                console.error("Error de Supabase:", error);
-                alert("⚠️ Error al cargar digitadores: " + error.message + "\n\nPosible causa: Faltan permisos (RLS) en la tabla 'digitadores'. Ejecuta el código SQL para permitir SELECT.");
-                return;
-            }
-
-            if (data && data.length > 0) {
+            if (error) return console.error(error);
+            if (data) {
                 digitadoresConConsumo = data.filter(d => d.condicion === 'con consumo').map(d => d.nombre);
                 digitadoresSinConsumo = data.filter(d => d.condicion === 'sin consumo').map(d => d.nombre);
-            } else {
-                alert("La tabla 'digitadores' está vacía. Por favor, agrega los nombres en Supabase.");
             }
-        } catch (err) {
-            alert("Error inesperado al conectar con Supabase: " + err.message);
-        }
+        } catch (err) { console.error(err); }
     }
 
     function switchTab(tabId) {
@@ -284,7 +266,13 @@
         manualDateChange();
     }
 
-    function manualDateChange() { loadData(); iniciarTemporizador(); }
+    function manualDateChange() { 
+        const d = document.getElementById('current-date').value;
+        window.selectedFuaDate_consumo = d;
+        window.selectedFuaDate_sin_consumo = d;
+        loadData(); 
+        iniciarTemporizador(); 
+    }
 
     function iniciarTemporizador() {
         if (pollingTimer) clearInterval(pollingTimer);
@@ -296,19 +284,7 @@
     function initCharts() {
         const ctxConsumo = document.getElementById('chartConsumo').getContext('2d');
         const ctxSinConsumo = document.getElementById('chartSinConsumo').getContext('2d');
-        
-        const configBase = { 
-            type: 'bar', 
-            options: { 
-                responsive: true, 
-                scales: { y: { beginAtZero: true, ticks: { color: '#fff' } }, x: { ticks: { color: '#fff' } } }, 
-                plugins: { 
-                    legend: { display: false },
-                    datalabels: { color: '#fff', anchor: 'end', align: 'top', font: { weight: 'bold', size: 14 } }
-                } 
-            } 
-        };
-        
+        const configBase = { type: 'bar', options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { color: '#fff' } }, x: { ticks: { color: '#fff' } } }, plugins: { legend: { display: false }, datalabels: { color: '#fff', anchor: 'end', align: 'top', font: { weight: 'bold', size: 14 } } } } };
         chartConsumoInstance = new Chart(ctxConsumo, { ...configBase, data: { labels: digitadoresConConsumo, datasets: [{ data: [], backgroundColor: '#3498db', borderRadius: 4 }] } });
         chartSinConsumoInstance = new Chart(ctxSinConsumo, { ...configBase, data: { labels: digitadoresSinConsumo, datasets: [{ data: [], backgroundColor: '#e74c3c', borderRadius: 4 }] } });
     }
@@ -317,22 +293,10 @@
         const selectedDate = document.getElementById('current-date').value;
         if (!selectedDate) return;
 
-        // 1. Cargar FUAs Sueltas Pendientes (Globales)
         await loadFuas();
 
-        // 2. Cargar datos globales de Asignación
-        const { data: asigData } = await supabase
-            .from('asignacion')
-            .select('*')
-            .eq('fecha_creacion', selectedDate)
-            .is('registro_id', null)
-            .is('nrofuasuelta', null) 
-            .limit(1);
-
-        let globalComp = '';
-        let globalCant = 0;
-        let auditDateConsumo = '';
-        let auditDateSinConsumo = '';
+        const { data: asigData } = await supabase.from('asignacion').select('*').eq('fecha_creacion', selectedDate).is('registro_id', null).is('nrofuasuelta', null).limit(1);
+        let globalComp = '', globalCant = 0, auditDateConsumo = '', auditDateSinConsumo = '';
 
         if (asigData && asigData.length > 0) {
             globalComp = asigData[0].ComposicionArmado || '';
@@ -349,29 +313,21 @@
             if (document.activeElement.id !== 'audit-date-sin-consumo') document.getElementById('audit-date-sin-consumo').value = auditDateSinConsumo;
         }
 
-        // 3. Cargar conteo de Registros
         const { data: regData } = await supabase.from('registros').select('Resp_Aud_Digi').eq('fecha_creacion', selectedDate);
-        
         const digitadoresActuales = currentTab === 'consumo' ? digitadoresConConsumo : digitadoresSinConsumo;
         const counts = {}; 
         digitadoresActuales.forEach(d => { counts[d] = 0; });
 
         if (regData) {
             regData.forEach(row => {
-                const digi = row.Resp_Aud_Digi;
-                if (digitadoresActuales.includes(digi)) {
-                    counts[digi]++;
-                }
+                if (digitadoresActuales.includes(row.Resp_Aud_Digi)) counts[row.Resp_Aud_Digi]++;
             });
         }
 
-        // Renderizar Tabla con Checks
         let tableHTML = '';
         digitadoresActuales.forEach(digi => {
             const isChecked = localStorage.getItem(`check_${selectedDate}_${digi}`) === 'true' ? 'checked' : '';
-            const rowClass = isChecked ? 'row-checked' : '';
-            
-            tableHTML += `<tr class="${rowClass}">
+            tableHTML += `<tr class="${isChecked ? 'row-checked' : ''}">
                 <td class="check-cell"><input type="checkbox" class="digitador-check" onchange="toggleRowCheck(this, '${digi}')" ${isChecked}></td>
                 <td><strong>${digi}</strong></td>
                 <td style="text-align: center;"><span class="reg-count">${counts[digi]}</span></td>
@@ -400,21 +356,15 @@
         const fechaInput = document.getElementById(`fua-fecha-${tab}`);
         const condicionInput = document.getElementById(`fua-condicion-${tab}`);
         
-        const nroValue = nroInput.value.trim();
-        const fechaValue = fechaInput.value;
-        const condicionValue = condicionInput.value;
-
-        if (!nroValue || !fechaValue) {
-            return alert("Por favor, ingresa el número de FUA y selecciona su fecha.");
-        }
+        if (!nroInput.value.trim() || !fechaInput.value) return alert("Ingresa el número de FUA y su fecha.");
 
         try {
             const payload = {
                 fecha_creacion: selectedDate, 
-                nrofuasuelta: nroValue,
-                fechafuasuelta: fechaValue,
+                nrofuasuelta: nroInput.value.trim(),
+                fechafuasuelta: fechaInput.value,
                 condicionfuasuelta: 'pendiente',
-                condicion_consumo: condicionValue // Guardamos la nueva condición
+                condicion_consumo: condicionInput.value
             };
 
             const { error } = await supabase.from('asignacion').insert([payload]);
@@ -422,50 +372,123 @@
 
             nroInput.value = '';
             fechaInput.value = '';
-            
             loadFuas(); 
-            
-        } catch (err) {
-            alert("Error al guardar la FUA: " + err.message);
-        }
+        } catch (err) { alert("Error al guardar la FUA: " + err.message); }
     }
 
     async function loadFuas() {
         try {
-            const { data, error } = await supabase
-                .from('asignacion')
-                .select('id, nrofuasuelta, fechafuasuelta, condicionfuasuelta, condicion_consumo')
+            // 1. Borrar FUAs con más de 10 días de antigüedad
+            const tenDaysAgo = new Date();
+            tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
+            const limitDateStr = tenDaysAgo.toISOString().split('T')[0];
+            
+            await supabase.from('asignacion')
+                .delete()
+                .not('nrofuasuelta', 'is', null)
+                .lt('fecha_creacion', limitDateStr);
+
+            // 2. Cargar todas las FUAs pendientes de los últimos 10 días
+            const { data, error } = await supabase.from('asignacion')
+                .select('id, nrofuasuelta, fechafuasuelta, condicionfuasuelta, condicion_consumo, fecha_creacion')
                 .eq('condicionfuasuelta', 'pendiente')
                 .not('nrofuasuelta', 'is', null)
+                .gte('fecha_creacion', limitDateStr)
                 .order('id', { ascending: false });
 
             if (error) throw error;
+            window.allFuas = data || [];
 
-            let listHTML = '';
-            if (data && data.length > 0) {
-                data.forEach(fua => {
-                    const condicionBadge = fua.condicion_consumo ? `<span class="fua-condicion-badge">${fua.condicion_consumo}</span>` : '';
-                    
-                    listHTML += `
-                    <li class="fua-item" id="fua-item-${fua.id}">
-                        <div class="fua-info">
-                            <span>Nro FUA: <strong>${fua.nrofuasuelta}</strong></span>
-                            <span>Fecha: <strong>${fua.fechafuasuelta}</strong></span>
-                            ${condicionBadge}
-                            <span class="fua-status">PENDIENTE</span>
-                        </div>
-                        <button class="btn-resolve" onclick="resolveFua(${fua.id}, this)">Resolver</button>
-                    </li>`;
-                });
-            } else {
-                listHTML = `<li style="color:#888; padding:10px; text-align:center;">No hay FUAs pendientes. ¡Todo al día!</li>`;
-            }
+            renderFuaTabs('consumo');
+            renderFuaTabs('sin-consumo');
+            renderFuaList('consumo');
+            renderFuaList('sin-consumo');
 
-            document.getElementById(`fua-list-${currentTab}`).innerHTML = listHTML;
+        } catch (err) { console.error("Error al cargar FUAs:", err); }
+    }
 
-        } catch (err) {
-            console.error("Error al cargar FUAs:", err);
+    function renderFuaTabs(tab) {
+        const container = document.getElementById(`fua-tabs-${tab}`);
+        const baseDateStr = document.getElementById('current-date').value;
+        const baseDate = new Date(baseDateStr);
+        
+        let tabsHTML = '';
+        
+        for (let i = 0; i < 10; i++) {
+            const d = new Date(baseDate);
+            d.setDate(d.getDate() - i);
+            const dateStr = d.toISOString().split('T')[0];
+            
+            // Contar FUAs para este día y esta pestaña (Consumo / Sin Consumo)
+            const condicionFiltro = tab === 'consumo' ? 'Con Consumo' : 'Sin Consumo';
+            const fuasDelDia = window.allFuas.filter(f => f.fecha_creacion === dateStr && f.condicion_consumo === condicionFiltro);
+            const count = fuasDelDia.length;
+            
+            const statusClass = count > 0 ? 'has-fuas' : 'no-fuas';
+            const activeClass = (tab === 'consumo' ? window.selectedFuaDate_consumo : window.selectedFuaDate_sin_consumo) === dateStr ? 'active' : '';
+            
+            // Formato DD/MM
+            const displayDate = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+            
+            tabsHTML += `
+                <div class="fua-day-tab ${statusClass} ${activeClass}" onclick="selectFuaTab('${tab}', '${dateStr}')">
+                    ${displayDate} <span class="fua-badge">${count}</span>
+                </div>
+            `;
         }
+        container.innerHTML = tabsHTML;
+    }
+
+    function selectFuaTab(tab, dateStr) {
+        if (tab === 'consumo') window.selectedFuaDate_consumo = dateStr;
+        else window.selectedFuaDate_sin_consumo = dateStr;
+        
+        renderFuaTabs(tab);
+        renderFuaList(tab);
+    }
+
+    function renderFuaList(tab) {
+        const listContainer = document.getElementById(`fua-list-${tab}`);
+        const selectedDate = tab === 'consumo' ? window.selectedFuaDate_consumo : window.selectedFuaDate_sin_consumo;
+        const condicionFiltro = tab === 'consumo' ? 'Con Consumo' : 'Sin Consumo';
+        
+        const fuasToShow = window.allFuas.filter(f => f.fecha_creacion === selectedDate && f.condicion_consumo === condicionFiltro);
+        
+        let listHTML = '';
+        if (fuasToShow.length > 0) {
+            fuasToShow.forEach(fua => {
+                listHTML += `
+                <li class="fua-item" id="fua-item-${fua.id}">
+                    <div class="fua-info">
+                        <span>Nro FUA: <strong>${fua.nrofuasuelta}</strong></span>
+                        <span>Fecha: <strong>${fua.fechafuasuelta}</strong></span>
+                        <span class="fua-condicion-badge">${fua.condicion_consumo}</span>
+                        <span class="fua-status">PENDIENTE</span>
+                    </div>
+                    <button class="btn-resolve" onclick="resolveFua(${fua.id}, this)">Resolver</button>
+                </li>`;
+            });
+        } else {
+            listHTML = `<li style="color:#888; padding:10px; text-align:center;">No hay FUAs pendientes para este día.</li>`;
+        }
+        listContainer.innerHTML = listHTML;
+    }
+
+    function copyFuas(tab) {
+        const selectedDate = tab === 'consumo' ? window.selectedFuaDate_consumo : window.selectedFuaDate_sin_consumo;
+        const condicionFiltro = tab === 'consumo' ? 'Con Consumo' : 'Sin Consumo';
+        
+        const fuasToCopy = window.allFuas.filter(f => f.fecha_creacion === selectedDate && f.condicion_consumo === condicionFiltro);
+        
+        if (fuasToCopy.length === 0) return alert("No hay FUAs para copiar en este día.");
+        
+        const textToCopy = fuasToCopy.map(f => f.nrofuasuelta).join('\n');
+        
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            alert(`¡Se copiaron ${fuasToCopy.length} números de FUA al portapapeles!`);
+        }).catch(err => {
+            alert("Error al copiar: " + err);
+        });
     }
 
     async function resolveFua(id, btnElement) {
@@ -474,15 +497,9 @@
         
         setTimeout(async () => {
             try {
-                const { error } = await supabase
-                    .from('asignacion')
-                    .update({ condicionfuasuelta: 'resuelto' })
-                    .eq('id', id);
-
+                const { error } = await supabase.from('asignacion').update({ condicionfuasuelta: 'resuelto' }).eq('id', id);
                 if (error) throw error;
-                
                 loadFuas(); 
-                
             } catch (err) {
                 alert("Error al resolver la FUA: " + err.message);
                 btnElement.classList.remove('resolved');
@@ -524,27 +541,15 @@
         }
 
         try {
-            const { data: existing } = await supabase
-                .from('asignacion')
-                .select('id')
-                .eq('fecha_creacion', selectedDate)
-                .is('registro_id', null)
-                .is('nrofuasuelta', null) 
-                .limit(1);
-
-            if (existing && existing.length > 0) {
-                payload.id = existing[0].id;
-            }
+            const { data: existing } = await supabase.from('asignacion').select('id').eq('fecha_creacion', selectedDate).is('registro_id', null).is('nrofuasuelta', null).limit(1);
+            if (existing && existing.length > 0) payload.id = existing[0].id;
 
             const { error } = await supabase.from('asignacion').upsert([payload]);
             if (error) throw error;
 
             alert(`Datos guardados correctamente para el día ${selectedDate}.`);
             loadData();
-            
-        } catch (err) {
-            alert("Error al guardar: " + err.message);
-        }
+        } catch (err) { alert("Error al guardar: " + err.message); }
     }
 </script>
 </body>
