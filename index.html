@@ -74,19 +74,15 @@
         .fua-day-tab.active { border-color: #f1c40f; transform: scale(1.05); box-shadow: 0 0 10px rgba(241, 196, 15, 0.5); }
         .fua-badge { background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 12px; font-size: 12px; }
 
-        /* Tres Tablas de FUAs con SCROLL */
+        /* Tres Tablas de FUAs */
         .fua-tables-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-        .fua-table-col { background: #222; padding: 15px; border-radius: 6px; border: 1px solid #444; display: flex; flex-direction: column; }
+        .fua-table-col { background: #222; padding: 15px; border-radius: 6px; border: 1px solid #444; }
         .fua-table-col h4 { display: flex; justify-content: space-between; align-items: center; color: #f1c40f; margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 10px; font-size: 16px; }
         
         .btn-copy-col { background: #e67e22; color: #fff; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 5px; }
         .btn-copy-col:hover { background: #d35400; }
 
-        /* SCROLL AÑADIDO AQUÍ */
-        .fua-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; max-height: 350px; overflow-y: auto; padding-right: 5px; }
-        .fua-list::-webkit-scrollbar { width: 6px; }
-        .fua-list::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
-
+        .fua-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
         .fua-item { display: flex; flex-direction: column; background: #1a1a1a; padding: 12px; border-radius: 5px; border-left: 3px solid #e74c3c; }
         .fua-item-header { display: flex; justify-content: space-between; width: 100%; margin-bottom: 5px; align-items: center; }
         .fua-obs { font-size: 13px; color: #aaa; background: #111; padding: 6px; border-radius: 4px; margin-bottom: 8px; word-break: break-word; }
@@ -276,6 +272,8 @@
         <div class="chart-container"><canvas id="chartSinConsumo"></canvas></div>
     </div>
 </div>
+
+
 <script>
     const supabaseUrl = 'https://esiklpxyectbekxvajnw.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzaWtscHh5ZWN0YmVreHZham53Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2OTI1MjEsImV4cCI6MjA3NzI2ODUyMX0.mtQnqUrTmhmN1DQxOAUnGpizhYZobStHDH0cz_XfKGU';
@@ -353,8 +351,7 @@
 
             if (nextWindowStart > currentWindowStart) {
                 const fallingOffDateStr = currentWindowStart.toISOString().split('T')[0];
-                // Solo alertamos si hay FUAs pendientes que NO sean Reasignadas (porque las reasignadas no se borran)
-                const hasPending = window.allFuas.some(f => f.fechafuasuelta === fallingOffDateStr && f.condicionfuasuelta === 'pendiente' && f.condicion_fuaobservada !== 'Reasignada');
+                const hasPending = window.allFuas.some(f => f.fechafuasuelta === fallingOffDateStr && f.condicionfuasuelta === 'pendiente');
                 
                 if (hasPending) {
                     if (!confirm(`¡ALERTA! Hay FUAs pendientes del día ${fallingOffDateStr}.\n\nSi avanzas, este día saldrá de la ventana de 10 días y las FUAs se borrarán permanentemente.\n\n¿Deseas continuar?`)) {
@@ -492,24 +489,21 @@
             
             const limitDateStr = limitDate.toISOString().split('T')[0];
             
-            // Borrar FUAs viejas, EXCEPTO las Reasignadas
             await supabase.from('asignacion')
                 .delete()
                 .not('nrofuasuelta', 'is', null)
-                .lt('fechafuasuelta', limitDateStr)
-                .neq('condicion_fuaobservada', 'Reasignada');
+                .lt('fechafuasuelta', limitDateStr);
 
-            // Traer todas las pendientes (luego filtramos en JS)
             const { data, error } = await supabase.from('asignacion')
                 .select('id, nrofuasuelta, fechafuasuelta, condicionfuasuelta, condicion_fuaobservada, observacion')
                 .eq('condicionfuasuelta', 'pendiente')
                 .not('nrofuasuelta', 'is', null)
+                .gte('fechafuasuelta', limitDateStr)
+                .lte('fechafuasuelta', baseDateStr)
                 .order('id', { ascending: false });
 
             if (error) throw error;
-            
-            // Guardamos en memoria solo las Reasignadas o las que están dentro de la ventana de 10 días
-            window.allFuas = (data || []).filter(f => f.condicion_fuaobservada === 'Reasignada' || f.fechafuasuelta >= limitDateStr);
+            window.allFuas = data || [];
 
             renderFuaTabs('consumo');
             renderFuaTabs('sin-consumo');
@@ -534,8 +528,8 @@
         while (iterDate <= baseDate) {
             const dateStr = iterDate.toISOString().split('T')[0];
             
-            // El contador NO incluye las Reasignadas
-            const fuasDelDia = window.allFuas.filter(f => f.fechafuasuelta === dateStr && f.condicion_fuaobservada !== 'Reasignada');
+            // Contamos todas las FUAs de ese día sin importar la condición
+            const fuasDelDia = window.allFuas.filter(f => f.fechafuasuelta === dateStr);
             const count = fuasDelDia.length;
             
             const statusClass = count > 0 ? 'has-fuas' : 'no-fuas';
@@ -564,57 +558,54 @@
 
     function renderFuaLists(tab) {
         const selectedDate = tab === 'consumo' ? window.selectedFuaDate_consumo : window.selectedFuaDate_sin_consumo;
-        
-        // Filtramos por fecha seleccionada para Y66X y Sin Consumo
-        const fuasY66X = window.allFuas.filter(f => f.fechafuasuelta === selectedDate && f.condicion_fuaobservada === 'Y66X');
-        const fuasSinConsumo = window.allFuas.filter(f => f.fechafuasuelta === selectedDate && f.condicion_fuaobservada === 'Sin Consumo');
-        
-        // Reasignadas son independientes de la fecha seleccionada (mostramos TODAS)
-        const fuasReasignada = window.allFuas.filter(f => f.condicion_fuaobservada === 'Reasignada');
+        const fuasToShow = window.allFuas.filter(f => f.fechafuasuelta === selectedDate);
         
         const cols = {
-            'Y66X': { el: document.getElementById(`fua-list-${tab}-y66x`), data: fuasY66X },
-            'Sin Consumo': { el: document.getElementById(`fua-list-${tab}-sin-consumo`), data: fuasSinConsumo },
-            'Reasignada': { el: document.getElementById(`fua-list-${tab}-reasignada`), data: fuasReasignada }
+            'Y66X': document.getElementById(`fua-list-${tab}-y66x`),
+            'Sin Consumo': document.getElementById(`fua-list-${tab}-sin-consumo`),
+            'Reasignada': document.getElementById(`fua-list-${tab}-reasignada`)
         };
 
+        // Limpiar listas
+        for (let key in cols) cols[key].innerHTML = '';
+
+        if (fuasToShow.length > 0) {
+            fuasToShow.forEach(fua => {
+                const cond = fua.condicion_fuaobservada;
+                const targetCol = cols[cond] || cols['Y66X']; // Fallback por si acaso
+                
+                const obsHtml = fua.observacion ? `<div class="fua-obs">📝 ${fua.observacion}</div>` : '';
+
+                const li = `
+                <li class="fua-item" id="fua-item-${fua.id}">
+                    <div class="fua-item-header">
+                        <strong>${fua.nrofuasuelta}</strong>
+                        <span class="fua-status">PENDIENTE</span>
+                    </div>
+                    ${obsHtml}
+                    <button class="btn-resolve" onclick="resolveFua(${fua.id}, this)">Resolver</button>
+                </li>`;
+                
+                targetCol.innerHTML += li;
+            });
+        }
+
+        // Mensaje vacío si la columna no tiene FUAs
         for (let key in cols) {
-            const col = cols[key];
-            col.el.innerHTML = '';
-            
-            if (col.data.length > 0) {
-                col.data.forEach(fua => {
-                    const obsHtml = fua.observacion ? `<div class="fua-obs">📝 ${fua.observacion}</div>` : '';
-                    // Añadimos la fecha visualmente a las reasignadas para saber de cuándo son
-                    const dateBadge = key === 'Reasignada' ? `<span style="font-size:11px; color:#888; margin-left:5px;">(${fua.fechafuasuelta})</span>` : '';
-                    
-                    col.el.innerHTML += `
-                    <li class="fua-item" id="fua-item-${fua.id}">
-                        <div class="fua-item-header">
-                            <strong>${fua.nrofuasuelta} ${dateBadge}</strong>
-                            <span class="fua-status">PENDIENTE</span>
-                        </div>
-                        ${obsHtml}
-                        <button class="btn-resolve" onclick="resolveFua(${fua.id}, this)">Resolver</button>
-                    </li>`;
-                });
-            } else {
-                col.el.innerHTML = `<li style="color:#888; padding:10px; text-align:center; font-size:13px;">No hay FUAs</li>`;
+            if (cols[key].innerHTML === '') {
+                cols[key].innerHTML = `<li style="color:#888; padding:10px; text-align:center; font-size:13px;">No hay FUAs</li>`;
             }
         }
     }
 
-    function copyFuasCol(tab, condicion) {
-        const selectedDate = tab === 'consumo' ? window.selectedFuaDate_consumo : window.selectedFuaDate_sin_consumo;
-        let fuasToCopy = [];
+    
 
-        if (condicion === 'Reasignada') {
-            fuasToCopy = window.allFuas.filter(f => f.condicion_fuaobservada === 'Reasignada');
-        } else {
-            fuasToCopy = window.allFuas.filter(f => f.fechafuasuelta === selectedDate && f.condicion_fuaobservada === condicion);
-        }
+function copyFuasCol(tab, condicion) {
+        const selectedDate = tab === 'consumo' ? window.selectedFuaDate_consumo : window.selectedFuaDate_sin_consumo;
         
-        if (fuasToCopy.length === 0) return alert(`No hay FUAs en la columna ${condicion} para copiar.`);
+        const fuasToCopy = window.allFuas.filter(f => f.fechafuasuelta === selectedDate && f.condicion_fuaobservada === condicion);
+        
+        if (fuasToCopy.length === 0) return alert(`No hay FUAs en la columna ${condicion} para copiar en este día.`);
         
         const textToCopy = fuasToCopy.map(f => f.nrofuasuelta).join('\n');
         
@@ -678,46 +669,12 @@
             const { data: existing } = await supabase.from('asignacion').select('id').eq('fecha_creacion', selectedDate).is('registro_id', null).is('nrofuasuelta', null).limit(1);
             if (existing && existing.length > 0) payload.id = existing[0].id;
 
-            
-    async function saveGlobalData(tab) {
-        const selectedDate = document.getElementById('current-date').value; 
-        let payload = { fecha_creacion: selectedDate }; 
-
-        if (tab === 'consumo') {
-            const auditDate = document.getElementById('audit-date-consumo').value;
-            const compValue = document.getElementById('global-comp').value;
-            const cantValue = document.getElementById('global-cant').value;
-            
-            if (auditDate) payload.FechaAuditoriaDigitadores = auditDate;
-            payload.ComposicionArmado = compValue;
-            payload.CantidadPreAsignacion = cantValue || 0;
-        } else {
-            const auditDate = document.getElementById('audit-date-sin-consumo').value;
-            if (auditDate) payload.FechaAuditoriaSinConsumo = auditDate;
-        }
-
-        try {
-            const { data: existing } = await supabase
-                .from('asignacion')
-                .select('id')
-                .eq('fecha_creacion', selectedDate)
-                .is('registro_id', null)
-                .is('nrofuasuelta', null)
-                .limit(1);
-                
-            if (existing && existing.length > 0) {
-                payload.id = existing[0].id;
-            }
-
             const { error } = await supabase.from('asignacion').upsert([payload]);
             if (error) throw error;
 
             alert(`Datos guardados correctamente para el día ${selectedDate}.`);
             loadData();
-            
-        } catch (err) { 
-            alert("Error al guardar: " + err.message); 
-        }
+        } catch (err) { alert("Error al guardar: " + err.message); }
     }
 </script>
 </body>
