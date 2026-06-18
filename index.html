@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Estación de Trabajo - Auditoría</title>
     
+    <!-- Bibliotecas -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -12,8 +13,9 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #121212; color: #ffffff; padding: 20px; }
-        .container { max-width: 1100px; margin: 0 auto; background: #1e1e1e; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5 ); }
+        .container { max-width: 1200px; margin: 0 auto; background: #1e1e1e; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5 ); }
         
+        /* Header / Navegación */
         .header-nav { display: flex; justify-content: space-between; align-items: center; background: #2a2a2a; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; }
         .nav-left, .nav-right { display: flex; gap: 10px; align-items: center; }
         .nav-center { text-align: center; flex-grow: 1; }
@@ -23,6 +25,7 @@
         .big-date { font-size: 26px; font-weight: bold; padding: 10px 20px; border-radius: 8px; border: 2px solid #555; background: #111; color: #f1c40f; text-align: center; outline: none; cursor: pointer; }
         .big-date:focus { border-color: #f1c40f; }
 
+        /* Pestañas Principales */
         .tabs { display: flex; border-bottom: 2px solid #333; margin-bottom: 20px; }
         .tab { padding: 12px 20px; cursor: pointer; font-weight: bold; color: #888; border-bottom: 3px solid transparent; transition: 0.3s; font-size: 16px; }
         .tab.active { color: #f1c40f; border-bottom-color: #f1c40f; }
@@ -30,6 +33,7 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         
+        /* Panel Global Unificado */
         .global-panel { display: flex; align-items: center; gap: 15px; background: #252525; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #f39c12; flex-wrap: wrap; }
         .global-panel .input-group { display: flex; flex-direction: column; gap: 5px; flex-grow: 1; }
         .global-panel label { font-size: 14px; color: #ccc; font-weight: bold; }
@@ -39,42 +43,55 @@
         .btn-save-panel { background: #f39c12; color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 15px; height: 42px; margin-top: 22px; }
         .btn-save-panel:hover { background: #d35400; color: white; }
 
+        /* Panel FUAs Observadas */
         .fua-panel { background: #1a1a1a; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #333; border-left: 4px solid #3498db; }
         .fua-panel h3 { color: #3498db; margin-top: 0; margin-bottom: 15px; font-size: 18px; border-bottom: 1px solid #333; padding-bottom: 10px; }
         .fua-add-section { display: flex; gap: 15px; align-items: flex-end; margin-bottom: 20px; background: #222; padding: 15px; border-radius: 6px; flex-wrap: wrap; }
         
-        .fua-add-section input, .fua-add-section select { background-color: #000000 !important; color: #f1c40f !important; font-size: 18px !important; font-weight: bold; border: 1px solid #555; padding: 10px; border-radius: 5px; outline: none; }
-        .fua-add-section input::placeholder { color: #666; font-weight: normal; font-size: 15px; }
+        .fua-add-section input, .fua-add-section select {
+            background-color: #000000 !important;
+            color: #f1c40f !important;
+            font-size: 16px !important;
+            font-weight: bold;
+            border: 1px solid #555;
+            padding: 10px;
+            border-radius: 5px;
+            outline: none;
+        }
+        .fua-add-section input::placeholder { color: #666; font-weight: normal; font-size: 14px; }
         .fua-add-section input:focus, .fua-add-section select:focus { border-color: #3498db; }
-        .btn-add-fua { background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; height: 44px; font-size: 16px; }
+
+        .btn-add-fua { background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; height: 42px; font-size: 15px; }
         .btn-add-fua:hover { background: #2980b9; }
         
-        /* Pestañas de 10 días */
-        .fua-tabs-container { display: flex; overflow-x: auto; gap: 10px; margin-bottom: 15px; padding-bottom: 10px; }
+        /* Pestañas de FUAs (10 días) */
+        .fua-tabs-container { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 10px; margin-bottom: 15px; border-bottom: 2px solid #333; }
         .fua-tabs-container::-webkit-scrollbar { height: 8px; }
         .fua-tabs-container::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
-        .fua-day-tab { padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 8px; transition: 0.3s; white-space: nowrap; }
-        .fua-day-tab.has-fuas { background-color: #e74c3c; color: white; }
-        .fua-day-tab.no-fuas { background-color: #2ecc71; color: #000; }
-        .fua-day-tab.active { outline: 3px solid #f1c40f; outline-offset: 2px; transform: scale(1.05); }
-        .fua-badge { background: rgba(0,0,0,0.4); padding: 2px 8px; border-radius: 12px; font-size: 12px; color: white; }
-        
-        /* Botón Copiar */
-        .btn-copy-fuas { background: #e67e22; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; margin-bottom: 15px; display: flex; align-items: center; gap: 5px; transition: 0.3s; }
-        .btn-copy-fuas:hover { background: #d35400; }
+        .fua-day-tab { padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 8px; transition: 0.2s; border: 2px solid transparent; white-space: nowrap; }
+        .fua-day-tab.has-fuas { background: #e74c3c; color: white; }
+        .fua-day-tab.no-fuas { background: #2ecc71; color: #000; }
+        .fua-day-tab.active { border-color: #f1c40f; transform: scale(1.05); box-shadow: 0 0 10px rgba(241, 196, 15, 0.5); }
+        .fua-badge { background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 12px; font-size: 12px; }
 
-        .fua-list { list-style: none; padding: 0; margin: 0; }
-        .fua-item { display: flex; justify-content: space-between; align-items: center; background: #252525; padding: 12px 15px; border-radius: 5px; margin-bottom: 8px; border-left: 3px solid #e74c3c; transition: all 0.3s ease; }
-        .fua-info { display: flex; gap: 20px; font-size: 15px; align-items: center; flex-wrap: wrap; }
-        .fua-info span { color: #aaa; }
-        .fua-info strong { color: #fff; font-size: 16px; }
-        .fua-condicion-badge { color: #f39c12; font-weight: bold; font-size: 14px; background: rgba(243, 156, 18, 0.1); padding: 4px 8px; border-radius: 4px; }
-        .fua-status { color: #e74c3c; font-weight: bold; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; background: rgba(231, 76, 60, 0.1); padding: 4px 8px; border-radius: 4px; }
+        /* Tres Tablas de FUAs */
+        .fua-tables-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .fua-table-col { background: #222; padding: 15px; border-radius: 6px; border: 1px solid #444; }
+        .fua-table-col h4 { display: flex; justify-content: space-between; align-items: center; color: #f1c40f; margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 10px; font-size: 16px; }
         
-        .btn-resolve { background: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.3s; }
+        .btn-copy-col { background: #e67e22; color: #fff; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 5px; }
+        .btn-copy-col:hover { background: #d35400; }
+
+        .fua-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+        .fua-item { display: flex; flex-direction: column; background: #1a1a1a; padding: 12px; border-radius: 5px; border-left: 3px solid #e74c3c; }
+        .fua-item-header { display: flex; justify-content: space-between; width: 100%; margin-bottom: 5px; align-items: center; }
+        .fua-obs { font-size: 13px; color: #aaa; background: #111; padding: 6px; border-radius: 4px; margin-bottom: 8px; word-break: break-word; }
+        
+        .btn-resolve { background: #3498db; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; transition: 0.3s; align-self: flex-end; }
         .btn-resolve:hover { background: #2980b9; }
         .btn-resolve.resolved { background: #2ecc71 !important; color: #000 !important; }
 
+        /* Gráfico y Tabla */
         .chart-container { width: 100%; max-width: 900px; margin: 30px auto 0 auto; background: #252525; padding: 20px; border-radius: 8px; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background: #252525; border-radius: 8px; overflow: hidden; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #444; vertical-align: middle; }
@@ -103,32 +120,56 @@
 
     <!-- Pestaña: Con Consumo -->
     <div id="consumo" class="tab-content active">
+        
+        <!-- SECCIÓN FUAS OBSERVADAS -->
         <div class="fua-panel">
-            <h3>FUAs Sueltas por Empaquetar (Ventana de 10 días)</h3>
+            <h3>FUAs Observadas (Ventana de 10 días)</h3>
+            
             <div class="fua-add-section">
-                <div class="input-group">
+                <div class="input-group" style="max-width: 150px;">
                     <label>Nro FUA</label>
                     <input type="number" id="fua-nro-consumo" placeholder="Ej: 123456" min="0">
                 </div>
-                <div class="input-group">
+                <div class="input-group" style="max-width: 160px;">
                     <label>Fecha FUA</label>
                     <input type="date" id="fua-fecha-consumo">
                 </div>
-                <div class="input-group">
+                <div class="input-group" style="max-width: 160px;">
                     <label>Condición</label>
                     <select id="fua-condicion-consumo">
-                        <option value="Con Consumo">Con Consumo</option>
+                        <option value="Y66X">Y66X</option>
                         <option value="Sin Consumo">Sin Consumo</option>
+                        <option value="Reasignada">Reasignada</option>
                     </select>
+                </div>
+                <div class="input-group" style="flex-grow: 1;">
+                    <label>Observación</label>
+                    <input type="text" id="fua-obs-consumo" placeholder="Detalle de la observación...">
                 </div>
                 <button class="btn-add-fua" onclick="addFua('consumo')">Guardar</button>
             </div>
             
-            <div class="fua-tabs-container" id="fua-tabs-consumo"></div>
-            <button class="btn-copy-fuas" onclick="copyFuas('consumo')">📋 Copiar FUAs de esta pestaña</button>
-            <ul class="fua-list" id="fua-list-consumo"></ul>
+            <div class="fua-tabs-container" id="fua-tabs-consumo">
+                <!-- Pestañas de días dinámicas -->
+            </div>
+
+            <div class="fua-tables-grid">
+                <div class="fua-table-col">
+                    <h4>Y66X <button class="btn-copy-col" onclick="copyFuasCol('consumo', 'Y66X')">📋 Copiar</button></h4>
+                    <ul class="fua-list" id="fua-list-consumo-y66x"></ul>
+                </div>
+                <div class="fua-table-col">
+                    <h4>Sin Consumo <button class="btn-copy-col" onclick="copyFuasCol('consumo', 'Sin Consumo')">📋 Copiar</button></h4>
+                    <ul class="fua-list" id="fua-list-consumo-sin-consumo"></ul>
+                </div>
+                <div class="fua-table-col">
+                    <h4>Reasignada <button class="btn-copy-col" onclick="copyFuasCol('consumo', 'Reasignada')">📋 Copiar</button></h4>
+                    <ul class="fua-list" id="fua-list-consumo-reasignada"></ul>
+                </div>
+            </div>
         </div>
 
+        <!-- PANEL ÚNICO -->
         <div class="global-panel">
             <div class="input-group" style="max-width: 200px;">
                 <label>Fecha Auditoría Digitadores</label>
@@ -160,32 +201,56 @@
 
     <!-- Pestaña: Sin Consumo -->
     <div id="sin-consumo" class="tab-content">
+        
+        <!-- SECCIÓN FUAS OBSERVADAS -->
         <div class="fua-panel">
-            <h3>FUAs Sueltas por Empaquetar (Ventana de 10 días)</h3>
+            <h3>FUAs Observadas (Ventana de 10 días)</h3>
+            
             <div class="fua-add-section">
-                <div class="input-group">
+                <div class="input-group" style="max-width: 150px;">
                     <label>Nro FUA</label>
                     <input type="number" id="fua-nro-sin-consumo" placeholder="Ej: 123456" min="0">
                 </div>
-                <div class="input-group">
+                <div class="input-group" style="max-width: 160px;">
                     <label>Fecha FUA</label>
                     <input type="date" id="fua-fecha-sin-consumo">
                 </div>
-                <div class="input-group">
+                <div class="input-group" style="max-width: 160px;">
                     <label>Condición</label>
                     <select id="fua-condicion-sin-consumo">
+                        <option value="Y66X">Y66X</option>
                         <option value="Sin Consumo">Sin Consumo</option>
-                        <option value="Con Consumo">Con Consumo</option>
+                        <option value="Reasignada">Reasignada</option>
                     </select>
+                </div>
+                <div class="input-group" style="flex-grow: 1;">
+                    <label>Observación</label>
+                    <input type="text" id="fua-obs-sin-consumo" placeholder="Detalle de la observación...">
                 </div>
                 <button class="btn-add-fua" onclick="addFua('sin-consumo')">Guardar</button>
             </div>
             
-            <div class="fua-tabs-container" id="fua-tabs-sin-consumo"></div>
-            <button class="btn-copy-fuas" onclick="copyFuas('sin-consumo')">📋 Copiar FUAs de esta pestaña</button>
-            <ul class="fua-list" id="fua-list-sin-consumo"></ul>
+            <div class="fua-tabs-container" id="fua-tabs-sin-consumo">
+                <!-- Pestañas de días dinámicas -->
+            </div>
+
+            <div class="fua-tables-grid">
+                <div class="fua-table-col">
+                    <h4>Y66X <button class="btn-copy-col" onclick="copyFuasCol('sin-consumo', 'Y66X')">📋 Copiar</button></h4>
+                    <ul class="fua-list" id="fua-list-sin-consumo-y66x"></ul>
+                </div>
+                <div class="fua-table-col">
+                    <h4>Sin Consumo <button class="btn-copy-col" onclick="copyFuasCol('sin-consumo', 'Sin Consumo')">📋 Copiar</button></h4>
+                    <ul class="fua-list" id="fua-list-sin-consumo-sin-consumo"></ul>
+                </div>
+                <div class="fua-table-col">
+                    <h4>Reasignada <button class="btn-copy-col" onclick="copyFuasCol('sin-consumo', 'Reasignada')">📋 Copiar</button></h4>
+                    <ul class="fua-list" id="fua-list-sin-consumo-reasignada"></ul>
+                </div>
+            </div>
         </div>
 
+        <!-- PANEL ÚNICO -->
         <div class="global-panel">
             <div class="input-group" style="max-width: 250px;">
                 <label>Fecha Auditoría Sin Consumo</label>
@@ -231,7 +296,12 @@
 
     document.addEventListener('DOMContentLoaded', async () => {
         const today = new Date().toISOString().split('T')[0];
+        
+        // Setear fechas por defecto
         document.getElementById('current-date').value = today;
+        document.getElementById('fua-fecha-consumo').value = today;
+        document.getElementById('fua-fecha-sin-consumo').value = today;
+        
         window.selectedFuaDate_consumo = today;
         window.selectedFuaDate_sin_consumo = today;
         
@@ -265,7 +335,6 @@
         const dateInput = document.getElementById('current-date');
         const currentDate = new Date(dateInput.value + 'T00:00:00');
 
-        // Lógica de Alerta al avanzar el día (si un día con FUAs va a desaparecer)
         if (days > 0) {
             const nextDate = new Date(currentDate);
             nextDate.setDate(nextDate.getDate() + days);
@@ -278,14 +347,13 @@
             nextWindowStart.setDate(nextWindowStart.getDate() - 9);
             if (nextWindowStart < MIN_START_DATE) nextWindowStart = new Date(MIN_START_DATE);
 
-            // Si la ventana de inicio avanza, significa que un día se va a borrar
             if (nextWindowStart > currentWindowStart) {
                 const fallingOffDateStr = currentWindowStart.toISOString().split('T')[0];
                 const hasPending = window.allFuas.some(f => f.fechafuasuelta === fallingOffDateStr && f.condicionfuasuelta === 'pendiente');
                 
                 if (hasPending) {
                     if (!confirm(`¡ALERTA! Hay FUAs pendientes del día ${fallingOffDateStr}.\n\nSi avanzas, este día saldrá de la ventana de 10 días y las FUAs se borrarán permanentemente.\n\n¿Deseas continuar?`)) {
-                        return; // Cancela el avance
+                        return; 
                     }
                 }
             }
@@ -378,13 +446,14 @@
         }
     }
 
-    // --- LÓGICA DE FUAS SUELTAS ---
+    // --- LÓGICA DE FUAS OBSERVADAS ---
 
     async function addFua(tab) {
         const selectedDate = document.getElementById('current-date').value;
         const nroInput = document.getElementById(`fua-nro-${tab}`);
         const fechaInput = document.getElementById(`fua-fecha-${tab}`);
         const condicionInput = document.getElementById(`fua-condicion-${tab}`);
+        const obsInput = document.getElementById(`fua-obs-${tab}`);
         
         if (!nroInput.value.trim() || !fechaInput.value) return alert("Ingresa el número de FUA y su fecha.");
 
@@ -394,14 +463,15 @@
                 nrofuasuelta: nroInput.value.trim(),
                 fechafuasuelta: fechaInput.value,
                 condicionfuasuelta: 'pendiente',
-                condicion_consumo: condicionInput.value
+                condicion_fuaobservada: condicionInput.value,
+                observacion: obsInput.value.trim()
             };
 
             const { error } = await supabase.from('asignacion').insert([payload]);
             if (error) throw error;
 
             nroInput.value = '';
-            fechaInput.value = '';
+            obsInput.value = '';
             loadFuas(); 
         } catch (err) { alert("Error al guardar la FUA: " + err.message); }
     }
@@ -413,21 +483,17 @@
             
             let limitDate = new Date(baseDate);
             limitDate.setDate(limitDate.getDate() - 9);
-            
-            // Nunca buscar ni borrar antes del 15 de Junio de 2026
             if (limitDate < MIN_START_DATE) limitDate = new Date(MIN_START_DATE);
             
             const limitDateStr = limitDate.toISOString().split('T')[0];
             
-            // Borrar FUAs que quedaron fuera de la ventana (más antiguas que limitDateStr)
             await supabase.from('asignacion')
                 .delete()
                 .not('nrofuasuelta', 'is', null)
                 .lt('fechafuasuelta', limitDateStr);
 
-            // Cargar FUAs pendientes dentro de la ventana permitida
             const { data, error } = await supabase.from('asignacion')
-                .select('id, nrofuasuelta, fechafuasuelta, condicionfuasuelta, condicion_consumo')
+                .select('id, nrofuasuelta, fechafuasuelta, condicionfuasuelta, condicion_fuaobservada, observacion')
                 .eq('condicionfuasuelta', 'pendiente')
                 .not('nrofuasuelta', 'is', null)
                 .gte('fechafuasuelta', limitDateStr)
@@ -439,8 +505,8 @@
 
             renderFuaTabs('consumo');
             renderFuaTabs('sin-consumo');
-            renderFuaList('consumo');
-            renderFuaList('sin-consumo');
+            renderFuaLists('consumo');
+            renderFuaLists('sin-consumo');
 
         } catch (err) { console.error("Error al cargar FUAs:", err); }
     }
@@ -455,14 +521,13 @@
         if (limitDate < MIN_START_DATE) limitDate = new Date(MIN_START_DATE);
 
         let tabsHTML = '';
-        
-        // Generar pestañas de izquierda (más antiguo) a derecha (actual)
         let iterDate = new Date(limitDate);
+        
         while (iterDate <= baseDate) {
             const dateStr = iterDate.toISOString().split('T')[0];
             
-            const condicionFiltro = tab === 'consumo' ? 'Con Consumo' : 'Sin Consumo';
-            const fuasDelDia = window.allFuas.filter(f => f.fechafuasuelta === dateStr && f.condicion_consumo === condicionFiltro);
+            // Contamos todas las FUAs de ese día sin importar la condición
+            const fuasDelDia = window.allFuas.filter(f => f.fechafuasuelta === dateStr);
             const count = fuasDelDia.length;
             
             const statusClass = count > 0 ? 'has-fuas' : 'no-fuas';
@@ -486,48 +551,62 @@
         else window.selectedFuaDate_sin_consumo = dateStr;
         
         renderFuaTabs(tab);
-        renderFuaList(tab);
+        renderFuaLists(tab);
     }
 
-    function renderFuaList(tab) {
-        const listContainer = document.getElementById(`fua-list-${tab}`);
+    function renderFuaLists(tab) {
         const selectedDate = tab === 'consumo' ? window.selectedFuaDate_consumo : window.selectedFuaDate_sin_consumo;
-        const condicionFiltro = tab === 'consumo' ? 'Con Consumo' : 'Sin Consumo';
+        const fuasToShow = window.allFuas.filter(f => f.fechafuasuelta === selectedDate);
         
-        const fuasToShow = window.allFuas.filter(f => f.fechafuasuelta === selectedDate && f.condicion_consumo === condicionFiltro);
-        
-        let listHTML = '';
+        const cols = {
+            'Y66X': document.getElementById(`fua-list-${tab}-y66x`),
+            'Sin Consumo': document.getElementById(`fua-list-${tab}-sin-consumo`),
+            'Reasignada': document.getElementById(`fua-list-${tab}-reasignada`)
+        };
+
+        // Limpiar listas
+        for (let key in cols) cols[key].innerHTML = '';
+
         if (fuasToShow.length > 0) {
             fuasToShow.forEach(fua => {
-                listHTML += `
+                const cond = fua.condicion_fuaobservada;
+                const targetCol = cols[cond] || cols['Y66X']; // Fallback por si acaso
+                
+                const obsHtml = fua.observacion ? `<div class="fua-obs">📝 ${fua.observacion}</div>` : '';
+
+                const li = `
                 <li class="fua-item" id="fua-item-${fua.id}">
-                    <div class="fua-info">
-                        <span>Nro FUA: <strong>${fua.nrofuasuelta}</strong></span>
-                        <span>Fecha: <strong>${fua.fechafuasuelta}</strong></span>
-                        <span class="fua-condicion-badge">${fua.condicion_consumo}</span>
+                    <div class="fua-item-header">
+                        <strong>${fua.nrofuasuelta}</strong>
                         <span class="fua-status">PENDIENTE</span>
                     </div>
+                    ${obsHtml}
                     <button class="btn-resolve" onclick="resolveFua(${fua.id}, this)">Resolver</button>
                 </li>`;
+                
+                targetCol.innerHTML += li;
             });
-        } else {
-            listHTML = `<li style="color:#888; padding:10px; text-align:center;">No hay FUAs pendientes para este día.</li>`;
         }
-        listContainer.innerHTML = listHTML;
+
+        // Mensaje vacío si la columna no tiene FUAs
+        for (let key in cols) {
+            if (cols[key].innerHTML === '') {
+                cols[key].innerHTML = `<li style="color:#888; padding:10px; text-align:center; font-size:13px;">No hay FUAs</li>`;
+            }
+        }
     }
 
-    function copyFuas(tab) {
+      function copyFuasCol(tab, condicion) {
         const selectedDate = tab === 'consumo' ? window.selectedFuaDate_consumo : window.selectedFuaDate_sin_consumo;
-        const condicionFiltro = tab === 'consumo' ? 'Con Consumo' : 'Sin Consumo';
         
-        const fuasToCopy = window.allFuas.filter(f => f.fechafuasuelta === selectedDate && f.condicion_consumo === condicionFiltro);
+        const fuasToCopy = window.allFuas.filter(f => f.fechafuasuelta === selectedDate && f.condicion_fuaobservada === condicion);
         
-        if (fuasToCopy.length === 0) return alert("No hay FUAs para copiar en este día.");
+        if (fuasToCopy.length === 0) return alert(`No hay FUAs en la columna ${condicion} para copiar en este día.`);
         
         const textToCopy = fuasToCopy.map(f => f.nrofuasuelta).join('\n');
         
         navigator.clipboard.writeText(textToCopy).then(() => {
-            alert(`¡Se copiaron ${fuasToCopy.length} números de FUA al portapapeles!`);
+            alert(`¡Se copiaron ${fuasToCopy.length} números de FUA de ${condicion} al portapapeles!`);
         }).catch(err => {
             alert("Error al copiar: " + err);
         });
@@ -550,7 +629,7 @@
         }, 500);
     }
 
-    // --- FIN LÓGICA FUAS ---
+    // --- FIN LÓGICA FUAS OBSERVADAS ---
 
     function toggleRowCheck(checkbox, digi) {
         const tr = checkbox.closest('tr');
@@ -594,6 +673,5 @@
         } catch (err) { alert("Error al guardar: " + err.message); }
     }
 </script>
-
 </body>
 </html>
