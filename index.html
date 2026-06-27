@@ -985,6 +985,10 @@
         reader.readAsArrayBuffer(file);
     }
 
+
+
+    
+
     function descargarExcelCargo() {
         if (datosProcesadosCargo.length === 0) return showAlert('No hay datos procesados.', 'error');
 
@@ -1009,8 +1013,8 @@
         ]);
         wsData.push([]);
 
-        // Cabeceras de tabla
-        let headers = ["Nro", "FUA", "Fecha", "Lote"];
+        // Cabeceras de tabla (NUEVO ORDEN SOLICITADO)
+        let headers = ["Nro", "FUA", "Paciente", "Fecha de Atención"];
         if (isPQR) headers.push(extraColName);
         
         const headerRow = headers.map(h => ({ v: h, s: { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "4F81BD" } }, alignment: { horizontal: "center" } } }));
@@ -1021,18 +1025,25 @@
         const endPrio = prioFin ? new Date(prioFin + 'T23:59:59') : null;
 
         datosProcesadosCargo.forEach((row, index) => {
-            let fua = '', fechaStr = '', lote = '';
+            let fua = '', paciente = '', fecAte = '', fechaRegist = '';
             
             // Buscar dinámicamente los valores en la fila
             for (let key in row) {
-                if (key === 'FUA' || key.includes('NROFUA') || key.includes('ITEMSMEDIN')) fua = row[key];
-                if (key.includes('FECHA')) fechaStr = row[key];
-                if (key.includes('LOTE')) lote = row[key];
+                const k = key.toUpperCase();
+                if (k === 'FUA' || k.includes('NROFUA') || k.includes('ITEMSMEDIN')) fua = row[key];
+                else if (k.includes('PACIENTE') || k.includes('ASEGURADO') || k.includes('AFILIADO')) paciente = row[key];
+                else if (k.includes('FEC') && k.includes('ATE')) fecAte = row[key];
+                
+                // Guardamos la fecha de registro para la validación de prioridad
+                if (k.includes('FECHAREGIST') || k === 'FECHA') fechaRegist = row[key];
             }
 
+            // Si no hay una columna específica de "Fecha de Atención", usamos la fecha general que encuentre
+            if (!fecAte && fechaRegist) fecAte = fechaRegist;
+
             let isPriority = false;
-            if (startPrio && endPrio && fechaStr) {
-                const rowDate = new Date(fechaStr);
+            if (startPrio && endPrio && fechaRegist) {
+                const rowDate = new Date(fechaRegist);
                 if (rowDate >= startPrio && rowDate <= endPrio) isPriority = true;
             }
 
@@ -1041,8 +1052,8 @@
             let rowData = [
                 { v: index + 1, s: style },
                 { v: fua, s: style },
-                { v: fechaStr, s: style },
-                { v: lote, s: style }
+                { v: paciente, s: style },
+                { v: fecAte, s: style }
             ];
 
             if (isPQR) rowData.push({ v: "", s: style });
@@ -1052,8 +1063,8 @@
 
         const ws = XLSX.utils.aoa_to_sheet(wsData);
         
-        // Ajustar anchos de columna
-        ws['!cols'] = [{ wch: 5 }, { wch: 15 }, { wch: 12 }, { wch: 10 }];
+        // Ajustar anchos de columna (Paciente más ancho para que quepa el nombre)
+        ws['!cols'] = [{ wch: 5 }, { wch: 15 }, { wch: 35 }, { wch: 18 }];
         if (isPQR) ws['!cols'].push({ wch: 20 });
 
         // Merge título
@@ -1063,6 +1074,13 @@
         XLSX.utils.book_append_sheet(wb, ws, "Cargo");
         XLSX.writeFile(wb, `Cargo_${paquete}.xlsx`);
     }
+
+
+
+
+
+
+    
 
     function descargarPdfCinto() {
         const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
