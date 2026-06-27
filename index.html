@@ -1225,7 +1225,6 @@
 
     
 
-
     function descargarPdfCinto() {
         const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
         const responsable = document.getElementById('cargo-responsable').value;
@@ -1254,31 +1253,32 @@
 
         doc.setFont("helvetica", "bold");
 
-        // --- COORDENADAS PARA LA MITAD IZQUIERDA DE LA HOJA A4 ---
-        // Girado 180 grados (angle: -90). El texto se lee de Arriba hacia Abajo.
+        // --- COORDENADAS EXACTAS (Sin centrado automático para evitar que se muevan) ---
+        // X = Posición de izquierda a derecha.
+        // Y = Posición de arriba hacia abajo (donde EMPIEZA a escribirse la palabra).
 
         // 1. PRIMERA LÍNEA VERTICAL (Extremo Izquierdo - X: 25)
         doc.setFontSize(14);
-        doc.text("FECHA AUDITORIA", 25, 60, { angle: -90, align: "center" });
-        doc.text(fechaFormateada, 25, 148, { angle: -90, align: "center" });
+        doc.text("FECHA AUDITORIA", 25, 40, { angle: -90 });
+        doc.text(fechaFormateada, 25, 100, { angle: -90 });
         
         doc.setFontSize(18);
-        doc.text(`CANT: ${cantidad}`, 25, 250, { angle: -90, align: "center" });
-        
-        // (Línea separadora eliminada)
+        doc.text(`CANT: ${cantidad}`, 25, 240, { angle: -90 });
 
-        // 2. SEGUNDA LÍNEA VERTICAL (Centro - X: 65) -> Movido más a la derecha para que no pise
+        // 2. SEGUNDA LÍNEA VERTICAL (Paquete - X: 65)
+        // Movido a la derecha (X=65) y empezando más arriba (Y=70)
         doc.setFontSize(60);
-        doc.text(paquete, 65, 148, { angle: -90, align: "center" });
+        doc.text(paquete, 65, 70, { angle: -90 });
 
-        // 3. TERCERA LÍNEA VERTICAL (Derecha - X: 100) -> Movido más a la derecha
+        // 3. TERCERA LÍNEA VERTICAL (Auditor - X: 95)
+        // Movido más a la izquierda (antes estaba en 100, ahora en 95)
         doc.setFontSize(14);
-        doc.text("Auditor / Digitador", 100, 250, { angle: -90, align: "center" });
-        
         if (responsable) {
-            doc.text(responsable, 100, 148, { angle: -90, align: "center" });
+            doc.text(responsable, 95, 100, { angle: -90 });
+        } else {
+            doc.text("_________________________", 95, 100, { angle: -90 });
         }
-        // (Línea de guiones eliminada)
+        doc.text("Auditor / Digitador", 95, 220, { angle: -90 });
 
         doc.save(`Cinto_${paquete}.pdf`);
     }
