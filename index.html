@@ -7,8 +7,6 @@
     
     <!-- Bibliotecas -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -48,16 +46,7 @@
         .fua-panel h3 { color: #3498db; margin-top: 0; margin-bottom: 15px; font-size: 18px; border-bottom: 1px solid #333; padding-bottom: 10px; }
         .fua-add-section { display: flex; gap: 15px; align-items: flex-end; margin-bottom: 20px; background: #222; padding: 15px; border-radius: 6px; flex-wrap: wrap; }
         
-        .fua-add-section input, .fua-add-section select {
-            background-color: #000000 !important;
-            color: #f1c40f !important;
-            font-size: 16px !important;
-            font-weight: bold;
-            border: 1px solid #555;
-            padding: 10px;
-            border-radius: 5px;
-            outline: none;
-        }
+        .fua-add-section input, .fua-add-section select { background-color: #000000 !important; color: #f1c40f !important; font-size: 16px !important; font-weight: bold; border: 1px solid #555; padding: 10px; border-radius: 5px; outline: none; }
         .fua-add-section input::placeholder { color: #666; font-weight: normal; font-size: 14px; }
         .fua-add-section input:focus, .fua-add-section select:focus { border-color: #3498db; }
 
@@ -93,9 +82,12 @@
         .btn-resolve { background: #3498db; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; transition: 0.3s; align-self: flex-end; }
         .btn-resolve:hover { background: #2980b9; }
         .btn-resolve.resolved { background: #2ecc71 !important; color: #000 !important; }
+        
+        /* Botón Entregado para Asignaciones */
+        .btn-entregado { background: #2ecc71; color: #000; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; transition: 0.3s; }
+        .btn-entregado:hover { background: #27ae60; color: white; }
 
-        /* Gráfico y Tabla */
-        .chart-container { width: 100%; max-width: 900px; margin: 30px auto 0 auto; background: #252525; padding: 20px; border-radius: 8px; }
+        /* Tabla General */
         table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background: #252525; border-radius: 8px; overflow: hidden; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #444; vertical-align: middle; }
         th { background: #333; color: #f1c40f; }
@@ -118,6 +110,7 @@
     <div class="tabs">
         <div class="tab active" onclick="switchTab('consumo')">Digitadores con consumo</div>
         <div class="tab" onclick="switchTab('asignacion')">Asignación</div>
+        <div class="tab" onclick="switchTab('filtro')">Filtro de FUAs</div>
     </div>
 
     <!-- Pestaña: Con Consumo -->
@@ -192,9 +185,7 @@
             </thead>
             <tbody id="table-consumo"></tbody>
         </table>
-        <div class="chart-container"><canvas id="chartConsumo"></canvas></div>
     </div>
-
     <!-- Pestaña: Asignación -->
     <div id="asignacion" class="tab-content">
         <div class="global-panel">
@@ -216,13 +207,14 @@
             <button class="btn-save-panel" onclick="saveAsignacion()">Guardar Asignación</button>
         </div>
         
-        <h3 style="color: #3498db; margin-bottom: 15px;">Asignaciones del Día Seleccionado</h3>
+        <h3 style="color: #3498db; margin-bottom: 15px;">Asignaciones Pendientes (Permanentes)</h3>
         <table>
             <thead>
                 <tr>
                     <th>Digitador Asignado</th>
                     <th style="text-align: center;">Cantidad</th>
                     <th style="text-align: center;">Fecha de Asignación</th>
+                    <th style="text-align: center;">Acción</th>
                 </tr>
             </thead>
             <tbody id="table-asignaciones">
@@ -230,16 +222,23 @@
             </tbody>
         </table>
     </div>
-</div>
+
+    <!-- Pestaña: Filtro de FUAs -->
+    <div id="filtro" class="tab-content">
+        <div class="fua-panel">
+            <h3>Buscador de FUAs</h3>
+            <p style="color: #888; margin-top: 10px;">La lógica de búsqueda se implementará en el siguiente paso.</p>
+        </div>
+    </div>
+
+</div> <!-- Cierre del container -->
+
 <script>
     const supabaseUrl = 'https://esiklpxyectbekxvajnw.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzaWtscHh5ZWN0YmVreHZham53Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2OTI1MjEsImV4cCI6MjA3NzI2ODUyMX0.mtQnqUrTmhmN1DQxOAUnGpizhYZobStHDH0cz_XfKGU';
     const supabase = window.supabase.createClient(supabaseUrl, supabaseKey );
 
-    Chart.register(ChartDataLabels);
-
     let currentTab = 'consumo';
-    let chartConsumoInstance = null;
     let digitadoresConConsumo = [];
     let todosLosDigitadores = [];
     let pollingTimer = null;
@@ -258,7 +257,6 @@
         window.selectedFuaDate_consumo = today;
         
         await cargarDigitadores();
-        initCharts();
         await loadData();
         iniciarTemporizador();
     });
@@ -336,13 +334,6 @@
             if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'SELECT') loadData();
         }, 10000);
     }
-
-    function initCharts() {
-        const ctxConsumo = document.getElementById('chartConsumo').getContext('2d');
-        const configBase = { type: 'bar', options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { color: '#fff' } }, x: { ticks: { color: '#fff' } } }, plugins: { legend: { display: false }, datalabels: { color: '#fff', anchor: 'end', align: 'top', font: { weight: 'bold', size: 14 } } } } };
-        chartConsumoInstance = new Chart(ctxConsumo, { ...configBase, data: { labels: digitadoresConConsumo, datasets: [{ data: [], backgroundColor: '#3498db', borderRadius: 4 }] } });
-    }
-
     async function loadData() {
         const selectedDate = document.getElementById('current-date').value;
         if (!selectedDate) return;
@@ -384,18 +375,14 @@
             });
 
             if(tableHTML === '') tableHTML = `<tr><td colspan="3" style="text-align:center;">No hay digitadores configurados</td></tr>`;
-
-            const chartData = digitadoresConConsumo.map(d => counts[d]);
-            chartConsumoInstance.data.datasets[0].data = chartData;
-            chartConsumoInstance.update();
             document.getElementById('table-consumo').innerHTML = tableHTML;
 
         } else if (currentTab === 'asignacion') {
-            // Cargar la tabla de asignaciones para el día seleccionado
+            // Cargar TODAS las asignaciones pendientes (Permanentes, no dependen del día seleccionado)
             const { data, error } = await supabase
                 .from('asignacion')
-                .select('digitador_asignado, cantidad_asignada, fecha_asignacion')
-                .eq('fecha_creacion', selectedDate)
+                .select('id, digitador_asignado, cantidad_asignada, fecha_asignacion')
+                .eq('estado_asignacion', 'pendiente')
                 .not('digitador_asignado', 'is', null)
                 .order('id', { ascending: false });
 
@@ -406,14 +393,18 @@
                         <td><strong>${row.digitador_asignado}</strong></td>
                         <td style="text-align: center; color: #f1c40f; font-weight: bold;">${row.cantidad_asignada}</td>
                         <td style="text-align: center;">${row.fecha_asignacion}</td>
+                        <td style="text-align: center;">
+                            <button class="btn-entregado" onclick="marcarEntregado(${row.id}, this)">Entregado ✓</button>
+                        </td>
                     </tr>`;
                 });
             } else {
-                tableHTML = `<tr><td colspan="3" style="text-align:center; color:#888;">No hay asignaciones registradas para este día</td></tr>`;
+                tableHTML = `<tr><td colspan="4" style="text-align:center; color:#888;">No hay asignaciones pendientes</td></tr>`;
             }
             document.getElementById('table-asignaciones').innerHTML = tableHTML;
         }
     }
+
     // --- LÓGICA DE FUAS OBSERVADAS ---
 
     async function addFua(tab) {
@@ -655,7 +646,8 @@
                 fecha_creacion: selectedDate,
                 digitador_asignado: digitador,
                 cantidad_asignada: cantidad,
-                fecha_asignacion: fechaAsig
+                fecha_asignacion: fechaAsig,
+                estado_asignacion: 'pendiente' // Se guarda como pendiente por defecto
             };
 
             const { error } = await supabase.from('asignacion').insert([payload]);
@@ -670,6 +662,21 @@
             loadData(); // Recargar la tabla de asignaciones
         } catch (err) {
             alert("Error al guardar la asignación: " + err.message);
+        }
+    }
+
+    // NUEVA FUNCIÓN: Marcar Asignación como Entregada
+    async function marcarEntregado(id, btnElement) {
+        btnElement.innerText = 'Procesando...';
+        try {
+            const { error } = await supabase.from('asignacion').update({ estado_asignacion: 'entregado' }).eq('id', id);
+            if (error) throw error;
+            
+            // Recargar la tabla para que desaparezca
+            loadData();
+        } catch (err) {
+            alert("Error al actualizar: " + err.message);
+            btnElement.innerText = 'Entregado ✓';
         }
     }
 </script>
