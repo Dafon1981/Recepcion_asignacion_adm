@@ -1225,7 +1225,7 @@
 
     
 
-    function descargarPdfCinto() {
+       function descargarPdfCinto() {
         const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
         const responsable = document.getElementById('cargo-responsable').value;
         const fechaAsig = document.getElementById('cargo-fecha').value;
@@ -1254,10 +1254,8 @@
         doc.setFont("helvetica", "bold");
 
         // --- COORDENADAS EXACTAS ---
-        // X = Posición de izquierda a derecha.
-        // Y = Posición de arriba hacia abajo (donde EMPIEZA a escribirse la palabra).
 
-        // 1. PRIMERA LÍNEA VERTICAL (Extremo Izquierdo - X: 15) -> Todo más a la izquierda
+        // 1. PRIMERA LÍNEA VERTICAL (Extremo Izquierdo - X: 15)
         doc.setFontSize(14);
         doc.text("FECHA AUDITORIA", 15, 40, { angle: -90 });
         doc.text(fechaFormateada, 15, 100, { angle: -90 });
@@ -1265,18 +1263,18 @@
         doc.setFontSize(18);
         doc.text(`CANT: ${cantidad}`, 15, 240, { angle: -90 });
 
-        // 2. SEGUNDA LÍNEA VERTICAL (Paquete - X: 45) -> Más a la izquierda
+        // 2. SEGUNDA LÍNEA VERTICAL (Paquete - X: 45)
         doc.setFontSize(60);
         doc.text(paquete, 45, 60, { angle: -90 });
 
-        // 3. TERCERA LÍNEA VERTICAL (Auditor - X: 65) -> Mucho más a la izquierda, pegado al paquete
+        // 3. TERCERA LÍNEA VERTICAL (Auditor - X: 55) -> Movido más a la izquierda (antes 65)
         doc.setFontSize(14);
         if (responsable) {
-            doc.text(responsable, 65, 100, { angle: -90 });
-        } else {
-            doc.text("_________________________", 65, 100, { angle: -90 });
+            doc.text(responsable, 55, 100, { angle: -90 });
         }
-        doc.text("Auditor / Digitador", 65, 220, { angle: -90 });
+        // ¡Línea de firma eliminada por completo!
+        
+        doc.text("Auditor / Digitador", 55, 220, { angle: -90 });
 
         doc.save(`Cinto_${paquete}.pdf`);
     }
