@@ -1080,7 +1080,12 @@
         document.getElementById('formulario-cargo').scrollIntoView({ behavior: 'smooth' });
     }
 
-    function descargarExcelCargo() {
+
+
+    
+
+
+        function descargarExcelCargo() {
         if (datosProcesadosCargo.length === 0) return showAlert('No hay datos procesados.', 'error');
 
         const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
@@ -1129,12 +1134,30 @@
             if (!fecAte && fechaRegist) fecAte = fechaRegist;
 
             let isPriority = false;
-            // Validar prioridad usando FecAte (o la fecha que se haya encontrado)
+            
+            // Validar prioridad arreglando el formato de fecha DD/MM/YYYY del Excel
             if (startPrio && endPrio && fecAte) {
-                const rowDate = new Date(fecAte);
-                if (rowDate >= startPrio && rowDate <= endPrio) {
-                    isPriority = true;
-                    countPrioridad++;
+                let rowDate = null;
+                const strDate = String(fecAte).trim();
+                
+                // Extraer DD/MM/YYYY si viene en ese formato (ej: 09/06/2026 12:00:00 a. m.)
+                const matchDDMMYYYY = strDate.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+                if (matchDDMMYYYY) {
+                    const day = matchDDMMYYYY[1].padStart(2, '0');
+                    const month = matchDDMMYYYY[2].padStart(2, '0');
+                    const year = matchDDMMYYYY[3];
+                    // Convertir a formato YYYY-MM-DD para que JavaScript lo entienda perfecto
+                    rowDate = new Date(`${year}-${month}-${day}T00:00:00`);
+                } else {
+                    // Intento de parseo normal si no tiene ese formato
+                    rowDate = new Date(strDate);
+                }
+
+                if (rowDate && !isNaN(rowDate.getTime())) {
+                    if (rowDate >= startPrio && rowDate <= endPrio) {
+                        isPriority = true;
+                        countPrioridad++;
+                    }
                 }
             }
 
@@ -1162,11 +1185,18 @@
             wsData.push([]);
         }
 
-        // Cabeceras de tabla
+        // Cabeceras de tabla (Gris 20% con letras negras)
         let headers = ["Nro", "FUA", "Paciente", "Fecha de Atención"];
         if (isPQR) headers.push(extraColName);
         
-        const headerRow = headers.map(h => ({ v: h, s: { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "4F81BD" } }, alignment: { horizontal: "center" } } }));
+        const headerRow = headers.map(h => ({ 
+            v: h, 
+            s: { 
+                font: { bold: true, color: { rgb: "000000" } }, 
+                fill: { fgColor: { rgb: "D9D9D9" } }, 
+                alignment: { horizontal: "center" } 
+            } 
+        }));
         wsData.push(headerRow);
 
         // Agregar las filas de datos
@@ -1174,8 +1204,8 @@
 
         const ws = XLSX.utils.aoa_to_sheet(wsData);
         
-        // Ajustar anchos de columna
-        ws['!cols'] = [{ wch: 5 }, { wch: 15 }, { wch: 35 }, { wch: 18 }];
+        // Ajustar anchos de columna (hice la fecha un poco más ancha para que quepa bien)
+        ws['!cols'] = [{ wch: 5 }, { wch: 15 }, { wch: 35 }, { wch: 22 }];
         if (isPQR) ws['!cols'].push({ wch: 20 });
 
         // Merge título principal
@@ -1190,6 +1220,7 @@
         XLSX.utils.book_append_sheet(wb, ws, "Cargo");
         XLSX.writeFile(wb, `Cargo_${paquete}.xlsx`);
     }
+
 
 
     
