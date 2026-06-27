@@ -285,72 +285,106 @@
         </div>
     </div>
 
-    <!-- NUEVA Pestaña: Cargo y Cinto -->
+
+
+
+    
+     <!-- NUEVA Pestaña: Cargo y Cinto -->
     <div id="cargo" class="tab-content">
         <div class="fua-panel" style="border-left-color: #f1c40f;">
-            <h3 style="color: #f1c40f;">Generador de Cargo y Cinto</h3>
             
-            <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px;">
-                <div class="input-group" style="flex: 2; min-width: 250px;">
-                    <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Archivo Excel (Lista de Registros)</label>
-                    <input type="file" id="cargo-file" accept=".xlsx, .xls" style="width: 100%; padding: 10px; background: #000; color: #2ecc71; border: 1px solid #555; border-radius: 5px;">
-                </div>
-                
-                <div class="input-group" style="flex: 1; min-width: 150px;">
-                    <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Paquete a buscar</label>
-                    <input type="text" id="cargo-paquete" placeholder="Ej: PQR000010" onkeyup="checkPaqueteType()" style="width: 100%; padding: 10px; background: #000; color: #fff; border: 1px solid #555; border-radius: 5px;">
-                </div>
+            <!-- 1. Lista de Asignaciones Integrada -->
+            <h3 style="color: #f1c40f; margin-bottom: 15px;">Asignaciones Pendientes</h3>
+            <table style="margin-bottom: 15px;">
+                <thead>
+                    <tr>
+                        <th>Digitador Asignado</th>
+                        <th style="text-align: center;">Cantidad</th>
+                        <th style="text-align: center;">Fecha de Asignación</th>
+                        <th style="text-align: center;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="table-asignaciones-cargo">
+                    <!-- Datos dinámicos -->
+                </tbody>
+            </table>
 
-                <div class="input-group" id="col-extra-pqr" style="flex: 1; min-width: 150px; display: none;">
-                    <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Columna Extra (Solo PQR)</label>
-                    <select id="cargo-extra-pqr" style="width: 100%; padding: 10px; background: #000; color: #fff; border: 1px solid #555; border-radius: 5px;">
-                        <option value="comentario">Comentario</option>
-                        <option value="consumo">Consumo</option>
-                    </select>
-                </div>
+            <!-- Botón Cargo Nuevo -->
+            <div style="text-align: center; margin-bottom: 20px;">
+                <button onclick="abrirCargoNuevo()" style="background: #e67e22; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 15px; transition: 0.3s;">➕ Cargo Nuevo</button>
             </div>
 
-            <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px;">
-                <div class="input-group" style="flex: 1; min-width: 150px;">
-                    <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Responsable (Opcional)</label>
-                    <select id="cargo-responsable" style="width: 100%; padding: 10px; background: #000; color: #fff; border: 1px solid #555; border-radius: 5px;">
-                        <option value="">En blanco...</option>
-                    </select>
-                </div>
+            <!-- 2. Formulario Generador (Oculto inicialmente) -->
+            <div id="formulario-cargo" style="display: none; border-top: 1px solid #444; padding-top: 20px;">
+                <h3 style="color: #f1c40f;">Generador de Cargo y Cinto</h3>
                 
-                <div class="input-group" style="flex: 1; min-width: 150px;">
-                    <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Fecha de Asignación</label>
-                    <input type="date" id="cargo-fecha" style="width: 100%; padding: 10px; background: #000; color: #2ecc71; border: 1px solid #555; border-radius: 5px;">
+                <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px;">
+                    <div class="input-group" style="flex: 2; min-width: 250px;">
+                        <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Archivo Excel (Lista de Registros)</label>
+                        <input type="file" id="cargo-file" accept=".xlsx, .xls" style="width: 100%; padding: 10px; background: #000; color: #2ecc71; border: 1px solid #555; border-radius: 5px;">
+                    </div>
+                    
+                    <div class="input-group" style="flex: 1; min-width: 150px;">
+                        <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Paquete a buscar</label>
+                        <input type="text" id="cargo-paquete" placeholder="Ej: PQR000010" onkeyup="checkPaqueteType()" style="width: 100%; padding: 10px; background: #000; color: #fff; border: 1px solid #555; border-radius: 5px;">
+                    </div>
+
+                    <div class="input-group" id="col-extra-pqr" style="flex: 1; min-width: 150px; display: none;">
+                        <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Columna Extra (Solo PQR)</label>
+                        <select id="cargo-extra-pqr" style="width: 100%; padding: 10px; background: #000; color: #fff; border: 1px solid #555; border-radius: 5px;">
+                            <option value="comentario">Comentario</option>
+                            <option value="consumo">Consumo</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div class="input-group" style="flex: 1; min-width: 150px;">
-                    <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Prioridad Desde</label>
-                    <input type="date" id="cargo-prio-inicio" style="width: 100%; padding: 10px; background: #000; color: #2ecc71; border: 1px solid #555; border-radius: 5px;">
+                <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px;">
+                    <div class="input-group" style="flex: 1; min-width: 150px;">
+                        <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Asignado a</label>
+                        <select id="cargo-responsable" style="width: 100%; padding: 10px; background: #000; color: #fff; border: 1px solid #555; border-radius: 5px;">
+                            <option value="">En blanco...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group" style="flex: 1; min-width: 150px;">
+                        <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Fecha de Asignación</label>
+                        <input type="date" id="cargo-fecha" style="width: 100%; padding: 10px; background: #000; color: #2ecc71; border: 1px solid #555; border-radius: 5px;">
+                    </div>
+
+                    <div class="input-group" style="flex: 1; min-width: 150px;">
+                        <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Prioridad Desde</label>
+                        <input type="date" id="cargo-prio-inicio" style="width: 100%; padding: 10px; background: #000; color: #2ecc71; border: 1px solid #555; border-radius: 5px;">
+                    </div>
+                    
+                    <div class="input-group" style="flex: 1; min-width: 150px;">
+                        <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Prioridad Hasta</label>
+                        <input type="date" id="cargo-prio-fin" style="width: 100%; padding: 10px; background: #000; color: #2ecc71; border: 1px solid #555; border-radius: 5px;">
+                    </div>
                 </div>
-                
-                <div class="input-group" style="flex: 1; min-width: 150px;">
-                    <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Prioridad Hasta</label>
-                    <input type="date" id="cargo-prio-fin" style="width: 100%; padding: 10px; background: #000; color: #2ecc71; border: 1px solid #555; border-radius: 5px;">
+
+                <!-- Botón Procesar -->
+                <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                    <button onclick="procesarData()" style="background: #3498db; color: white; border: none; padding: 12px 25px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s;">⚙️ Procesar Data</button>
                 </div>
-            </div>
 
-            <!-- Botón Procesar -->
-            <div style="display: flex; gap: 15px; margin-bottom: 15px;">
-                <button onclick="procesarData()" style="background: #3498db; color: white; border: none; padding: 12px 25px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s;">⚙️ Procesar Data</button>
-            </div>
+                <div id="cargo-alert" class="alert-box"></div>
 
-            <div id="cargo-alert" class="alert-box"></div>
-
-            <!-- Botones de Descarga (Ocultos inicialmente) -->
-            <div id="botones-descarga" style="display: none; gap: 15px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #444;">
-                <button class="btn-excel" onclick="descargarExcelCargo()">📊 Descargar Excel</button>
-                <button class="btn-pdf" onclick="descargarPdfCinto()">🖨️ Descargar Cinto (PDF)</button>
+                <!-- Botones de Descarga (Ocultos inicialmente) -->
+                <div id="botones-descarga" style="display: none; gap: 15px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #444;">
+                    <button class="btn-excel" onclick="descargarExcelCargo()">📊 Descargar Excel</button>
+                    <button class="btn-pdf" onclick="descargarPdfCinto()">🖨️ Descargar Cinto (PDF)</button>
+                </div>
             </div>
         </div>
     </div>
 
 </div> <!-- Cierre del container -->
 
+
+
+
+
+    
 
 <script>
     const supabaseUrl = 'https://esiklpxyectbekxvajnw.supabase.co';
@@ -461,7 +495,12 @@
         }, 10000);
     }
 
-    async function loadData() {
+
+
+
+    
+
+        async function loadData() {
         const selectedDate = document.getElementById('current-date').value;
         if (!selectedDate) return;
 
@@ -504,7 +543,7 @@
             if(tableHTML === '') tableHTML = `<tr><td colspan="3" style="text-align:center;">No hay digitadores configurados</td></tr>`;
             document.getElementById('table-consumo').innerHTML = tableHTML;
 
-        } else if (currentTab === 'asignacion') {
+        } else if (currentTab === 'asignacion' || currentTab === 'cargo') {
             const { data, error } = await supabase
                 .from('asignacion')
                 .select('id, digitador_asignado, cantidad_asignada, fecha_asignacion')
@@ -513,8 +552,10 @@
                 .order('id', { ascending: false });
 
             let tableHTML = '';
+            let tableCargoHTML = '';
             if (data && data.length > 0) {
                 data.forEach(row => {
+                    // Fila para la pestaña Asignación original
                     tableHTML += `<tr>
                         <td><strong>${row.digitador_asignado}</strong></td>
                         <td style="text-align: center; color: #f1c40f; font-weight: bold;">${row.cantidad_asignada}</td>
@@ -523,15 +564,36 @@
                             <button class="btn-entregado" onclick="marcarEntregado(${row.id}, this)">Entregado ✓</button>
                         </td>
                     </tr>`;
+                    
+                    // Fila para la nueva pestaña Cargo y Cinto (con botón Hacer Cargo)
+                    tableCargoHTML += `<tr>
+                        <td><strong>${row.digitador_asignado}</strong></td>
+                        <td style="text-align: center; color: #f1c40f; font-weight: bold;">${row.cantidad_asignada}</td>
+                        <td style="text-align: center;">${row.fecha_asignacion}</td>
+                        <td style="text-align: center; display: flex; gap: 10px; justify-content: center;">
+                            <button style="background: #3498db; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px;" onclick="hacerCargoDesdeAsignacion('${row.digitador_asignado}')">Hacer Cargo</button>
+                            <button class="btn-entregado" onclick="marcarEntregado(${row.id}, this)">Entregado ✓</button>
+                        </td>
+                    </tr>`;
                 });
             } else {
                 tableHTML = `<tr><td colspan="4" style="text-align:center; color:#888;">No hay asignaciones pendientes</td></tr>`;
+                tableCargoHTML = tableHTML;
             }
-            document.getElementById('table-asignaciones').innerHTML = tableHTML;
+            
+            if (document.getElementById('table-asignaciones')) document.getElementById('table-asignaciones').innerHTML = tableHTML;
+            if (document.getElementById('table-asignaciones-cargo')) document.getElementById('table-asignaciones-cargo').innerHTML = tableCargoHTML;
         }
     }
-    // --- LÓGICA DE FUAS OBSERVADAS ---
 
+
+
+
+
+
+
+
+    
     async function addFua(tab) {
         const selectedDate = document.getElementById('current-date').value;
         const nroInput = document.getElementById(`fua-nro-${tab}`);
@@ -1001,6 +1063,23 @@
 
     
 
+       function abrirCargoNuevo() {
+        document.getElementById('formulario-cargo').style.display = 'block';
+        const selectResp = document.getElementById('cargo-responsable');
+        selectResp.value = '';
+        selectResp.disabled = false; // Desbloquear
+    }
+
+    function hacerCargoDesdeAsignacion(digitador) {
+        document.getElementById('formulario-cargo').style.display = 'block';
+        const selectResp = document.getElementById('cargo-responsable');
+        selectResp.value = digitador;
+        selectResp.disabled = true; // Bloquear para que no se cambie
+        
+        // Hacer scroll suave hacia el formulario
+        document.getElementById('formulario-cargo').scrollIntoView({ behavior: 'smooth' });
+    }
+
     function descargarExcelCargo() {
         if (datosProcesadosCargo.length === 0) return showAlert('No hay datos procesados.', 'error');
 
@@ -1011,69 +1090,52 @@
         const prioFin = document.getElementById('cargo-prio-fin').value;
         
         let isPQR = paquete.startsWith('PQR');
-        const extraColType = document.getElementById('cargo-extra-pqr').value; // 'consumo' o 'comentario'
+        const extraColType = document.getElementById('cargo-extra-pqr').value;
         let extraColName = isPQR ? (extraColType === 'consumo' ? 'Consumo' : 'Comentario') : '';
 
         const wsData = [];
         
-        // Cabecera del Cargo
+        // Cabecera del Cargo (Formato Vertical)
         wsData.push([{ v: "CARGO DE ENTREGA DE FUAS", s: { font: { bold: true, sz: 14 }, alignment: { horizontal: "center" } } }]);
         wsData.push([]);
-        wsData.push([
-            { v: "Paquete:", s: { font: { bold: true } } }, { v: paquete },
-            { v: "Responsable:", s: { font: { bold: true } } }, { v: responsable },
-            { v: "Fecha Asignación:", s: { font: { bold: true } } }, { v: fechaAsig }
-        ]);
+        wsData.push([{ v: "Paquete:", s: { font: { bold: true } } }, { v: paquete }]);
+        wsData.push([{ v: "Recepcionista:", s: { font: { bold: true } } }, { v: "Manuel Andres Da'fonseca Irribarri" }]);
+        wsData.push([{ v: "Asignado a:", s: { font: { bold: true } } }, { v: responsable }]);
+        wsData.push([{ v: "Fecha Asignación:", s: { font: { bold: true } } }, { v: fechaAsig }]);
         wsData.push([]);
 
-        // Cabeceras de tabla
-        let headers = ["Nro", "FUA", "Paciente", "Fecha de Atención"];
-        if (isPQR) headers.push(extraColName);
-        
-        const headerRow = headers.map(h => ({ v: h, s: { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "4F81BD" } }, alignment: { horizontal: "center" } } }));
-        wsData.push(headerRow);
-
-        // Datos
+        // Datos y cálculo de prioridad
         const startPrio = prioInicio ? new Date(prioInicio + 'T00:00:00') : null;
         const endPrio = prioFin ? new Date(prioFin + 'T23:59:59') : null;
+        
+        let countPrioridad = 0;
+        const filasDatos = [];
 
         datosProcesadosCargo.forEach((row, index) => {
             let fua = '', paciente = '', fecAte = '', fechaRegist = '';
             let costoTotal = 0;
             
-            // Buscar dinámicamente los valores en la fila
             for (let key in row) {
                 const k = key.toUpperCase().trim();
+                if (k === 'NFUA') fua = row[key];
+                else if (!fua && (k === 'FUA' || k.includes('NROFUA'))) fua = row[key];
+                else if (k.includes('PACIENTE') || k.includes('ASEGURADO') || k.includes('AFILIADO')) paciente = row[key];
+                else if (k.includes('FEC') && k.includes('ATE')) fecAte = row[key];
                 
-                // 1. Buscar NFUA estrictamente
-                if (k === 'NFUA') {
-                    fua = row[key];
-                } else if (!fua && (k === 'FUA' || k.includes('NROFUA'))) {
-                    fua = row[key];
-                } else if (k.includes('PACIENTE') || k.includes('ASEGURADO') || k.includes('AFILIADO')) {
-                    paciente = row[key];
-                } else if (k.includes('FEC') && k.includes('ATE')) {
-                    fecAte = row[key];
-                }
-                
-                // Guardamos la fecha de registro para la validación de prioridad
-                if (k.includes('FECHAREGIST') || k === 'FECHA') {
-                    fechaRegist = row[key];
-                }
-
-                // 2. Capturar el CostoTotal
-                if (k.includes('COSTO')) {
-                    costoTotal = parseFloat(row[key]) || 0;
-                }
+                if (k.includes('FECHAREGIST') || k === 'FECHA') fechaRegist = row[key];
+                if (k.includes('COSTO')) costoTotal = parseFloat(row[key]) || 0;
             }
 
-            // Si no hay una columna específica de "Fecha de Atención", usamos la fecha general que encuentre
             if (!fecAte && fechaRegist) fecAte = fechaRegist;
 
             let isPriority = false;
-            if (startPrio && endPrio && fechaRegist) {
-                const rowDate = new Date(fechaRegist);
-                if (rowDate >= startPrio && rowDate <= endPrio) isPriority = true;
+            // Validar prioridad usando FecAte (o la fecha que se haya encontrado)
+            if (startPrio && endPrio && fecAte) {
+                const rowDate = new Date(fecAte);
+                if (rowDate >= startPrio && rowDate <= endPrio) {
+                    isPriority = true;
+                    countPrioridad++;
+                }
             }
 
             const style = isPriority ? { font: { bold: true, underline: true } } : {};
@@ -1085,20 +1147,30 @@
                 { v: fecAte, s: style }
             ];
 
-            // 3. Lógica para la columna extra (Consumo o Comentario)
             if (isPQR) {
                 let extraValue = "";
-                // Si eligió "consumo" y el costo es mayor a 0, ponemos "CON CONSUMO"
-                if (extraColType === 'consumo' && costoTotal > 0) {
-                    extraValue = "CON CONSUMO";
-                }
-                // Si es comentario o el costo es 0, extraValue se queda vacío ("")
-                
+                if (extraColType === 'consumo' && costoTotal > 0) extraValue = "CON CONSUMO";
                 rowData.push({ v: extraValue, s: style });
             }
 
-            wsData.push(rowData);
+            filasDatos.push(rowData);
         });
+
+        // Insertar Nota de Prioridad si hay alguna
+        if (countPrioridad > 0) {
+            wsData.push([{ v: `Nota: Hay ${countPrioridad} FUAs con prioridad en este paquete.`, s: { font: { bold: true, color: { rgb: "FF0000" } } } }]);
+            wsData.push([]);
+        }
+
+        // Cabeceras de tabla
+        let headers = ["Nro", "FUA", "Paciente", "Fecha de Atención"];
+        if (isPQR) headers.push(extraColName);
+        
+        const headerRow = headers.map(h => ({ v: h, s: { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "4F81BD" } }, alignment: { horizontal: "center" } } }));
+        wsData.push(headerRow);
+
+        // Agregar las filas de datos
+        filasDatos.forEach(fila => wsData.push(fila));
 
         const ws = XLSX.utils.aoa_to_sheet(wsData);
         
@@ -1106,14 +1178,18 @@
         ws['!cols'] = [{ wch: 5 }, { wch: 15 }, { wch: 35 }, { wch: 18 }];
         if (isPQR) ws['!cols'].push({ wch: 20 });
 
-        // Merge título
+        // Merge título principal
         ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: headers.length - 1 } }];
+        
+        // Merge para la nota roja si existe
+        if (countPrioridad > 0) {
+            ws['!merges'].push({ s: { r: 7, c: 0 }, e: { r: 7, c: headers.length - 1 } });
+        }
 
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Cargo");
         XLSX.writeFile(wb, `Cargo_${paquete}.xlsx`);
     }
-
 
 
     
