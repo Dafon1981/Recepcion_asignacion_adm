@@ -5,15 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Estación de Trabajo - Auditoría</title>
     
-    <!-- Bibliotecas -->
+    <!-- Bibliotecas Base -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    
+    <!-- Bibliotecas para Excel (con estilos ) y PDF -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #121212; color: #ffffff; padding: 20px; }
-        .container { max-width: 1300px; margin: 0 auto; background: #1e1e1e; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5 ); }
+        .container { max-width: 1200px; margin: 0 auto; background: #1e1e1e; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5  ); }
         
-        /* Header / Navegación */
         .header-nav { display: flex; justify-content: space-between; align-items: center; background: #2a2a2a; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; }
         .nav-left, .nav-right { display: flex; gap: 10px; align-items: center; }
         .nav-center { text-align: center; flex-grow: 1; }
@@ -23,25 +28,27 @@
         .big-date { font-size: 26px; font-weight: bold; padding: 10px 20px; border-radius: 8px; border: 2px solid #555; background: #111; color: #f1c40f; text-align: center; outline: none; cursor: pointer; }
         .big-date:focus { border-color: #f1c40f; }
 
-        /* Pestañas Principales */
-        .tabs { display: flex; border-bottom: 2px solid #333; margin-bottom: 20px; }
-        .tab { padding: 12px 20px; cursor: pointer; font-weight: bold; color: #888; border-bottom: 3px solid transparent; transition: 0.3s; font-size: 16px; }
+        .tabs { display: flex; border-bottom: 2px solid #333; margin-bottom: 20px; overflow-x: auto; }
+        .tab { padding: 12px 20px; cursor: pointer; font-weight: bold; color: #888; border-bottom: 3px solid transparent; transition: 0.3s; font-size: 16px; white-space: nowrap; }
         .tab.active { color: #f1c40f; border-bottom-color: #f1c40f; }
         .tab:hover:not(.active) { color: #ddd; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         
-        /* Panel Global Unificado */
         .global-panel { display: flex; align-items: center; gap: 15px; background: #252525; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #f39c12; flex-wrap: wrap; }
         .global-panel .input-group { display: flex; flex-direction: column; gap: 5px; flex-grow: 1; }
         .global-panel label { font-size: 14px; color: #ccc; font-weight: bold; }
         .global-panel input, .global-panel select { padding: 10px; border-radius: 5px; border: 1px solid #555; background: #1a1a1a; color: white; outline: none; font-size: 15px; }
-        .global-panel input[type="date"] { color: #2ecc71; font-weight: bold; }
+        .global-panel input[type="date"], .global-panel input[type="file"] { color: #2ecc71; font-weight: bold; }
         .global-panel input:focus, .global-panel select:focus { border-color: #f1c40f; }
+        
         .btn-save-panel { background: #f39c12; color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 15px; height: 42px; margin-top: 22px; }
         .btn-save-panel:hover { background: #d35400; color: white; }
+        .btn-action { background: #2ecc71; color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 15px; height: 42px; margin-top: 22px; }
+        .btn-action:hover { background: #27ae60; color: white; }
+        .btn-pdf { background: #e74c3c; color: #fff; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 15px; height: 42px; margin-top: 22px; }
+        .btn-pdf:hover { background: #c0392b; }
 
-        /* Panel FUAs Observadas */
         .fua-panel { background: #1a1a1a; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #333; border-left: 4px solid #3498db; }
         .fua-panel h3 { color: #3498db; margin-top: 0; margin-bottom: 15px; font-size: 18px; border-bottom: 1px solid #333; padding-bottom: 10px; }
         .fua-add-section { display: flex; gap: 15px; align-items: flex-end; margin-bottom: 20px; background: #222; padding: 15px; border-radius: 6px; flex-wrap: wrap; }
@@ -53,7 +60,6 @@
         .btn-add-fua { background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; height: 42px; font-size: 15px; }
         .btn-add-fua:hover { background: #2980b9; }
         
-        /* Pestañas de FUAs (10 días) */
         .fua-tabs-container { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 10px; margin-bottom: 15px; border-bottom: 2px solid #333; }
         .fua-tabs-container::-webkit-scrollbar { height: 8px; }
         .fua-tabs-container::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
@@ -63,7 +69,6 @@
         .fua-day-tab.active { border-color: #f1c40f; transform: scale(1.05); box-shadow: 0 0 10px rgba(241, 196, 15, 0.5); }
         .fua-badge { background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 12px; font-size: 12px; }
 
-        /* Tres Tablas de FUAs con SCROLL */
         .fua-tables-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
         .fua-table-col { background: #222; padding: 15px; border-radius: 6px; border: 1px solid #444; display: flex; flex-direction: column; }
         .fua-table-col h4 { display: flex; justify-content: space-between; align-items: center; color: #f1c40f; margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 10px; font-size: 16px; }
@@ -82,12 +87,10 @@
         .btn-resolve { background: #3498db; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; transition: 0.3s; align-self: flex-end; }
         .btn-resolve:hover { background: #2980b9; }
         .btn-resolve.resolved { background: #2ecc71 !important; color: #000 !important; }
-        
-        /* Botón Entregado para Asignaciones */
-        .btn-entregado { background: #2ecc71; color: #000; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; transition: 0.3s; }
-        .btn-entregado:hover { background: #27ae60; color: white; }
+        .btn-entregado { background: #3498db; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; transition: 0.3s; }
+        .btn-entregado:hover { background: #2980b9; }
 
-        /* Tabla General */
+        .chart-container { width: 100%; max-width: 900px; margin: 30px auto 0 auto; background: #252525; padding: 20px; border-radius: 8px; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background: #252525; border-radius: 8px; overflow: hidden; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #444; vertical-align: middle; }
         th { background: #333; color: #f1c40f; }
@@ -111,10 +114,12 @@
         <div class="tab active" onclick="switchTab('consumo')">Digitadores con consumo</div>
         <div class="tab" onclick="switchTab('asignacion')">Asignación</div>
         <div class="tab" onclick="switchTab('filtro')">Filtro de FUAs</div>
+        <div class="tab" onclick="switchTab('cargo')">Cargo y Cinto</div>
     </div>
 
     <!-- Pestaña: Con Consumo -->
     <div id="consumo" class="tab-content active">
+        
         <div class="fua-panel">
             <h3>FUAs Observadas (Ventana de 10 días)</h3>
             <div class="fua-add-section">
@@ -185,16 +190,16 @@
             </thead>
             <tbody id="table-consumo"></tbody>
         </table>
+        <div class="chart-container"><canvas id="chartConsumo"></canvas></div>
     </div>
+
     <!-- Pestaña: Asignación -->
     <div id="asignacion" class="tab-content">
         <div class="global-panel">
             <h3 style="width: 100%; color: #f1c40f; margin-bottom: 10px;">Nueva Asignación</h3>
             <div class="input-group" style="flex-grow: 2;">
                 <label>Digitador</label>
-                <select id="asig-digitador">
-                    <option value="">Cargando digitadores...</option>
-                </select>
+                <select id="asig-digitador"><option value="">Cargando digitadores...</option></select>
             </div>
             <div class="input-group" style="max-width: 150px;">
                 <label>Cantidad</label>
@@ -207,7 +212,7 @@
             <button class="btn-save-panel" onclick="saveAsignacion()">Guardar Asignación</button>
         </div>
         
-        <h3 style="color: #3498db; margin-bottom: 15px;">Asignaciones Pendientes (Permanentes)</h3>
+        <h3 style="color: #3498db; margin-bottom: 15px;">Asignaciones Pendientes</h3>
         <table>
             <thead>
                 <tr>
@@ -217,9 +222,7 @@
                     <th style="text-align: center;">Acción</th>
                 </tr>
             </thead>
-            <tbody id="table-asignaciones">
-                <!-- Datos dinámicos -->
-            </tbody>
+            <tbody id="table-asignaciones"></tbody>
         </table>
     </div>
 
@@ -227,67 +230,103 @@
     <div id="filtro" class="tab-content">
         <div class="fua-panel">
             <h3 style="color: #f1c40f; margin-bottom: 15px;">Buscador y Cruce de FUAs</h3>
-            <p style="color: #aaa; margin-bottom: 15px; font-size: 14px;">Pega la lista del sistema a la izquierda, los números a buscar en el centro, y presiona "Encontrar".</p>
-            
             <div style="display: flex; gap: 15px; align-items: stretch; flex-wrap: wrap;">
-                <!-- Cuadro 1: Lista del Sistema -->
                 <div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 10px;">
                     <label style="color: #ccc; font-weight: bold;">1. Lista del Sistema</label>
-                    <textarea id="filtro-sistema" rows="15" style="width: 100%; background: #000; color: #2ecc71; padding: 10px; border: 1px solid #555; border-radius: 5px; outline: none; resize: vertical; font-family: monospace;" placeholder="Ejemplo:\n31 2600374945 23/06/2026...\n36 2600373299 23/06/2026..."></textarea>
+                    <textarea id="filtro-sistema" rows="15" style="width: 100%; background: #000; color: #2ecc71; padding: 10px; border: 1px solid #555; border-radius: 5px; outline: none; resize: vertical; font-family: monospace;"></textarea>
                 </div>
-                
-                <!-- Cuadro 2: FUAs a Buscar -->
                 <div style="flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 10px;">
                     <label style="color: #ccc; font-weight: bold;">2. FUAs a Buscar (7 dígitos)</label>
-                    <textarea id="filtro-buscar" rows="15" style="width: 100%; background: #000; color: #f1c40f; padding: 10px; border: 1px solid #555; border-radius: 5px; outline: none; resize: vertical; font-family: monospace;" placeholder="Ejemplo:\n0373299\n0374262"></textarea>
+                    <textarea id="filtro-buscar" rows="15" style="width: 100%; background: #000; color: #f1c40f; padding: 10px; border: 1px solid #555; border-radius: 5px; outline: none; resize: vertical; font-family: monospace;"></textarea>
                 </div>
-                
-                <!-- Botón Encontrar -->
                 <div style="display: flex; align-items: center; justify-content: center;">
-                    <button onclick="procesarFiltro()" style="background: #3498db; color: white; border: none; padding: 15px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">Encontrar ➔</button>
+                    <button onclick="procesarFiltro()" style="background: #3498db; color: white; border: none; padding: 15px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px;">Encontrar ➔</button>
                 </div>
-                
-                <!-- Cuadro 3: Resultados Dinámicos (Verde y Rojo) -->
                 <div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 10px;">
                     <label style="color: #ccc; font-weight: bold;">3. Resultados</label>
                     <div style="background: #111; border: 1px solid #555; border-radius: 5px; padding: 10px; height: 100%; min-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px;">
-                        
-                        <!-- Lista Verde -->
                         <div>
                             <h4 style="color: #2ecc71; border-bottom: 1px solid #2ecc71; padding-bottom: 5px; margin-bottom: 10px;">✅ Encontrados</h4>
-                            <ul id="resultado-encontrados" style="list-style: none; padding: 0; margin: 0; color: #2ecc71; font-family: monospace; font-size: 14px; display: flex; flex-direction: column; gap: 4px;">
-                                <li style="color: #666;">Esperando búsqueda...</li>
-                            </ul>
+                            <ul id="resultado-encontrados" style="list-style: none; padding: 0; margin: 0; color: #2ecc71; font-family: monospace; font-size: 14px; display: flex; flex-direction: column; gap: 4px;"></ul>
                         </div>
-
-                        <!-- Lista Roja -->
                         <div>
                             <h4 style="color: #e74c3c; border-bottom: 1px solid #e74c3c; padding-bottom: 5px; margin-bottom: 10px;">❌ No Encontrados</h4>
-                            <ul id="resultado-no-encontrados" style="list-style: none; padding: 0; margin: 0; color: #e74c3c; font-family: monospace; font-size: 14px; display: flex; flex-direction: column; gap: 4px;">
-                            </ul>
+                            <ul id="resultado-no-encontrados" style="list-style: none; padding: 0; margin: 0; color: #e74c3c; font-family: monospace; font-size: 14px; display: flex; flex-direction: column; gap: 4px;"></ul>
                         </div>
-
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-</div> <!-- Cierre del container -->
+    <!-- Pestaña: Cargo y Cinto -->
+    <div id="cargo" class="tab-content">
+        <div class="global-panel">
+            <h3 style="width: 100%; color: #f1c40f; margin-bottom: 10px;">Generador de Cargo y Cinto</h3>
+            
+            <div class="input-group" style="flex-grow: 2;">
+                <label>Archivo Excel (Lista de Registros)</label>
+                <input type="file" id="cargo-file" accept=".xlsx, .xls">
+            </div>
+            
+            <div class="input-group">
+                <label>Paquete a buscar</label>
+                <input type="text" id="cargo-paquete" placeholder="Ej: PQE000184 o PQR000014" onkeyup="checkPaqueteType()">
+            </div>
 
+            <div class="input-group" id="col-extra-pqr" style="display: none;">
+                <label>Columna Extra (Solo PQR)</label>
+                <select id="cargo-extra-pqr">
+                    <option value="consumo">Consumo</option>
+                    <option value="comentario">Comentario</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>Responsable (Opcional)</label>
+                <select id="cargo-responsable">
+                    <option value="">En blanco...</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <label>Fecha de Asignación</label>
+                <input type="date" id="cargo-fecha">
+            </div>
+
+            <div class="input-group">
+                <label>Prioridad Desde</label>
+                <input type="date" id="cargo-prio-inicio">
+            </div>
+            <div class="input-group">
+                <label>Prioridad Hasta</label>
+                <input type="date" id="cargo-prio-fin">
+            </div>
+
+            <div style="width: 100%; display: flex; gap: 15px;">
+                <button class="btn-action" onclick="procesarCargo('excel')">📊 Descargar Excel</button>
+                <button class="btn-pdf" onclick="procesarCargo('pdf')">🖨️ Descargar Cinto (PDF)</button>
+            </div>
+
+            <div id="cargo-alert" class="alert-box"></div>
+        </div>
+    </div>
+
+</div> <!-- Cierre del container -->
 <script>
     const supabaseUrl = 'https://esiklpxyectbekxvajnw.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzaWtscHh5ZWN0YmVreHZham53Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2OTI1MjEsImV4cCI6MjA3NzI2ODUyMX0.mtQnqUrTmhmN1DQxOAUnGpizhYZobStHDH0cz_XfKGU';
     const supabase = window.supabase.createClient(supabaseUrl, supabaseKey );
 
+    Chart.register(ChartDataLabels);
+
     let currentTab = 'consumo';
+    let chartConsumoInstance = null;
     let digitadoresConConsumo = [];
-    let todosLosDigitadores = [];
     let pollingTimer = null;
 
     window.allFuas = [];
     window.selectedFuaDate_consumo = '';
-
     const MIN_START_DATE = new Date('2026-06-15T00:00:00');
 
     document.addEventListener('DOMContentLoaded', async () => {
@@ -295,10 +334,12 @@
         document.getElementById('current-date').value = today;
         document.getElementById('fua-fecha-consumo').value = today;
         document.getElementById('asig-fecha').value = today;
+        document.getElementById('cargo-fecha').value = today;
         
         window.selectedFuaDate_consumo = today;
         
         await cargarDigitadores();
+        initCharts();
         await loadData();
         iniciarTemporizador();
     });
@@ -308,13 +349,14 @@
             const { data, error } = await supabase.from('digitadores').select('*');
             if (error) return console.error(error);
             if (data) {
-                todosLosDigitadores = data;
                 digitadoresConConsumo = data.filter(d => d.condicion === 'con consumo').map(d => d.nombre);
                 
                 const selectAsig = document.getElementById('asig-digitador');
-                selectAsig.innerHTML = '<option value="">Seleccione un digitador...</option>';
+                const selectCargo = document.getElementById('cargo-responsable');
+                
                 data.forEach(d => {
                     selectAsig.innerHTML += `<option value="${d.nombre}">${d.nombre}</option>`;
+                    selectCargo.innerHTML += `<option value="${d.nombre}">${d.nombre}</option>`;
                 });
             }
         } catch (err) { console.error(err); }
@@ -326,7 +368,7 @@
         event.target.classList.add('active');
         document.getElementById(tabId).classList.add('active');
         currentTab = tabId;
-        loadData();
+        if (tabId === 'consumo' || tabId === 'asignacion') loadData();
     }
 
     function changeDate(days) {
@@ -372,9 +414,18 @@
     function iniciarTemporizador() {
         if (pollingTimer) clearInterval(pollingTimer);
         pollingTimer = setInterval(() => {
-            if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'SELECT' && document.activeElement.tagName !== 'TEXTAREA') loadData();
+            if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'SELECT' && document.activeElement.tagName !== 'TEXTAREA') {
+                if (currentTab === 'consumo' || currentTab === 'asignacion') loadData();
+            }
         }, 10000);
     }
+
+    function initCharts() {
+        const ctxConsumo = document.getElementById('chartConsumo').getContext('2d');
+        const configBase = { type: 'bar', options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { color: '#fff' } }, x: { ticks: { color: '#fff' } } }, plugins: { legend: { display: false }, datalabels: { color: '#fff', anchor: 'end', align: 'top', font: { weight: 'bold', size: 14 } } } } };
+        chartConsumoInstance = new Chart(ctxConsumo, { ...configBase, data: { labels: digitadoresConConsumo, datasets: [{ data: [], backgroundColor: '#3498db', borderRadius: 4 }] } });
+    }
+
     async function loadData() {
         const selectedDate = document.getElementById('current-date').value;
         if (!selectedDate) return;
@@ -418,6 +469,10 @@
             if(tableHTML === '') tableHTML = `<tr><td colspan="3" style="text-align:center;">No hay digitadores configurados</td></tr>`;
             document.getElementById('table-consumo').innerHTML = tableHTML;
 
+            const chartData = digitadoresConConsumo.map(d => counts[d]);
+            chartConsumoInstance.data.datasets[0].data = chartData;
+            chartConsumoInstance.update();
+
         } else if (currentTab === 'asignacion') {
             const { data, error } = await supabase
                 .from('asignacion')
@@ -444,9 +499,63 @@
             document.getElementById('table-asignaciones').innerHTML = tableHTML;
         }
     }
+    function toggleRowCheck(checkbox, digi) {
+        const selectedDate = document.getElementById('current-date').value;
+        localStorage.setItem(`check_${selectedDate}_${digi}`, checkbox.checked);
+        const tr = checkbox.closest('tr');
+        if (checkbox.checked) tr.classList.add('row-checked');
+        else tr.classList.remove('row-checked');
+    }
+
+    async function saveGlobalData(tab) {
+        const selectedDate = document.getElementById('current-date').value;
+        const comp = document.getElementById('global-comp').value;
+        const cant = document.getElementById('global-cant').value;
+        const auditDate = document.getElementById(`audit-date-${tab}`).value;
+
+        try {
+            const { data: existing } = await supabase.from('asignacion').select('id').eq('fecha_creacion', selectedDate).is('registro_id', null).is('nrofuasuelta', null).is('digitador_asignado', null);
+            
+            const payload = { fecha_creacion: selectedDate, ComposicionArmado: comp, CantidadPreAsignacion: cant, FechaAuditoriaDigitadores: auditDate };
+
+            if (existing && existing.length > 0) {
+                await supabase.from('asignacion').update(payload).eq('id', existing[0].id);
+            } else {
+                await supabase.from('asignacion').insert([payload]);
+            }
+            alert('Datos globales guardados correctamente.');
+        } catch (err) { alert('Error al guardar: ' + err.message); }
+    }
+
+    async function saveAsignacion() {
+        const digitador = document.getElementById('asig-digitador').value;
+        const cantidad = document.getElementById('asig-cantidad').value;
+        const fecha = document.getElementById('asig-fecha').value;
+
+        if (!digitador || !cantidad || !fecha) return alert("Completa todos los campos de asignación.");
+
+        try {
+            await supabase.from('asignacion').insert([{
+                digitador_asignado: digitador,
+                cantidad_asignada: cantidad,
+                fecha_asignacion: fecha,
+                estado_asignacion: 'pendiente'
+            }]);
+            document.getElementById('asig-cantidad').value = '';
+            loadData();
+            alert("Asignación guardada.");
+        } catch (err) { alert("Error: " + err.message); }
+    }
+
+    async function marcarEntregado(id, btn) {
+        btn.innerText = 'Guardando...';
+        try {
+            await supabase.from('asignacion').update({ estado_asignacion: 'entregado' }).eq('id', id);
+            loadData();
+        } catch (err) { alert("Error: " + err.message); btn.innerText = 'Entregado ✓'; }
+    }
 
     // --- LÓGICA DE FUAS OBSERVADAS ---
-
     async function addFua(tab) {
         const selectedDate = document.getElementById('current-date').value;
         const nroInput = document.getElementById(`fua-nro-${tab}`);
@@ -466,12 +575,10 @@
                 observacion: obsInput.value.trim()
             };
 
-            const { error } = await supabase.from('asignacion').insert([payload]);
-            if (error) throw error;
-
+            await supabase.from('asignacion').insert([payload]);
             nroInput.value = '';
             obsInput.value = '';
-            loadFuas(); 
+            loadData(); 
         } catch (err) { alert("Error al guardar la FUA: " + err.message); }
     }
 
@@ -522,21 +629,14 @@
         
         while (iterDate <= baseDate) {
             const dateStr = iterDate.toISOString().split('T')[0];
-            
             const fuasDelDia = window.allFuas.filter(f => f.fechafuasuelta === dateStr && f.condicion_fuaobservada !== 'Reasignada');
             const count = fuasDelDia.length;
             
             const statusClass = count > 0 ? 'has-fuas' : 'no-fuas';
             const activeClass = window.selectedFuaDate_consumo === dateStr ? 'active' : '';
-            
             const displayDate = `${String(iterDate.getDate()).padStart(2, '0')}/${String(iterDate.getMonth() + 1).padStart(2, '0')}`;
             
-            tabsHTML += `
-                <div class="fua-day-tab ${statusClass} ${activeClass}" onclick="selectFuaTab('${tab}', '${dateStr}')">
-                    ${displayDate} <span class="fua-badge">${count}</span>
-                </div>
-            `;
-            
+            tabsHTML += `<div class="fua-day-tab ${statusClass} ${activeClass}" onclick="selectFuaTab('${tab}', '${dateStr}')">${displayDate} <span class="fua-badge">${count}</span></div>`;
             iterDate.setDate(iterDate.getDate() + 1);
         }
         container.innerHTML = tabsHTML;
@@ -550,8 +650,8 @@
 
     function renderFuaLists(tab) {
         const selectedDate = window.selectedFuaDate_consumo;
-        
-        const fuasY66X = window.allFuas.filter(f => f.fechafuasuelta === selectedDate && f.condicion_fuaobservada === 'Y66X');
+        const fuasY
+66X = window.allFuas.filter(f => f.fechafuasuelta === selectedDate && f.condicion_fuaobservada === 'Y66X');
         const fuasSinConsumo = window.allFuas.filter(f => f.fechafuasuelta === selectedDate && f.condicion_fuaobservada === 'Sin Consumo');
         const fuasReasignada = window.allFuas.filter(f => f.condicion_fuaobservada === 'Reasignada');
         
@@ -564,21 +664,11 @@
         for (let key in cols) {
             const col = cols[key];
             col.el.innerHTML = '';
-            
             if (col.data.length > 0) {
                 col.data.forEach(fua => {
                     const obsHtml = fua.observacion ? `<div class="fua-obs">📝 ${fua.observacion}</div>` : '';
                     const dateBadge = key === 'Reasignada' ? `<span style="font-size:11px; color:#888; margin-left:5px;">(${fua.fechafuasuelta})</span>` : '';
-                    
-                    col.el.innerHTML += `
-                    <li class="fua-item" id="fua-item-${fua.id}">
-                        <div class="fua-item-header">
-                            <strong>${fua.nrofuasuelta} ${dateBadge}</strong>
-                            <span class="fua-status">PENDIENTE</span>
-                        </div>
-                        ${obsHtml}
-                        <button class="btn-resolve" onclick="resolveFua(${fua.id}, this)">Resolver</button>
-                    </li>`;
+                    col.el.innerHTML += `<li class="fua-item" id="fua-item-${fua.id}"><div class="fua-item-header"><strong>${fua.nrofuasuelta} ${dateBadge}</strong><span class="fua-status">PENDIENTE</span></div>${obsHtml}<button class="btn-resolve" onclick="resolveFua(${fua.id}, this)">Resolver</button></li>`;
                 });
             } else {
                 col.el.innerHTML = `<li style="color:#888; padding:10px; text-align:center; font-size:13px;">No hay FUAs</li>`;
@@ -588,185 +678,222 @@
 
     function copyFuasCol(tab, condicion) {
         const selectedDate = window.selectedFuaDate_consumo;
-        let fuasToCopy = [];
-
-        if (condicion === 'Reasignada') {
-            fuasToCopy = window.allFuas.filter(f => f.condicion_fuaobservada === 'Reasignada');
-        } else {
-            fuasToCopy = window.allFuas.filter(f => f.fechafuasuelta === selectedDate && f.condicion_fuaobservada === condicion);
-        }
-        
+        let fuasToCopy = condicion === 'Reasignada' ? window.allFuas.filter(f => f.condicion_fuaobservada === 'Reasignada') : window.allFuas.filter(f => f.fechafuasuelta === selectedDate && f.condicion_fuaobservada === condicion);
         if (fuasToCopy.length === 0) return alert(`No hay FUAs en la columna ${condicion} para copiar.`);
-        
-        const textToCopy = fuasToCopy.map(f => f.nrofuasuelta).join('\n');
-        
-        navigator.clipboard.writeText(textToCopy).then(() => {
-            alert(`¡Se copiaron ${fuasToCopy.length} números de FUA de ${condicion} al portapapeles!`);
-        }).catch(err => {
-            alert("Error al copiar: " + err);
-        });
+        navigator.clipboard.writeText(fuasToCopy.map(f => f.nrofuasuelta).join('\n')).then(() => alert(`¡Se copiaron ${fuasToCopy.length} números de FUA!`));
     }
 
     async function resolveFua(id, btnElement) {
         btnElement.classList.add('resolved');
         btnElement.innerText = 'Resuelto ✓';
-        
         setTimeout(async () => {
             try {
-                const { error } = await supabase.from('asignacion').update({ condicionfuasuelta: 'resuelto' }).eq('id', id);
-                if (error) throw error;
-                loadFuas(); 
-            } catch (err) {
-                alert("Error al resolver la FUA: " + err.message);
-                btnElement.classList.remove('resolved');
-                btnElement.innerText = 'Resolver';
-            }
+                await supabase.from('asignacion').update({ condicionfuasuelta: 'resuelto' }).eq('id', id);
+                loadData();
+            } catch (err) { alert("Error al resolver: " + err.message); }
         }, 500);
     }
 
-    // --- LÓGICA DE GUARDADO GLOBAL Y ASIGNACIÓN ---
-
-    function toggleRowCheck(checkbox, digi) {
-        const tr = checkbox.closest('tr');
-        const selectedDate = document.getElementById('current-date').value;
-        
-        if (checkbox.checked) {
-            tr.classList.add('row-checked');
-            localStorage.setItem(`check_${selectedDate}_${digi}`, 'true');
-        } else {
-            tr.classList.remove('row-checked');
-            localStorage.removeItem(`check_${selectedDate}_${digi}`);
-        }
-    }
-
-    async function saveGlobalData(tab) {
-        const selectedDate = document.getElementById('current-date').value; 
-        let payload = { fecha_creacion: selectedDate }; 
-
-        const auditDate = document.getElementById('audit-date-consumo').value;
-        const compValue = document.getElementById('global-comp').value;
-        const cantValue = document.getElementById('global-cant').value;
-        
-        if (auditDate) payload.FechaAuditoriaDigitadores = auditDate;
-        payload.ComposicionArmado = compValue;
-        payload.CantidadPreAsignacion = cantValue || 0;
-
-        try {
-            const { data: existing } = await supabase.from('asignacion').select('id').eq('fecha_creacion', selectedDate).is('registro_id', null).is('nrofuasuelta', null).is('digitador_asignado', null).limit(1);
-            if (existing && existing.length > 0) payload.id = existing[0].id;
-
-            const { error } = await supabase.from('asignacion').upsert([payload]);
-            if (error) throw error;
-
-            alert(`Datos guardados correctamente para el día ${selectedDate}.`);
-            loadData();
-        } catch (err) { alert("Error al guardar: " + err.message); }
-    }
-
-    async function saveAsignacion() {
-        const selectedDate = document.getElementById('current-date').value;
-        const digitador = document.getElementById('asig-digitador').value;
-        const cantidad = document.getElementById('asig-cantidad').value;
-        const fechaAsig = document.getElementById('asig-fecha').value;
-
-        if (!digitador || !cantidad || !fechaAsig) {
-            return alert("Por favor, completa todos los campos de la asignación.");
-        }
-
-        try {
-            const payload = {
-                fecha_creacion: selectedDate,
-                digitador_asignado: digitador,
-                cantidad_asignada: cantidad,
-                fecha_asignacion: fechaAsig,
-                estado_asignacion: 'pendiente'
-            };
-
-            const { error } = await supabase.from('asignacion').insert([payload]);
-            if (error) throw error;
-
-            alert("Asignación guardada correctamente.");
-            document.getElementById('asig-digitador').value = '';
-            document.getElementById('asig-cantidad').value = '';
-            loadData(); 
-        } catch (err) {
-            alert("Error al guardar la asignación: " + err.message);
-        }
-    }
-
-    async function marcarEntregado(id, btnElement) {
-        btnElement.innerText = 'Procesando...';
-        try {
-            const { error } = await supabase.from('asignacion').update({ estado_asignacion: 'entregado' }).eq('id', id);
-            if (error) throw error;
-            loadData();
-        } catch (err) {
-            alert("Error al actualizar: " + err.message);
-            btnElement.innerText = 'Entregado ✓';
-        }
-    }
-
-    // --- NUEVA LÓGICA: BUSCADOR Y CRUCE DE FUAS ---
+    // --- LÓGICA DE FILTRO DE FUAS ---
     function procesarFiltro() {
-        const sistemaText = document.getElementById('filtro-sistema').value.trim();
-        const buscarText = document.getElementById('filtro-buscar').value.trim();
-        const ulEncontrados = document.getElementById('resultado-encontrados');
-        const ulNoEncontrados = document.getElementById('resultado-no-encontrados');
+        const sisText = document.getElementById('filtro-sistema').value;
+        const busText = document.getElementById('filtro-buscar').value;
+        
+        const extractFuas = (text) => {
+            const matches = text.match(/\b\d{7}\b/g);
+            return matches ? [...new Set(matches)] : [];
+        };
 
-        if (!sistemaText || !buscarText) {
-            alert("Por favor, pega los datos en el Cuadro 1 y el Cuadro 2 para poder buscar.");
-            return;
+        const listSistema = extractFuas(sisText);
+        const listBuscar = extractFuas(busText);
+
+        if (listSistema.length === 0 || listBuscar.length === 0) {
+            return alert("Por favor, ingresa datos válidos en ambas listas (números de 7 dígitos).");
         }
 
-        // 1. Leer y mapear la lista del sistema (Cuadro 1)
-        const lineasSistema = sistemaText.split('\n');
-        const mapaSistema = {}; 
+        const encontrados = [];
+        const noEncontrados = [];
 
-        lineasSistema.forEach(linea => {
-            const partes = linea.trim().split(/\s+/); 
-            if (partes.length >= 2) {
-                const numPosicion = parseInt(partes[0], 10); // Convertir a número para ordenar bien
-                const idFuaCompleto = partes[1]; 
-                
-                if (idFuaCompleto.length >= 7 && !isNaN(numPosicion)) {
-                    const fua7Digitos = idFuaCompleto.slice(-7);
-                    mapaSistema[fua7Digitos] = numPosicion;
-                }
-            }
+        listBuscar.forEach(fua => {
+            if (listSistema.includes(fua)) encontrados.push(fua);
+            else noEncontrados.push(fua);
         });
 
-        // 2. Buscar coincidencias con la lista a buscar (Cuadro 2)
-        const lineasBuscar = buscarText.split('\n');
-        let encontrados = [];
-        let noEncontrados = [];
+        encontrados.sort();
+        noEncontrados.sort();
 
-        lineasBuscar.forEach(linea => {
-            const fuaBuscar = linea.trim();
-            if (fuaBuscar) {
-                if (mapaSistema[fuaBuscar] !== undefined) {
-                    encontrados.push({ fua: fuaBuscar, pos: mapaSistema[fuaBuscar] });
-                } else {
-                    noEncontrados.push(fuaBuscar);
+        const renderList = (id, arr) => {
+            const el = document.getElementById(id);
+            el.innerHTML = arr.length > 0 ? arr.map(f => `<li>${f}</li>`).join('') : '<li>Ninguno</li>';
+        };
+
+        renderList('resultado-encontrados', encontrados);
+        renderList('resultado-no-encontrados', noEncontrados);
+    }
+
+    // --- LÓGICA DE CARGO Y CINTO ---
+    function checkPaqueteType() {
+        const pq = document.getElementById('cargo-paquete').value.trim().toUpperCase();
+        const colExtra = document.getElementById('col-extra-pqr');
+        if (pq.startsWith('PQR')) {
+            colExtra.style.display = 'flex';
+        } else {
+            colExtra.style.display = 'none';
+        }
+    }
+
+    async function procesarCargo(tipo) {
+        const fileInput = document.getElementById('cargo-file');
+        const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
+        const responsable = document.getElementById('cargo-responsable').value;
+        const fechaAsig = document.getElementById('cargo-fecha').value;
+        const prioInicio = document.getElementById('cargo-prio-inicio').value;
+        const prioFin = document.getElementById('cargo-prio-fin').value;
+        const alertBox = document.getElementById('cargo-alert');
+
+        alertBox.style.display = 'none';
+        alertBox.className = 'alert-box';
+
+        if (!fileInput.files.length) return showAlert('Sube un archivo Excel.', 'error');
+        if (!paquete) return showAlert('Ingresa el nombre del paquete.', 'error');
+
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
+
+            let filteredData = jsonData.filter(row => {
+                const rowPaquete = String(row['Paquete'] || row['PAQUETE'] || '').trim().toUpperCase();
+                return rowPaquete === paquete;
+            });
+
+            if (filteredData.length === 0) return showAlert('No se encontraron registros para ese paquete.', 'error');
+
+            // Validación de Costo para PQE
+            if (paquete.startsWith('PQE')) {
+                const tieneCostoCero = filteredData.some(row => {
+                    const costo = parseFloat(row['Costo'] || row['COSTO'] || row['costo'] || 0);
+                    return costo === 0;
+                });
+                if (tieneCostoCero) {
+                    return showAlert('¡ALERTA! Hay registros en este PQE con Costo 0.00. Revisa el Excel.', 'error');
                 }
             }
+
+            // Ordenamiento y Columna Extra para PQR
+            let isPQR = paquete.startsWith('PQR');
+            let extraColName = '';
+            if (isPQR) {
+                extraColName = document.getElementById('cargo-extra-pqr').value === 'consumo' ? 'Consumo' : 'Comentario';
+                filteredData.sort((a, b) => {
+                    const dateA = new Date(a['Fecha'] || a['FECHA'] || 0);
+                    const dateB = new Date(b['Fecha'] || b['FECHA'] || 0);
+                    return dateA - dateB;
+                });
+            }
+
+            if (tipo === 'excel') {
+                generarExcelCargo(filteredData, paquete, responsable, fechaAsig, prioInicio, prioFin, isPQR, extraColName);
+            } else if (tipo === 'pdf') {
+                generarPdfCinto(paquete);
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function showAlert(msg, type) {
+        const alertBox = document.getElementById('cargo-alert');
+        alertBox.innerText = msg;
+        alertBox.style.display = 'block';
+        alertBox.style.backgroundColor = type === 'error' ? '#e74c3c' : '#2ecc71';
+        alertBox.style.color = '#fff';
+        alertBox.style.padding = '10px';
+        alertBox.style.marginTop = '15px';
+        alertBox.style.borderRadius = '5px';
+    }
+
+    function generarExcelCargo(data, paquete, responsable, fechaAsig, prioInicio, prioFin, isPQR, extraColName) {
+        const wsData = [];
+        
+        // Cabecera del Cargo
+        wsData.push([{ v: "CARGO DE ENTREGA DE FUAS", s: { font: { bold: true, sz: 14 }, alignment: { horizontal: "center" } } }]);
+        wsData.push([]);
+        wsData.push([
+            { v: "Paquete:", s: { font: { bold: true } } }, { v: paquete },
+            { v: "Responsable:", s: { font: { bold: true } } }, { v: responsable },
+            { v: "Fecha Asignación:", s: { font: { bold: true } } }, { v: fechaAsig }
+        ]);
+        wsData.push([]);
+
+        // Cabeceras de tabla
+        let headers = ["Nro", "FUA", "Fecha", "Lote"];
+        if (isPQR) headers.push(extraColName);
+        
+        const headerRow = headers.map(h => ({ v: h, s: { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "4F81BD" } }, alignment: { horizontal: "center" } } }));
+        wsData.push(headerRow);
+
+        // Datos
+        const startPrio = prioInicio ? new Date(prioInicio + 'T00:00:00') : null;
+        const endPrio = prioFin ? new Date(prioFin + 'T23:59:59') : null;
+
+        data.forEach((row, index) => {
+            const fua = row['FUA'] || row['Fua'] || row['fua'] || '';
+            const fechaStr = row['Fecha'] || row['FECHA'] || row['fecha'] || '';
+            const lote = row['Lote'] || row['LOTE'] || row['lote'] || '';
+            
+            let isPriority = false;
+            if (startPrio && endPrio && fechaStr) {
+                const rowDate = new Date(fechaStr);
+                if (rowDate >= startPrio && rowDate <= endPrio) isPriority = true;
+            }
+
+            const style = isPriority ? { font: { bold: true, underline: true } } : {};
+
+            let rowData = [
+                { v: index + 1, s: style },
+                { v: fua, s: style },
+                { v: fechaStr, s: style },
+                { v: lote, s: style }
+            ];
+
+            if (isPQR) rowData.push({ v: "", s: style });
+
+            wsData.push(rowData);
         });
 
-        // 3. Ordenar encontrados de menor a mayor por la posición (Nº)
-        encontrados.sort((a, b) => a.pos - b.pos);
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        
+        // Ajustar anchos
+        ws['!cols'] = [{ wch: 5 }, { wch: 15 }, { wch: 12 }, { wch: 10 }];
+        if (isPQR) ws['!cols'].push({ wch: 20 });
 
-        // 4. Renderizar Encontrados (Verde)
-        if (encontrados.length > 0) {
-            ulEncontrados.innerHTML = encontrados.map(item => `<li>Nº ${item.pos} - ${item.fua}</li>`).join('');
-        } else {
-            ulEncontrados.innerHTML = `<li style="color: #666;">Ninguna coincidencia</li>`;
-        }
+        // Merge título
+        ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: headers.length - 1 } }];
 
-        // 5. Renderizar No Encontrados (Rojo)
-        if (noEncontrados.length > 0) {
-            ulNoEncontrados.innerHTML = noEncontrados.map(fua => `<li>${fua} - No encontrado</li>`).join('');
-        } else {
-            ulNoEncontrados.innerHTML = `<li style="color: #666;">Todos fueron encontrados</li>`;
-        }
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Cargo");
+        XLSX.writeFile(wb, `Cargo_${paquete}.xlsx`);
+    }
+
+    function generarPdfCinto(paquete) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        doc.setFontSize(120);
+        doc.setFont("helvetica", "bold");
+        
+        // Rotar texto 90 grados
+        doc.text(paquete, 105, 148, { angle: 90, align: "center" });
+
+        doc.save(`Cinto_${paquete}.pdf`);
     }
 </script>
 </body>
