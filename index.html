@@ -1253,36 +1253,33 @@
 
         doc.setFont("helvetica", "bold");
 
-        // --- COORDENADAS EXACTAS (Sin centrado automático para evitar que se muevan) ---
+        // --- COORDENADAS EXACTAS ---
         // X = Posición de izquierda a derecha.
         // Y = Posición de arriba hacia abajo (donde EMPIEZA a escribirse la palabra).
 
-        // 1. PRIMERA LÍNEA VERTICAL (Extremo Izquierdo - X: 25)
+        // 1. PRIMERA LÍNEA VERTICAL (Extremo Izquierdo - X: 15) -> Todo más a la izquierda
         doc.setFontSize(14);
-        doc.text("FECHA AUDITORIA", 25, 40, { angle: -90 });
-        doc.text(fechaFormateada, 25, 100, { angle: -90 });
+        doc.text("FECHA AUDITORIA", 15, 40, { angle: -90 });
+        doc.text(fechaFormateada, 15, 100, { angle: -90 });
         
         doc.setFontSize(18);
-        doc.text(`CANT: ${cantidad}`, 25, 240, { angle: -90 });
+        doc.text(`CANT: ${cantidad}`, 15, 240, { angle: -90 });
 
-        // 2. SEGUNDA LÍNEA VERTICAL (Paquete - X: 65)
-        // Movido a la derecha (X=65) y empezando más arriba (Y=70)
+        // 2. SEGUNDA LÍNEA VERTICAL (Paquete - X: 45) -> Más a la izquierda
         doc.setFontSize(60);
-        doc.text(paquete, 65, 70, { angle: -90 });
+        doc.text(paquete, 45, 60, { angle: -90 });
 
-        // 3. TERCERA LÍNEA VERTICAL (Auditor - X: 95)
-        // Movido más a la izquierda (antes estaba en 100, ahora en 95)
+        // 3. TERCERA LÍNEA VERTICAL (Auditor - X: 65) -> Mucho más a la izquierda, pegado al paquete
         doc.setFontSize(14);
         if (responsable) {
-            doc.text(responsable, 95, 100, { angle: -90 });
+            doc.text(responsable, 65, 100, { angle: -90 });
         } else {
-            doc.text("_________________________", 95, 100, { angle: -90 });
+            doc.text("_________________________", 65, 100, { angle: -90 });
         }
-        doc.text("Auditor / Digitador", 95, 220, { angle: -90 });
+        doc.text("Auditor / Digitador", 65, 220, { angle: -90 });
 
         doc.save(`Cinto_${paquete}.pdf`);
     }
-
 
 
 
