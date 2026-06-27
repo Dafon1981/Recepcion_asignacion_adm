@@ -1043,18 +1043,28 @@
             
             // Buscar dinámicamente los valores en la fila
             for (let key in row) {
-                const k = key.toUpperCase();
+                const k = key.toUpperCase().trim();
                 
-                // 1. Buscar NFUA prioritariamente
-                if (k === 'NFUA' || k === 'FUA' || k.includes('NROFUA') || k.includes('ITEMSMEDIN')) fua = row[key];
-                else if (k.includes('PACIENTE') || k.includes('ASEGURADO') || k.includes('AFILIADO')) paciente = row[key];
-                else if (k.includes('FEC') && k.includes('ATE')) fecAte = row[key];
+                // 1. Buscar NFUA estrictamente
+                if (k === 'NFUA') {
+                    fua = row[key];
+                } else if (!fua && (k === 'FUA' || k.includes('NROFUA'))) {
+                    fua = row[key];
+                } else if (k.includes('PACIENTE') || k.includes('ASEGURADO') || k.includes('AFILIADO')) {
+                    paciente = row[key];
+                } else if (k.includes('FEC') && k.includes('ATE')) {
+                    fecAte = row[key];
+                }
                 
                 // Guardamos la fecha de registro para la validación de prioridad
-                if (k.includes('FECHAREGIST') || k === 'FECHA') fechaRegist = row[key];
+                if (k.includes('FECHAREGIST') || k === 'FECHA') {
+                    fechaRegist = row[key];
+                }
 
                 // 2. Capturar el CostoTotal
-                if (k.includes('COSTO')) costoTotal = parseFloat(row[key]) || 0;
+                if (k.includes('COSTO')) {
+                    costoTotal = parseFloat(row[key]) || 0;
+                }
             }
 
             // Si no hay una columna específica de "Fecha de Atención", usamos la fecha general que encuentre
@@ -1103,7 +1113,6 @@
         XLSX.utils.book_append_sheet(wb, ws, "Cargo");
         XLSX.writeFile(wb, `Cargo_${paquete}.xlsx`);
     }
-
 
 
 
