@@ -1225,16 +1225,24 @@
 
     
 
-
-
-
-
-
-    
-
     function descargarPdfCinto() {
         const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
+        const responsable = document.getElementById('cargo-responsable').value || '_________________________';
+        const fechaAsig = document.getElementById('cargo-fecha').value;
+        
         if (!paquete) return showAlert('Ingresa el nombre del paquete.', 'error');
+        if (datosProcesadosCargo.length === 0) return showAlert('No hay datos procesados. Por favor, procesa la data primero.', 'error');
+
+        const cantidad = datosProcesadosCargo.length;
+
+        // Formatear la fecha de YYYY-MM-DD a DD / MM / YYYY
+        let fechaFormateada = "";
+        if (fechaAsig) {
+            const partes = fechaAsig.split('-');
+            if (partes.length === 3) {
+                fechaFormateada = `${partes[2]} / ${partes[1]} / ${partes[0]}`;
+            }
+        }
 
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({
@@ -1243,14 +1251,35 @@
             format: 'a4'
         });
 
-        doc.setFontSize(120);
         doc.setFont("helvetica", "bold");
-        
-        // Rotar texto 90 grados para que ocupe toda la hoja A4
+
+        // 1. Paquete (Centro, tamaño ajustado para que no se borre)
+        doc.setFontSize(85);
         doc.text(paquete, 105, 148, { angle: 90, align: "center" });
+
+        // 2. Auditor / Digitador (Derecha)
+        doc.setFontSize(16);
+        doc.text("Auditor / Digitador", 160, 230, { angle: 90, align: "center" });
+        doc.text(responsable, 160, 80, { angle: 90, align: "center" });
+
+        // 3. Fecha Auditoria (Izquierda)
+        doc.text("FECHA AUDITORIA", 50, 230, { angle: 90, align: "center" });
+        doc.text(fechaFormateada, 50, 80, { angle: 90, align: "center" });
+
+        // 4. Cantidad (Extremo Izquierdo)
+        doc.text(`CANT: ${cantidad}`, 25, 80, { angle: 90, align: "center" });
 
         doc.save(`Cinto_${paquete}.pdf`);
     }
+
+
+
+
+
+    
+
+  
+    
 </script>
 </body>
 </html>
