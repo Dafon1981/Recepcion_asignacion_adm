@@ -7,15 +7,11 @@
     
     <!-- Bibliotecas -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8"></script>
-    
-    <!-- Nuevas Bibliotecas para Excel (con estilos ) y PDF -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #121212; color: #ffffff; padding: 20px; }
-        .container { max-width: 1300px; margin: 0 auto; background: #1e1e1e; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5  ); }
+        .container { max-width: 1300px; margin: 0 auto; background: #1e1e1e; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5 ); }
         
         /* Header / Navegación */
         .header-nav { display: flex; justify-content: space-between; align-items: center; background: #2a2a2a; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; }
@@ -36,22 +32,14 @@
         .tab-content.active { display: block; }
         
         /* Panel Global Unificado */
-        .global-panel { display: flex; align-items: center; gap: 15px; background: #252525; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #f39c12; flex-wrap: wrap
-; }
+        .global-panel { display: flex; align-items: center; gap: 15px; background: #252525; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #f39c12; flex-wrap: wrap; }
         .global-panel .input-group { display: flex; flex-direction: column; gap: 5px; flex-grow: 1; }
         .global-panel label { font-size: 14px; color: #ccc; font-weight: bold; }
         .global-panel input, .global-panel select { padding: 10px; border-radius: 5px; border: 1px solid #555; background: #1a1a1a; color: white; outline: none; font-size: 15px; }
-        .global-panel input[type="date"], .global-panel input[type="file"] { color: #2ecc71; font-weight: bold; }
+        .global-panel input[type="date"] { color: #2ecc71; font-weight: bold; }
         .global-panel input:focus, .global-panel select:focus { border-color: #f1c40f; }
         .btn-save-panel { background: #f39c12; color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 15px; height: 42px; margin-top: 22px; }
         .btn-save-panel:hover { background: #d35400; color: white; }
-
-        /* Botones Cargo y Cinto */
-        .btn-excel { background: #2ecc71; color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 15px; display: flex; align-items: center; gap: 8px; }
-        .btn-excel:hover { background: #27ae60; color: white; }
-        .btn-pdf { background: #e74c3c; color: #fff; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 15px; display: flex; align-items: center; gap: 8px; }
-        .btn-pdf:hover { background: #c0392b; }
-        .alert-box { padding: 12px; border-radius: 5px; margin-top: 15px; font-weight: bold; display: none; width: fit-content; }
 
         /* Panel FUAs Observadas */
         .fua-panel { background: #1a1a1a; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #333; border-left: 4px solid #3498db; }
@@ -123,7 +111,6 @@
         <div class="tab active" onclick="switchTab('consumo')">Digitadores con consumo</div>
         <div class="tab" onclick="switchTab('asignacion')">Asignación</div>
         <div class="tab" onclick="switchTab('filtro')">Filtro de FUAs</div>
-        <div class="tab" onclick="switchTab('cargo')">Cargo y Cinto</div>
     </div>
 
     <!-- Pestaña: Con Consumo -->
@@ -151,8 +138,7 @@
                     <label>Observación</label>
                     <input type="text" id="fua-obs-consumo" placeholder="Detalle de la observación...">
                 </div>
-                <button class="btn-add-
-fua" onclick="addFua('consumo')">Guardar</button>
+                <button class="btn-add-fua" onclick="addFua('consumo')">Guardar</button>
             </div>
             
             <div class="fua-tabs-container" id="fua-tabs-consumo"></div>
@@ -287,70 +273,12 @@ fua" onclick="addFua('consumo')">Guardar</button>
         </div>
     </div>
 
-    <!-- NUEVA Pestaña: Cargo y Cinto -->
-    <div id="cargo" class="tab-content">
-        <div class="fua-panel" style="border-left-color: #f1c40f;">
-            <h3 style="color: #f1c40f;">Generador de Cargo y Cinto</h3>
-            
-            <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px;">
-                <div class="input-group" style="flex: 2; min-width: 250px;">
-                    <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Archivo Excel (Lista de Registros)</label>
-                    <input type="file" id="cargo-file" accept=".xlsx, .xls" style="width: 100%; padding: 10px; background: #000; color: #2ecc71; border: 1px solid #555; border-radius: 5px;">
-                </div>
-                
-                <div class="input-group" style="flex: 1; min-width: 150px;">
-                    <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Paquete a buscar</label>
-                    <input type="text" id="cargo-paquete" placeholder="Ej: PQR000010" onkeyup="checkPaqueteType()" style="width: 100%; padding: 10px; background: #000; color: #fff; border: 1px solid #555; border-radius: 5px;">
-                </div>
-
-                <div class="input-group" id="col-extra-pqr" style="flex: 1; min-width: 150px; display: none;">
-                    <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Columna Extra (Solo PQR)</label>
-                    <select id="cargo-extra-pqr" style="width: 100%; padding: 10px; background: #000; color: #fff; border: 1px solid #555; border-radius: 5px;">
-                        <option value="comentario">Comentario</option>
-                        <option value="consumo">Consumo</option>
-                    </select>
-                </div>
-            </div>
-
-            <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px;">
-                <div class="input-group" style="flex: 1; min-width: 150px;">
-                    <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Responsable (Opcional)</label>
-                    <select id="cargo-responsable" style="width: 100%; padding: 10px; background: #000; color: #fff; border: 1px solid #555; border-radius: 5px;">
-                        <option value="">En blanco...</option>
-                    </select>
-                </div>
-                
-                <div class="input-group" style="flex: 1; min-width: 150px;">
-                    <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Fecha de Asignación</label>
-                    <input type="date" id="cargo-fecha" style="width: 100%; padding: 10px; background: #000; color: #2ecc71; border: 1px solid #555; border-radius: 5px;">
-                </div>
-
-                <div class="input-group" style="flex: 1; min-width: 150px;">
-                    <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Prioridad Desde</label>
-                    <input type="date" id="cargo-prio-inicio" style="width: 100%; padding: 10px; background: #000; color: #2ecc71; border: 1px solid #555; border-radius: 5px;">
-                </div>
-                
-                <div class="input-group" style="flex: 1; min-width: 150px;">
-                    <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Prioridad Hasta</label>
-                    <input type="date" id="cargo-prio-fin" style="width: 100%; padding: 10px; background: #000; color: #2ecc71; border: 1px solid #555; border-radius: 5px;">
-                </div>
-            </div>
-
-            <div style="display: flex; gap: 15px;">
-                <button class="btn-excel" onclick="procesarCargo('excel')">📊 Descargar Excel</button>
-                <button class="btn-pdf" onclick="procesarCargo('pdf')">🖨️ Descargar Cinto (PDF)</button>
-            </div>
-
-            <div id="cargo-alert" class="alert-box"></div>
-        </div>
-    </div>
-
 </div> <!-- Cierre del container -->
 
 <script>
     const supabaseUrl = 'https://esiklpxyectbekxvajnw.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzaWtscHh5ZWN0YmVreHZham53Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2OTI1MjEsImV4cCI6MjA3NzI2ODUyMX0.mtQnqUrTmhmN1DQxOAUnGpizhYZobStHDH0cz_XfKGU';
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey  );
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey );
 
     let currentTab = 'consumo';
     let digitadoresConConsumo = [];
@@ -360,15 +288,13 @@ fua" onclick="addFua('consumo')">Guardar</button>
     window.allFuas = [];
     window.selectedFuaDate_consumo = '';
 
-    const MIN_START_DATE = new Date('2026-06-15T
-00:00:00');
+    const MIN_START_DATE = new Date('2026-06-15T00:00:00');
 
     document.addEventListener('DOMContentLoaded', async () => {
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('current-date').value = today;
         document.getElementById('fua-fecha-consumo').value = today;
         document.getElementById('asig-fecha').value = today;
-        document.getElementById('cargo-fecha').value = today; // Nuevo para Cargo
         
         window.selectedFuaDate_consumo = today;
         
@@ -386,14 +312,9 @@ fua" onclick="addFua('consumo')">Guardar</button>
                 digitadoresConConsumo = data.filter(d => d.condicion === 'con consumo').map(d => d.nombre);
                 
                 const selectAsig = document.getElementById('asig-digitador');
-                const selectCargo = document.getElementById('cargo-responsable'); // Nuevo para Cargo
-                
                 selectAsig.innerHTML = '<option value="">Seleccione un digitador...</option>';
-                selectCargo.innerHTML = '<option value="">En blanco...</option>'; // Nuevo para Cargo
-                
                 data.forEach(d => {
                     selectAsig.innerHTML += `<option value="${d.nombre}">${d.nombre}</option>`;
-                    selectCargo.innerHTML += `<option value="${d.nombre}">${d.nombre}</option>`; // Nuevo para Cargo
                 });
             }
         } catch (err) { console.error(err); }
@@ -405,7 +326,7 @@ fua" onclick="addFua('consumo')">Guardar</button>
         event.target.classList.add('active');
         document.getElementById(tabId).classList.add('active');
         currentTab = tabId;
-        if (tabId !== 'cargo' && tabId !== 'filtro') loadData();
+        loadData();
     }
 
     function changeDate(days) {
@@ -451,12 +372,9 @@ fua" onclick="addFua('consumo')">Guardar</button>
     function iniciarTemporizador() {
         if (pollingTimer) clearInterval(pollingTimer);
         pollingTimer = setInterval(() => {
-            if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'SELECT' && document.activeElement.tagName !== 'TEXTAREA') {
-                if (currentTab === 'consumo' || currentTab === 'asignacion') loadData();
-            }
+            if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'SELECT' && document.activeElement.tagName !== 'TEXTAREA') loadData();
         }, 10000);
     }
-
     async function loadData() {
         const selectedDate = document.getElementById('current-date').value;
         if (!selectedDate) return;
@@ -629,6 +547,7 @@ fua" onclick="addFua('consumo')">Guardar</button>
         renderFuaTabs(tab);
         renderFuaLists(tab);
     }
+
     function renderFuaLists(tab) {
         const selectedDate = window.selectedFuaDate_consumo;
         
@@ -787,7 +706,7 @@ fua" onclick="addFua('consumo')">Guardar</button>
         }
     }
 
-    // --- LÓGICA: BUSCADOR Y CRUCE DE FUAS ---
+    // --- NUEVA LÓGICA: BUSCADOR Y CRUCE DE FUAS ---
     function procesarFiltro() {
         const sistemaText = document.getElementById('filtro-sistema').value.trim();
         const buscarText = document.getElementById('filtro-buscar').value.trim();
@@ -799,13 +718,14 @@ fua" onclick="addFua('consumo')">Guardar</button>
             return;
         }
 
+        // 1. Leer y mapear la lista del sistema (Cuadro 1)
         const lineasSistema = sistemaText.split('\n');
         const mapaSistema = {}; 
 
         lineasSistema.forEach(linea => {
             const partes = linea.trim().split(/\s+/); 
             if (partes.length >= 2) {
-                const numPosicion = parseInt(partes[0], 10); 
+                const numPosicion = parseInt(partes[0], 10); // Convertir a número para ordenar bien
                 const idFuaCompleto = partes[1]; 
                 
                 if (idFuaCompleto.length >= 7 && !isNaN(numPosicion)) {
@@ -815,6 +735,7 @@ fua" onclick="addFua('consumo')">Guardar</button>
             }
         });
 
+        // 2. Buscar coincidencias con la lista a buscar (Cuadro 2)
         const lineasBuscar = buscarText.split('\n');
         let encontrados = [];
         let noEncontrados = [];
@@ -830,181 +751,22 @@ fua" onclick="addFua('consumo')">Guardar</button>
             }
         });
 
+        // 3. Ordenar encontrados de menor a mayor por la posición (Nº)
         encontrados.sort((a, b) => a.pos - b.pos);
 
+        // 4. Renderizar Encontrados (Verde)
         if (encontrados.length > 0) {
             ulEncontrados.innerHTML = encontrados.map(item => `<li>Nº ${item.pos} - ${item.fua}</li>`).join('');
         } else {
             ulEncontrados.innerHTML = `<li style="color: #666;">Ninguna coincidencia</li>`;
         }
 
+        // 5. Renderizar No Encontrados (Rojo)
         if (noEncontrados.length > 0) {
             ulNoEncontrados.innerHTML = noEncontrados.map(fua => `<li>${fua} - No encontrado</li>`).join('');
         } else {
             ulNoEncontrados.innerHTML = `<li style="color: #666;">Todos fueron encontrados</li>`;
         }
-    }
-
-    // --- NUEVA LÓGICA: CARGO Y CINTO ---
-    function checkPaqueteType() {
-        const pq = document.getElementById('cargo-paquete').value.trim().toUpperCase();
-        const colExtra = document.getElementById('col-extra-pqr');
-        if (pq.startsWith('PQR')) {
-            colExtra.style.display = 'flex';
-        } else {
-            colExtra.style.display = 'none';
-        }
-    }
-
-    async function procesarCargo(tipo) {
-        const fileInput = document.getElementById('cargo-file');
-        const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
-        const responsable = document.getElementById('cargo-responsable').value;
-        const fechaAsig = document.getElementById('cargo-fecha').value;
-        const prioInicio = document.getElementById('cargo-prio-inicio').value;
-        const prioFin = document.getElementById('cargo-prio-fin').value;
-        const alertBox = document.getElementById('cargo-alert');
-
-        alertBox.style.display = 'none';
-        alertBox.className = 'alert-box';
-
-        if (!fileInput.files.length) return showAlert('Sube un archivo Excel.', 'error');
-        if (!paquete) return showAlert('Ingresa el nombre del paquete.', 'error');
-
-        const file = fileInput.files[0];
-        const reader = new FileReader();
-
-        reader.onload = function(e) {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-            const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
-
-            let filteredData = jsonData.filter(row => {
-                const rowPaquete = String(row['Paquete'] || row['PAQUETE'] || '').trim().toUpperCase();
-                return rowPaquete === paquete;
-            });
-
-            if (filteredData.length === 0) return showAlert('No se encontraron registros para ese paquete.', 'error');
-
-            // Validación de Costo para PQE
-            if (paquete.startsWith('PQE')) {
-                const tieneCostoCero = filteredData.some(row => {
-                    const costo = parseFloat(row['Costo'] || row['COSTO'] || row['costo'] || 0);
-                    return costo === 0;
-                });
-                if (tieneCostoCero) {
-                    return showAlert('¡ALERTA! Hay registros en este PQE con Costo 0.00. Revisa el Excel.', 'error');
-                }
-            }
-
-            // Ordenamiento y Columna Extra para PQR
-            let isPQR = paquete.startsWith('PQR');
-            let extraColName = '';
-            if (isPQR) {
-                extraColName = document.getElementById('cargo-extra-pqr').value === 'consumo' ? 'Consumo' : 'Comentario';
-                filteredData.sort((a, b) => {
-                    const dateA = new Date(a['Fecha'] || a['FECHA'] || 0);
-                    const dateB = new Date(b['Fecha'] || b['FECHA'] || 0);
-                    return dateA - dateB;
-                });
-            }
-
-            if (tipo === 'excel') {
-                generarExcelCargo(filteredData, paquete, responsable, fechaAsig, prioInicio, prioFin, isPQR, extraColName);
-            } else if (tipo === 'pdf') {
-                generarPdfCinto(paquete);
-            }
-        };
-        reader.readAsArrayBuffer(file);
-    }
-
-    function showAlert(msg, type) {
-        const alertBox = document.getElementById('cargo-alert');
-        alertBox.innerText = msg;
-        alertBox.style.display = 'block';
-        alertBox.style.backgroundColor = type === 'error' ? '#e74c3c' : '#2ecc71';
-        alertBox.style.color = '#fff';
-    }
-
-    function generarExcelCargo(data, paquete, responsable, fechaAsig, prioInicio, prioFin, isPQR, extraColName) {
-        const wsData = [];
-        
-        // Cabecera del Cargo
-        wsData.push([{ v: "CARGO DE ENTREGA DE FUAS", s: { font: { bold: true, sz: 14 }, alignment: { horizontal: "center" } } }]);
-        wsData.push([]);
-        wsData.push([
-            { v: "Paquete:", s: { font: { bold: true } } }, { v: paquete },
-            { v: "Responsable:", s: { font: { bold: true } } }, { v: responsable },
-            { v: "Fecha Asignación:", s: { font: { bold: true } } }, { v: fechaAsig }
-        ]);
-        wsData.push([]);
-
-        // Cabeceras de tabla
-        let headers = ["Nro", "FUA", "Fecha", "Lote"];
-        if (isPQR) headers.push(extraColName);
-        
-        const headerRow = headers.map(h => ({ v: h, s: { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "4F81BD" } }, alignment: { horizontal: "center" } } }));
-        wsData.push(headerRow);
-
-        // Datos
-        const startPrio = prioInicio ? new Date(prioInicio + 'T00:00:00') : null;
-        const endPrio = prioFin ? new Date(prioFin + 'T23:59:59') : null;
-
-        data.forEach((row, index) => {
-            const fua = row['FUA'] || row['Fua'] || row['fua'] || '';
-            const fechaStr = row['Fecha'] || row['FECHA'] || row['fecha'] || '';
-            const lote = row['Lote'] || row['LOTE'] || row['lote'] || '';
-            
-            let isPriority = false;
-            if (startPrio && endPrio && fechaStr) {
-                const rowDate = new Date(fechaStr);
-                if (rowDate >= startPrio && rowDate <= endPrio) isPriority = true;
-            }
-
-            const style = isPriority ? { font: { bold: true, underline: true } } : {};
-
-            let rowData = [
-                { v: index + 1, s: style },
-                { v: fua, s: style },
-                { v: fechaStr, s: style },
-                { v: lote, s: style }
-            ];
-
-            if (isPQR) rowData.push({ v: "", s: style });
-
-            wsData.push(rowData);
-        });
-
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-        
-        // Ajustar anchos
-        ws['!cols'] = [{ wch: 5 }, { wch: 15 }, { wch: 12 }, { wch: 10 }];
-        if (isPQR) ws['!cols'].push({ wch: 20 });
-
-        // Merge título
-        ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: headers.length - 1 } }];
-
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Cargo");
-        XLSX.writeFile(wb, `Cargo_${paquete}.xlsx`);
-    }
-
-    function generarPdfCinto(paquete) {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({
-            orientation: 'portrait',
-            unit: 'mm',
-            format: 'a4'
-        });
-
-        doc.setFontSize(120);
-        doc.setFont("helvetica", "bold");
-        
-        // Rotar texto 90 grados
-        doc.text(paquete, 105, 148, { angle: 90, align: "center" });
-
-        doc.save(`Cinto_${paquete}.pdf`);
     }
 </script>
 </body>
