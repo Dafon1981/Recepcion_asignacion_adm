@@ -37,9 +37,9 @@
         .global-panel { display: flex; align-items: center; gap: 15px; background: #252525; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #f39c12; flex-wrap: wrap; }
         .global-panel .input-group { display: flex; flex-direction: column; gap: 5px; flex-grow: 1; }
         .global-panel label { font-size: 14px; color: #ccc; font-weight: bold; }
-        .global-panel input { padding: 10px; border-radius: 5px; border: 1px solid #555; background: #1a1a1a; color: white; outline: none; font-size: 15px; }
+        .global-panel input, .global-panel select { padding: 10px; border-radius: 5px; border: 1px solid #555; background: #1a1a1a; color: white; outline: none; font-size: 15px; }
         .global-panel input[type="date"] { color: #2ecc71; font-weight: bold; }
-        .global-panel input:focus { border-color: #f1c40f; }
+        .global-panel input:focus, .global-panel select:focus { border-color: #f1c40f; }
         .btn-save-panel { background: #f39c12; color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 15px; height: 42px; margin-top: 22px; }
         .btn-save-panel:hover { background: #d35400; color: white; }
 
@@ -117,7 +117,7 @@
 
     <div class="tabs">
         <div class="tab active" onclick="switchTab('consumo')">Digitadores con consumo</div>
-        <div class="tab" onclick="switchTab('sin-consumo')">Digitadores sin consumo</div>
+        <div class="tab" onclick="switchTab('asignacion')">Asignación</div>
     </div>
 
     <!-- Pestaña: Con Consumo -->
@@ -195,71 +195,40 @@
         <div class="chart-container"><canvas id="chartConsumo"></canvas></div>
     </div>
 
-    <!-- Pestaña: Sin Consumo -->
-    <div id="sin-consumo" class="tab-content">
-        <div class="fua-panel">
-            <h3>FUAs Observadas (Ventana de 10 días)</h3>
-            <div class="fua-add-section">
-                <div class="input-group" style="max-width: 150px;">
-                    <label>Nro FUA</label>
-                    <input type="number" id="fua-nro-sin-consumo" placeholder="Ej: 123456" min="0">
-                </div>
-                <div class="input-group" style="max-width: 160px;">
-                    <label>Fecha FUA</label>
-                    <input type="date" id="fua-fecha-sin-consumo">
-                </div>
-                <div class="input-group" style="max-width: 160px;">
-                    <label>Condición</label>
-                    <select id="fua-condicion-sin-consumo">
-                        <option value="Y66X">Y66X</option>
-                        <option value="Sin Consumo">Sin Consumo</option>
-                        <option value="Reasignada">Reasignada</option>
-                    </select>
-                </div>
-                <div class="input-group" style="flex-grow: 1;">
-                    <label>Observación</label>
-                    <input type="text" id="fua-obs-sin-consumo" placeholder="Detalle de la observación...">
-                </div>
-                <button class="btn-add-fua" onclick="addFua('sin-consumo')">Guardar</button>
-            </div>
-            
-            <div class="fua-tabs-container" id="fua-tabs-sin-consumo"></div>
-
-            <div class="fua-tables-grid">
-                <div class="fua-table-col">
-                    <h4>Y66X <button class="btn-copy-col" onclick="copyFuasCol('sin-consumo', 'Y66X')">📋 Copiar</button></h4>
-                    <ul class="fua-list" id="fua-list-sin-consumo-y66x"></ul>
-                </div>
-                <div class="fua-table-col">
-                    <h4>Sin Consumo <button class="btn-copy-col" onclick="copyFuasCol('sin-consumo', 'Sin Consumo')">📋 Copiar</button></h4>
-                    <ul class="fua-list" id="fua-list-sin-consumo-sin-consumo"></ul>
-                </div>
-                <div class="fua-table-col">
-                    <h4>Reasignada <button class="btn-copy-col" onclick="copyFuasCol('sin-consumo', 'Reasignada')">📋 Copiar</button></h4>
-                    <ul class="fua-list" id="fua-list-sin-consumo-reasignada"></ul>
-                </div>
-            </div>
-        </div>
-
+    <!-- Pestaña: Asignación -->
+    <div id="asignacion" class="tab-content">
         <div class="global-panel">
-            <div class="input-group" style="max-width: 250px;">
-                <label>Fecha Auditoría Sin Consumo</label>
-                <input type="date" id="audit-date-sin-consumo">
+            <h3 style="width: 100%; color: #f1c40f; margin-bottom: 10px;">Nueva Asignación</h3>
+            <div class="input-group" style="flex-grow: 2;">
+                <label>Digitador</label>
+                <select id="asig-digitador">
+                    <option value="">Cargando digitadores...</option>
+                </select>
             </div>
-            <button class="btn-save-panel" onclick="saveGlobalData('sin-consumo')">Guardar Datos</button>
+            <div class="input-group" style="max-width: 150px;">
+                <label>Cantidad</label>
+                <input type="number" id="asig-cantidad" min="1" placeholder="Ej: 50">
+            </div>
+            <div class="input-group" style="max-width: 200px;">
+                <label>Fecha de Asignación</label>
+                <input type="date" id="asig-fecha">
+            </div>
+            <button class="btn-save-panel" onclick="saveAsignacion()">Guardar Asignación</button>
         </div>
         
+        <h3 style="color: #3498db; margin-bottom: 15px;">Asignaciones del Día Seleccionado</h3>
         <table>
             <thead>
                 <tr>
-                    <th class="check-cell">✓</th>
-                    <th>Digitador</th>
-                    <th style="width: 200px; text-align: center;">Registros del Día</th>
+                    <th>Digitador Asignado</th>
+                    <th style="text-align: center;">Cantidad</th>
+                    <th style="text-align: center;">Fecha de Asignación</th>
                 </tr>
             </thead>
-            <tbody id="table-sin-consumo"></tbody>
+            <tbody id="table-asignaciones">
+                <!-- Datos dinámicos -->
+            </tbody>
         </table>
-        <div class="chart-container"><canvas id="chartSinConsumo"></canvas></div>
     </div>
 </div>
 <script>
@@ -271,15 +240,12 @@
 
     let currentTab = 'consumo';
     let chartConsumoInstance = null;
-    let chartSinConsumoInstance = null;
-    
     let digitadoresConConsumo = [];
-    let digitadoresSinConsumo = [];
+    let todosLosDigitadores = [];
     let pollingTimer = null;
 
     window.allFuas = [];
     window.selectedFuaDate_consumo = '';
-    window.selectedFuaDate_sin_consumo = '';
 
     const MIN_START_DATE = new Date('2026-06-15T00:00:00');
 
@@ -287,10 +253,9 @@
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('current-date').value = today;
         document.getElementById('fua-fecha-consumo').value = today;
-        document.getElementById('fua-fecha-sin-consumo').value = today;
+        document.getElementById('asig-fecha').value = today;
         
         window.selectedFuaDate_consumo = today;
-        window.selectedFuaDate_sin_consumo = today;
         
         await cargarDigitadores();
         initCharts();
@@ -303,8 +268,15 @@
             const { data, error } = await supabase.from('digitadores').select('*');
             if (error) return console.error(error);
             if (data) {
+                todosLosDigitadores = data;
                 digitadoresConConsumo = data.filter(d => d.condicion === 'con consumo').map(d => d.nombre);
-                digitadoresSinConsumo = data.filter(d => d.condicion === 'sin consumo').map(d => d.nombre);
+                
+                // Llenar combo box de la pestaña Asignación
+                const selectAsig = document.getElementById('asig-digitador');
+                selectAsig.innerHTML = '<option value="">Seleccione un digitador...</option>';
+                data.forEach(d => {
+                    selectAsig.innerHTML += `<option value="${d.nombre}">${d.nombre}</option>`;
+                });
             }
         } catch (err) { console.error(err); }
     }
@@ -354,7 +326,6 @@
     function manualDateChange() { 
         const d = document.getElementById('current-date').value;
         window.selectedFuaDate_consumo = d;
-        window.selectedFuaDate_sin_consumo = d;
         loadData(); 
         iniciarTemporizador(); 
     }
@@ -368,68 +339,79 @@
 
     function initCharts() {
         const ctxConsumo = document.getElementById('chartConsumo').getContext('2d');
-        const ctxSinConsumo = document.getElementById('chartSinConsumo').getContext('2d');
         const configBase = { type: 'bar', options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { color: '#fff' } }, x: { ticks: { color: '#fff' } } }, plugins: { legend: { display: false }, datalabels: { color: '#fff', anchor: 'end', align: 'top', font: { weight: 'bold', size: 14 } } } } };
         chartConsumoInstance = new Chart(ctxConsumo, { ...configBase, data: { labels: digitadoresConConsumo, datasets: [{ data: [], backgroundColor: '#3498db', borderRadius: 4 }] } });
-        chartSinConsumoInstance = new Chart(ctxSinConsumo, { ...configBase, data: { labels: digitadoresSinConsumo, datasets: [{ data: [], backgroundColor: '#e74c3c', borderRadius: 4 }] } });
     }
 
     async function loadData() {
         const selectedDate = document.getElementById('current-date').value;
         if (!selectedDate) return;
 
-        await loadFuas();
-
-        const { data: asigData } = await supabase.from('asignacion').select('*').eq('fecha_creacion', selectedDate).is('registro_id', null).is('nrofuasuelta', null).limit(1);
-        let globalComp = '', globalCant = 0, auditDateConsumo = '', auditDateSinConsumo = '';
-
-        if (asigData && asigData.length > 0) {
-            globalComp = asigData[0].ComposicionArmado || '';
-            globalCant = asigData[0].CantidadPreAsignacion || 0;
-            auditDateConsumo = asigData[0].FechaAuditoriaDigitadores || '';
-            auditDateSinConsumo = asigData[0].FechaAuditoriaSinConsumo || '';
-        }
-
         if (currentTab === 'consumo') {
+            await loadFuas();
+
+            const { data: asigData } = await supabase.from('asignacion').select('*').eq('fecha_creacion', selectedDate).is('registro_id', null).is('nrofuasuelta', null).is('digitador_asignado', null).limit(1);
+            let globalComp = '', globalCant = 0, auditDateConsumo = '';
+
+            if (asigData && asigData.length > 0) {
+                globalComp = asigData[0].ComposicionArmado || '';
+                globalCant = asigData[0].CantidadPreAsignacion || 0;
+                auditDateConsumo = asigData[0].FechaAuditoriaDigitadores || '';
+            }
+
             if (document.activeElement.id !== 'global-comp') document.getElementById('global-comp').value = globalComp;
             if (document.activeElement.id !== 'global-cant') document.getElementById('global-cant').value = globalCant;
             if (document.activeElement.id !== 'audit-date-consumo') document.getElementById('audit-date-consumo').value = auditDateConsumo;
-        } else {
-            if (document.activeElement.id !== 'audit-date-sin-consumo') document.getElementById('audit-date-sin-consumo').value = auditDateSinConsumo;
-        }
 
-        const { data: regData } = await supabase.from('registros').select('Resp_Aud_Digi').eq('fecha_creacion', selectedDate);
-        const digitadoresActuales = currentTab === 'consumo' ? digitadoresConConsumo : digitadoresSinConsumo;
-        const counts = {}; 
-        digitadoresActuales.forEach(d => { counts[d] = 0; });
+            const { data: regData } = await supabase.from('registros').select('Resp_Aud_Digi').eq('fecha_creacion', selectedDate);
+            const counts = {}; 
+            digitadoresConConsumo.forEach(d => { counts[d] = 0; });
 
-        if (regData) {
-            regData.forEach(row => {
-                if (digitadoresActuales.includes(row.Resp_Aud_Digi)) counts[row.Resp_Aud_Digi]++;
+            if (regData) {
+                regData.forEach(row => {
+                    if (digitadoresConConsumo.includes(row.Resp_Aud_Digi)) counts[row.Resp_Aud_Digi]++;
+                });
+            }
+
+            let tableHTML = '';
+            digitadoresConConsumo.forEach(digi => {
+                const isChecked = localStorage.getItem(`check_${selectedDate}_${digi}`) === 'true' ? 'checked' : '';
+                tableHTML += `<tr class="${isChecked ? 'row-checked' : ''}">
+                    <td class="check-cell"><input type="checkbox" class="digitador-check" onchange="toggleRowCheck(this, '${digi}')" ${isChecked}></td>
+                    <td><strong>${digi}</strong></td>
+                    <td style="text-align: center;"><span class="reg-count">${counts[digi]}</span></td>
+                </tr>`;
             });
-        }
 
-        let tableHTML = '';
-        digitadoresActuales.forEach(digi => {
-            const isChecked = localStorage.getItem(`check_${selectedDate}_${digi}`) === 'true' ? 'checked' : '';
-            tableHTML += `<tr class="${isChecked ? 'row-checked' : ''}">
-                <td class="check-cell"><input type="checkbox" class="digitador-check" onchange="toggleRowCheck(this, '${digi}')" ${isChecked}></td>
-                <td><strong>${digi}</strong></td>
-                <td style="text-align: center;"><span class="reg-count">${counts[digi]}</span></td>
-            </tr>`;
-        });
+            if(tableHTML === '') tableHTML = `<tr><td colspan="3" style="text-align:center;">No hay digitadores configurados</td></tr>`;
 
-        if(tableHTML === '') tableHTML = `<tr><td colspan="3" style="text-align:center;">No hay digitadores configurados</td></tr>`;
-
-        const chartData = digitadoresActuales.map(d => counts[d]);
-        if (currentTab === 'consumo') {
+            const chartData = digitadoresConConsumo.map(d => counts[d]);
             chartConsumoInstance.data.datasets[0].data = chartData;
             chartConsumoInstance.update();
             document.getElementById('table-consumo').innerHTML = tableHTML;
-        } else {
-            chartSinConsumoInstance.data.datasets[0].data = chartData;
-            chartSinConsumoInstance.update();
-            document.getElementById('table-sin-consumo').innerHTML = tableHTML;
+
+        } else if (currentTab === 'asignacion') {
+            // Cargar la tabla de asignaciones para el día seleccionado
+            const { data, error } = await supabase
+                .from('asignacion')
+                .select('digitador_asignado, cantidad_asignada, fecha_asignacion')
+                .eq('fecha_creacion', selectedDate)
+                .not('digitador_asignado', 'is', null)
+                .order('id', { ascending: false });
+
+            let tableHTML = '';
+            if (data && data.length > 0) {
+                data.forEach(row => {
+                    tableHTML += `<tr>
+                        <td><strong>${row.digitador_asignado}</strong></td>
+                        <td style="text-align: center; color: #f1c40f; font-weight: bold;">${row.cantidad_asignada}</td>
+                        <td style="text-align: center;">${row.fecha_asignacion}</td>
+                    </tr>`;
+                });
+            } else {
+                tableHTML = `<tr><td colspan="3" style="text-align:center; color:#888;">No hay asignaciones registradas para este día</td></tr>`;
+            }
+            document.getElementById('table-asignaciones').innerHTML = tableHTML;
         }
     }
     // --- LÓGICA DE FUAS OBSERVADAS ---
@@ -493,9 +475,7 @@
             window.allFuas = (data || []).filter(f => f.condicion_fuaobservada === 'Reasignada' || f.fechafuasuelta >= limitDateStr);
 
             renderFuaTabs('consumo');
-            renderFuaTabs('sin-consumo');
             renderFuaLists('consumo');
-            renderFuaLists('sin-consumo');
 
         } catch (err) { console.error("Error al cargar FUAs:", err); }
     }
@@ -520,7 +500,7 @@
             const count = fuasDelDia.length;
             
             const statusClass = count > 0 ? 'has-fuas' : 'no-fuas';
-            const activeClass = (tab === 'consumo' ? window.selectedFuaDate_consumo : window.selectedFuaDate_sin_consumo) === dateStr ? 'active' : '';
+            const activeClass = window.selectedFuaDate_consumo === dateStr ? 'active' : '';
             
             const displayDate = `${String(iterDate.getDate()).padStart(2, '0')}/${String(iterDate.getMonth() + 1).padStart(2, '0')}`;
             
@@ -536,15 +516,13 @@
     }
 
     function selectFuaTab(tab, dateStr) {
-        if (tab === 'consumo') window.selectedFuaDate_consumo = dateStr;
-        else window.selectedFuaDate_sin_consumo = dateStr;
-        
+        window.selectedFuaDate_consumo = dateStr;
         renderFuaTabs(tab);
         renderFuaLists(tab);
     }
 
     function renderFuaLists(tab) {
-        const selectedDate = tab === 'consumo' ? window.selectedFuaDate_consumo : window.selectedFuaDate_sin_consumo;
+        const selectedDate = window.selectedFuaDate_consumo;
         
         // Filtramos por fecha seleccionada para Y66X y Sin Consumo
         const fuasY66X = window.allFuas.filter(f => f.fechafuasuelta === selectedDate && f.condicion_fuaobservada === 'Y66X');
@@ -566,7 +544,6 @@
             if (col.data.length > 0) {
                 col.data.forEach(fua => {
                     const obsHtml = fua.observacion ? `<div class="fua-obs">📝 ${fua.observacion}</div>` : '';
-                    // Añadimos la fecha visualmente a las reasignadas para saber de cuándo son
                     const dateBadge = key === 'Reasignada' ? `<span style="font-size:11px; color:#888; margin-left:5px;">(${fua.fechafuasuelta})</span>` : '';
                     
                     col.el.innerHTML += `
@@ -586,7 +563,7 @@
     }
 
     function copyFuasCol(tab, condicion) {
-        const selectedDate = tab === 'consumo' ? window.selectedFuaDate_consumo : window.selectedFuaDate_sin_consumo;
+        const selectedDate = window.selectedFuaDate_consumo;
         let fuasToCopy = [];
 
         if (condicion === 'Reasignada') {
@@ -623,7 +600,7 @@
         }, 500);
     }
 
-    // --- FIN LÓGICA FUAS OBSERVADAS ---
+    // --- LÓGICA DE GUARDADO GLOBAL Y ASIGNACIÓN ---
 
     function toggleRowCheck(checkbox, digi) {
         const tr = checkbox.closest('tr');
@@ -642,21 +619,16 @@
         const selectedDate = document.getElementById('current-date').value; 
         let payload = { fecha_creacion: selectedDate }; 
 
-        if (tab === 'consumo') {
-            const auditDate = document.getElementById('audit-date-consumo').value;
-            const compValue = document.getElementById('global-comp').value;
-            const cantValue = document.getElementById('global-cant').value;
-            
-            if (auditDate) payload.FechaAuditoriaDigitadores = auditDate;
-            payload.ComposicionArmado = compValue;
-            payload.CantidadPreAsignacion = cantValue || 0;
-        } else {
-            const auditDate = document.getElementById('audit-date-sin-consumo').value;
-            if (auditDate) payload.FechaAuditoriaSinConsumo = auditDate;
-        }
+        const auditDate = document.getElementById('audit-date-consumo').value;
+        const compValue = document.getElementById('global-comp').value;
+        const cantValue = document.getElementById('global-cant').value;
+        
+        if (auditDate) payload.FechaAuditoriaDigitadores = auditDate;
+        payload.ComposicionArmado = compValue;
+        payload.CantidadPreAsignacion = cantValue || 0;
 
         try {
-            const { data: existing } = await supabase.from('asignacion').select('id').eq('fecha_creacion', selectedDate).is('registro_id', null).is('nrofuasuelta', null).limit(1);
+            const { data: existing } = await supabase.from('asignacion').select('id').eq('fecha_creacion', selectedDate).is('registro_id', null).is('nrofuasuelta', null).is('digitador_asignado', null).limit(1);
             if (existing && existing.length > 0) payload.id = existing[0].id;
 
             const { error } = await supabase.from('asignacion').upsert([payload]);
@@ -665,6 +637,40 @@
             alert(`Datos guardados correctamente para el día ${selectedDate}.`);
             loadData();
         } catch (err) { alert("Error al guardar: " + err.message); }
+    }
+
+    // NUEVA FUNCIÓN: Guardar Asignación
+    async function saveAsignacion() {
+        const selectedDate = document.getElementById('current-date').value;
+        const digitador = document.getElementById('asig-digitador').value;
+        const cantidad = document.getElementById('asig-cantidad').value;
+        const fechaAsig = document.getElementById('asig-fecha').value;
+
+        if (!digitador || !cantidad || !fechaAsig) {
+            return alert("Por favor, completa todos los campos de la asignación.");
+        }
+
+        try {
+            const payload = {
+                fecha_creacion: selectedDate,
+                digitador_asignado: digitador,
+                cantidad_asignada: cantidad,
+                fecha_asignacion: fechaAsig
+            };
+
+            const { error } = await supabase.from('asignacion').insert([payload]);
+            if (error) throw error;
+
+            alert("Asignación guardada correctamente.");
+            
+            // Limpiar campos para la siguiente asignación
+            document.getElementById('asig-digitador').value = '';
+            document.getElementById('asig-cantidad').value = '';
+            
+            loadData(); // Recargar la tabla de asignaciones
+        } catch (err) {
+            alert("Error al guardar la asignación: " + err.message);
+        }
     }
 </script>
 </body>
