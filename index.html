@@ -334,16 +334,23 @@
                 </div>
             </div>
 
-            <div style="display: flex; gap: 15px;">
-                <button class="btn-excel" onclick="procesarCargo('excel')">📊 Descargar Excel</button>
-                <button class="btn-pdf" onclick="procesarCargo('pdf')">🖨️ Descargar Cinto (PDF)</button>
+            <!-- Botón Procesar -->
+            <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                <button onclick="procesarData()" style="background: #3498db; color: white; border: none; padding: 12px 25px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s;">⚙️ Procesar Data</button>
             </div>
 
             <div id="cargo-alert" class="alert-box"></div>
+
+            <!-- Botones de Descarga (Ocultos inicialmente) -->
+            <div id="botones-descarga" style="display: none; gap: 15px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #444;">
+                <button class="btn-excel" onclick="descargarExcelCargo()">📊 Descargar Excel</button>
+                <button class="btn-pdf" onclick="descargarPdfCinto()">🖨️ Descargar Cinto (PDF)</button>
+            </div>
         </div>
     </div>
 
 </div> <!-- Cierre del container -->
+
 
 <script>
     const supabaseUrl = 'https://esiklpxyectbekxvajnw.supabase.co';
@@ -842,7 +849,9 @@
         }
     }
 
-    // --- NUEVA LÓGICA: CARGO Y CINTO ---
+      // --- NUEVA LÓGICA: CARGO Y CINTO ---
+    let datosProcesadosCargo = []; // Variable global para guardar los datos filtrados
+
     function checkPaqueteType() {
         const pq = document.getElementById('cargo-paquete').value.trim().toUpperCase();
         const colExtra = document.getElementById('col-extra-pqr');
@@ -851,69 +860,9 @@
         } else {
             colExtra.style.display = 'none';
         }
-    }
-
-    async function procesarCargo(tipo) {
-        const fileInput = document.getElementById('cargo-file');
-        const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
-        const responsable = document.getElementById('cargo-responsable').value;
-        const fechaAsig = document.getElementById('cargo-fecha').value;
-        const prioInicio = document.getElementById('cargo-prio-inicio').value;
-        const prioFin = document.getElementById('cargo-prio-fin').value;
-        const alertBox = document.getElementById('cargo-alert');
-
-        alertBox.style.display = 'none';
-        alertBox.className = 'alert-box';
-
-        if (!fileInput.files.length) return showAlert('Sube un archivo Excel.', 'error');
-        if (!paquete) return showAlert('Ingresa el nombre del paquete.', 'error');
-
-        const file = fileInput.files[0];
-        const reader = new FileReader();
-
-        reader.onload = function(e) {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-            const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
-
-            let filteredData = jsonData.filter(row => {
-                const rowPaquete = String(row['Paquete'] || row['PAQUETE'] || '').trim().toUpperCase();
-                return rowPaquete === paquete;
-            });
-
-            if (filteredData.length === 0) return showAlert('No se encontraron registros para ese paquete.', 'error');
-
-            // Validación de Costo para PQE
-            if (paquete.startsWith('PQE')) {
-                const tieneCostoCero = filteredData.some(row => {
-                    const costo = parseFloat(row['Costo'] || row['COSTO'] || row['costo'] || 0);
-                    return costo === 0;
-                });
-                if (tieneCostoCero) {
-                    return showAlert('¡ALERTA! Hay registros en este PQE con Costo 0.00. Revisa el Excel.', 'error');
-                }
-            }
-
-            // Ordenamiento y Columna Extra para PQR
-            let isPQR = paquete.startsWith('PQR');
-            let extraColName = '';
-            if (isPQR) {
-                extraColName = document.getElementById('cargo-extra-pqr').value === 'consumo' ? 'Consumo' : 'Comentario';
-                filteredData.sort((a, b) => {
-                    const dateA = new Date(a['Fecha'] || a['FECHA'] || 0);
-                    const dateB = new Date(b['Fecha'] || b['FECHA'] || 0);
-                    return dateA - dateB;
-                });
-            }
-
-            if (tipo === 'excel') {
-                generarExcelCargo(filteredData, paquete, responsable, fechaAsig, prioInicio, prioFin, isPQR, extraColName);
-            } else if (tipo === 'pdf') {
-                generarPdfCinto(paquete);
-            }
-        };
-        reader.readAsArrayBuffer(file);
+        // Ocultar botones si el usuario cambia el paquete después de procesar
+        document.getElementById('botones-descarga').style.display = 'none';
+        document.getElementById('cargo-alert').style.display = 'none';
     }
 
     function showAlert(msg, type) {
@@ -924,7 +873,84 @@
         alertBox.style.color = '#fff';
     }
 
-    function generarExcelCargo(data, paquete, responsable, fechaAsig, prioInicio, prioFin, isPQR, extraColName) {
+    async function procesarData() {
+        const fileInput = document.getElementById('cargo-file');
+        const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
+        const alertBox = document.getElementById('cargo-alert');
+        const btnDescarga = document.getElementById('botones-descarga');
+
+        alertBox.style.display = 'none';
+        btnDescarga.style.display = 'none';
+        datosProcesadosCargo = [];
+
+        if (!fileInput.files.length) return showAlert('Sube un archivo Excel.', 'error');
+        if (!paquete) return showAlert('Ingresa el nombre del paquete.', 'error');
+
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
+
+                // Filtrar por paquete (adaptado a los nombres de tu Excel: NomPaquete)
+                let filteredData = jsonData.filter(row => {
+                    const rowPaquete = String(row['NomPaquete'] || row['Paquete'] || row['PAQUETE'] || '').trim().toUpperCase();
+                    return rowPaquete === paquete;
+                });
+
+                if (filteredData.length === 0) {
+                    return showAlert('No se encontraron registros para ese paquete.', 'error');
+                }
+
+                // Validación de Costo para PQE (adaptado a tu Excel: CostoTotal)
+                if (paquete.startsWith('PQE')) {
+                    const tieneCostoCero = filteredData.some(row => {
+                        const costo = parseFloat(row['CostoTotal'] || row['Costo'] || row['COSTO'] || row['costo'] || 0);
+                        return costo === 0;
+                    });
+                    if (tieneCostoCero) {
+                        return showAlert('¡ALERTA! Hay registros en este PQE con Costo 0.00. Revisa el Excel.', 'error');
+                    }
+                }
+
+                // Ordenamiento para PQR (adaptado a tu Excel: FechaRegist)
+                let isPQR = paquete.startsWith('PQR');
+                if (isPQR) {
+                    filteredData.sort((a, b) => {
+                        const dateA = new Date(a['FechaRegist'] || a['Fecha'] || a['FECHA'] || 0);
+                        const dateB = new Date(b['FechaRegist'] || b['Fecha'] || b['FECHA'] || 0);
+                        return dateA - dateB;
+                    });
+                }
+
+                // Guardar globalmente y mostrar botones
+                datosProcesadosCargo = filteredData;
+                showAlert(`¡Éxito! Se encontraron ${filteredData.length} registros listos para descargar.`, 'success');
+                btnDescarga.style.display = 'flex';
+
+            } catch (err) {
+                showAlert('Error al leer el archivo Excel: ' + err.message, 'error');
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function descargarExcelCargo() {
+        if (datosProcesadosCargo.length === 0) return showAlert('No hay datos procesados.', 'error');
+
+        const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
+        const responsable = document.getElementById('cargo-responsable').value;
+        const fechaAsig = document.getElementById('cargo-fecha').value;
+        const prioInicio = document.getElementById('cargo-prio-inicio').value;
+        const prioFin = document.getElementById('cargo-prio-fin').value;
+        
+        let isPQR = paquete.startsWith('PQR');
+        let extraColName = isPQR ? (document.getElementById('cargo-extra-pqr').value === 'consumo' ? 'Consumo' : 'Comentario') : '';
+
         const wsData = [];
         
         // Cabecera del Cargo
@@ -948,9 +974,10 @@
         const startPrio = prioInicio ? new Date(prioInicio + 'T00:00:00') : null;
         const endPrio = prioFin ? new Date(prioFin + 'T23:59:59') : null;
 
-        data.forEach((row, index) => {
-            const fua = row['FUA'] || row['Fua'] || row['fua'] || '';
-            const fechaStr = row['Fecha'] || row['FECHA'] || row['fecha'] || '';
+        datosProcesadosCargo.forEach((row, index) => {
+            // Adaptado a posibles nombres de columnas en tu Excel
+            const fua = row['FUA'] || row['Fua'] || row['fua'] || row['NroFua'] || row['ItemsMedIn'] || '';
+            const fechaStr = row['FechaRegist'] || row['Fecha'] || row['FECHA'] || row['fecha'] || '';
             const lote = row['Lote'] || row['LOTE'] || row['lote'] || '';
             
             let isPriority = false;
@@ -975,7 +1002,7 @@
 
         const ws = XLSX.utils.aoa_to_sheet(wsData);
         
-        // Ajustar anchos
+        // Ajustar anchos de columna
         ws['!cols'] = [{ wch: 5 }, { wch: 15 }, { wch: 12 }, { wch: 10 }];
         if (isPQR) ws['!cols'].push({ wch: 20 });
 
@@ -987,7 +1014,10 @@
         XLSX.writeFile(wb, `Cargo_${paquete}.xlsx`);
     }
 
-    function generarPdfCinto(paquete) {
+    function descargarPdfCinto() {
+        const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
+        if (!paquete) return showAlert('Ingresa el nombre del paquete.', 'error');
+
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({
             orientation: 'portrait',
@@ -998,7 +1028,7 @@
         doc.setFontSize(120);
         doc.setFont("helvetica", "bold");
         
-        // Rotar texto 90 grados
+        // Rotar texto 90 grados para que ocupe toda la hoja A4
         doc.text(paquete, 105, 148, { angle: 90, align: "center" });
 
         doc.save(`Cinto_${paquete}.pdf`);
