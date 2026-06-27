@@ -873,7 +873,10 @@
         alertBox.style.color = '#fff';
     }
 
-    async function procesarData() {
+
+
+
+        async function procesarData() {
         const fileInput = document.getElementById('cargo-file');
         const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
         const alertBox = document.getElementById('cargo-alert');
@@ -895,13 +898,13 @@
                 const workbook = XLSX.read(data, { type: 'array' });
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                 
-                // Leer como array de arrays para encontrar la fila de cabeceras dinámicamente (ya que están en la fila 5)
+                // Leer como array de arrays para encontrar la fila de cabeceras dinámicamente
                 const rawData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: "" });
                 
                 let headerRowIndex = -1;
                 let headers = [];
                 
-                // Buscar la fila que contiene la palabra "PAQUET" (NomPaquete, NomPaquet, etc.)
+                // Buscar la fila que contiene la palabra "PAQUET"
                 for (let i = 0; i < Math.min(20, rawData.length); i++) {
                     const row = rawData[i];
                     if (row.some(cell => String(cell).toUpperCase().includes('PAQUET'))) {
@@ -945,9 +948,11 @@
                     return showAlert('No se encontraron registros para ese paquete.', 'error');
                 }
 
+                let mensajeExito = `¡Éxito! Se encontraron ${filteredData.length} registros listos para descargar.`;
+
                 // Validación de Costo para PQE (Busca CostoTotal, Costo, etc.)
                 if (paquete.startsWith('PQE')) {
-                    const tieneCostoCero = filteredData.some(row => {
+                    const registrosCero = filteredData.filter(row => {
                         let costo = 0;
                         for (let key in row) {
                             if (key.includes('COSTO')) {
@@ -957,8 +962,12 @@
                         }
                         return costo === 0;
                     });
-                    if (tieneCostoCero) {
-                        return showAlert('¡ALERTA! Hay registros en este PQE con Costo 0.00. Revisa el Excel.', 'error');
+                    
+                    if (registrosCero.length > 0) {
+                        return showAlert(`¡ALERTA! Hay ${registrosCero.length} registros en este PQE con Costo 0.00. Revisa el Excel.`, 'error');
+                    } else {
+                        // Reporte de validación exitosa para PQE
+                        mensajeExito += ' Reporte: Todos los registros tienen costo mayor a 0.00.';
                     }
                 }
 
@@ -975,7 +984,7 @@
 
                 // Guardar globalmente y mostrar botones
                 datosProcesadosCargo = filteredData;
-                showAlert(`¡Éxito! Se encontraron ${filteredData.length} registros listos para descargar.`, 'success');
+                showAlert(mensajeExito, 'success');
                 btnDescarga.style.display = 'flex';
 
             } catch (err) {
@@ -986,6 +995,9 @@
     }
 
 
+
+
+    
 
     
 
@@ -999,7 +1011,8 @@
         const prioFin = document.getElementById('cargo-prio-fin').value;
         
         let isPQR = paquete.startsWith('PQR');
-        let extraColName = isPQR ? (document.getElementById('cargo-extra-pqr').value === 'consumo' ? 'Consumo' : 'Comentario') : '';
+        const extraColType = document.getElementById('cargo-extra-pqr').value; // 'consumo' o 'comentario'
+        let extraColName = isPQR ? (extraColType === 'consumo' ? 'Consumo' : 'Comentario') : '';
 
         const wsData = [];
         
@@ -1013,7 +1026,7 @@
         ]);
         wsData.push([]);
 
-        // Cabeceras de tabla (NUEVO ORDEN SOLICITADO)
+        // Cabeceras de tabla
         let headers = ["Nro", "FUA", "Paciente", "Fecha de Atención"];
         if (isPQR) headers.push(extraColName);
         
@@ -1026,16 +1039,22 @@
 
         datosProcesadosCargo.forEach((row, index) => {
             let fua = '', paciente = '', fecAte = '', fechaRegist = '';
+            let costoTotal = 0;
             
             // Buscar dinámicamente los valores en la fila
             for (let key in row) {
                 const k = key.toUpperCase();
-                if (k === 'FUA' || k.includes('NROFUA') || k.includes('ITEMSMEDIN')) fua = row[key];
+                
+                // 1. Buscar NFUA prioritariamente
+                if (k === 'NFUA' || k === 'FUA' || k.includes('NROFUA') || k.includes('ITEMSMEDIN')) fua = row[key];
                 else if (k.includes('PACIENTE') || k.includes('ASEGURADO') || k.includes('AFILIADO')) paciente = row[key];
                 else if (k.includes('FEC') && k.includes('ATE')) fecAte = row[key];
                 
                 // Guardamos la fecha de registro para la validación de prioridad
                 if (k.includes('FECHAREGIST') || k === 'FECHA') fechaRegist = row[key];
+
+                // 2. Capturar el CostoTotal
+                if (k.includes('COSTO')) costoTotal = parseFloat(row[key]) || 0;
             }
 
             // Si no hay una columna específica de "Fecha de Atención", usamos la fecha general que encuentre
@@ -1056,14 +1075,24 @@
                 { v: fecAte, s: style }
             ];
 
-            if (isPQR) rowData.push({ v: "", s: style });
+            // 3. Lógica para la columna extra (Consumo o Comentario)
+            if (isPQR) {
+                let extraValue = "";
+                // Si eligió "consumo" y el costo es mayor a 0, ponemos "CON CONSUMO"
+                if (extraColType === 'consumo' && costoTotal > 0) {
+                    extraValue = "CON CONSUMO";
+                }
+                // Si es comentario o el costo es 0, extraValue se queda vacío ("")
+                
+                rowData.push({ v: extraValue, s: style });
+            }
 
             wsData.push(rowData);
         });
 
         const ws = XLSX.utils.aoa_to_sheet(wsData);
         
-        // Ajustar anchos de columna (Paciente más ancho para que quepa el nombre)
+        // Ajustar anchos de columna
         ws['!cols'] = [{ wch: 5 }, { wch: 15 }, { wch: 35 }, { wch: 18 }];
         if (isPQR) ws['!cols'].push({ wch: 20 });
 
@@ -1074,6 +1103,11 @@
         XLSX.utils.book_append_sheet(wb, ws, "Cargo");
         XLSX.writeFile(wb, `Cargo_${paquete}.xlsx`);
     }
+
+
+
+
+    
 
 
 
