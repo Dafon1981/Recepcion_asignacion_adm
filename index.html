@@ -247,10 +247,27 @@
                     <button onclick="procesarFiltro()" style="background: #3498db; color: white; border: none; padding: 15px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">Encontrar ➔</button>
                 </div>
                 
-                <!-- Cuadro 3: Resultados -->
-                <div style="flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 10px;">
-                    <label style="color: #ccc; font-weight: bold;">3. Resultados (Nº - FUA)</label>
-                    <textarea id="filtro-resultado" rows="15" readonly style="width: 100%; background: #111; color: #fff; padding: 10px; border: 1px solid #555; border-radius: 5px; outline: none; resize: vertical; font-family: monospace;" placeholder="Aquí aparecerán las coincidencias..."></textarea>
+                <!-- Cuadro 3: Resultados Dinámicos (Verde y Rojo) -->
+                <div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 10px;">
+                    <label style="color: #ccc; font-weight: bold;">3. Resultados</label>
+                    <div style="background: #111; border: 1px solid #555; border-radius: 5px; padding: 10px; height: 100%; min-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px;">
+                        
+                        <!-- Lista Verde -->
+                        <div>
+                            <h4 style="color: #2ecc71; border-bottom: 1px solid #2ecc71; padding-bottom: 5px; margin-bottom: 10px;">✅ Encontrados</h4>
+                            <ul id="resultado-encontrados" style="list-style: none; padding: 0; margin: 0; color: #2ecc71; font-family: monospace; font-size: 14px; display: flex; flex-direction: column; gap: 4px;">
+                                <li style="color: #666;">Esperando búsqueda...</li>
+                            </ul>
+                        </div>
+
+                        <!-- Lista Roja -->
+                        <div>
+                            <h4 style="color: #e74c3c; border-bottom: 1px solid #e74c3c; padding-bottom: 5px; margin-bottom: 10px;">❌ No Encontrados</h4>
+                            <ul id="resultado-no-encontrados" style="list-style: none; padding: 0; margin: 0; color: #e74c3c; font-family: monospace; font-size: 14px; display: flex; flex-direction: column; gap: 4px;">
+                            </ul>
+                        </div>
+
+                    </div>
                 </div>
             </div>
         </div>
@@ -693,7 +710,8 @@
     function procesarFiltro() {
         const sistemaText = document.getElementById('filtro-sistema').value.trim();
         const buscarText = document.getElementById('filtro-buscar').value.trim();
-        const resultadoEl = document.getElementById('filtro-resultado');
+        const ulEncontrados = document.getElementById('resultado-encontrados');
+        const ulNoEncontrados = document.getElementById('resultado-no-encontrados');
 
         if (!sistemaText || !buscarText) {
             alert("Por favor, pega los datos en el Cuadro 1 y el Cuadro 2 para poder buscar.");
@@ -702,17 +720,16 @@
 
         // 1. Leer y mapear la lista del sistema (Cuadro 1)
         const lineasSistema = sistemaText.split('\n');
-        const mapaSistema = {}; // Guardará { "0373299": "36" }
+        const mapaSistema = {}; 
 
         lineasSistema.forEach(linea => {
-            // Separar por espacios o tabulaciones
             const partes = linea.trim().split(/\s+/); 
             if (partes.length >= 2) {
-                const numPosicion = partes[0]; // La columna Nº
-                const idFuaCompleto = partes[1]; // La columna IdFUA (ej. 2600373299)
+                const numPosicion = parseInt(partes[0], 10); // Convertir a número para ordenar bien
+                const idFuaCompleto = partes[1]; 
                 
-                if (idFuaCompleto.length >= 7) {
-                    const fua7Digitos = idFuaCompleto.slice(-7); // Extraer los últimos 7 dígitos
+                if (idFuaCompleto.length >= 7 && !isNaN(numPosicion)) {
+                    const fua7Digitos = idFuaCompleto.slice(-7);
                     mapaSistema[fua7Digitos] = numPosicion;
                 }
             }
@@ -720,23 +737,36 @@
 
         // 2. Buscar coincidencias con la lista a buscar (Cuadro 2)
         const lineasBuscar = buscarText.split('\n');
-        let resultados = [];
+        let encontrados = [];
+        let noEncontrados = [];
 
         lineasBuscar.forEach(linea => {
             const fuaBuscar = linea.trim();
             if (fuaBuscar) {
-                if (mapaSistema[fuaBuscar]) {
-                    // Si lo encuentra, formatea: Nº 36 - 0373299
-                    resultados.push(`Nº ${mapaSistema[fuaBuscar]} - ${fuaBuscar}`);
+                if (mapaSistema[fuaBuscar] !== undefined) {
+                    encontrados.push({ fua: fuaBuscar, pos: mapaSistema[fuaBuscar] });
                 } else {
-                    // Si no lo encuentra, lo avisa
-                    resultados.push(`${fuaBuscar} - No encontrado`);
+                    noEncontrados.push(fuaBuscar);
                 }
             }
         });
 
-        // 3. Mostrar el resultado en el Cuadro 3
-        resultadoEl.value = resultados.join('\n');
+        // 3. Ordenar encontrados de menor a mayor por la posición (Nº)
+        encontrados.sort((a, b) => a.pos - b.pos);
+
+        // 4. Renderizar Encontrados (Verde)
+        if (encontrados.length > 0) {
+            ulEncontrados.innerHTML = encontrados.map(item => `<li>Nº ${item.pos} - ${item.fua}</li>`).join('');
+        } else {
+            ulEncontrados.innerHTML = `<li style="color: #666;">Ninguna coincidencia</li>`;
+        }
+
+        // 5. Renderizar No Encontrados (Rojo)
+        if (noEncontrados.length > 0) {
+            ulNoEncontrados.innerHTML = noEncontrados.map(fua => `<li>${fua} - No encontrado</li>`).join('');
+        } else {
+            ulNoEncontrados.innerHTML = `<li style="color: #666;">Todos fueron encontrados</li>`;
+        }
     }
 </script>
 </body>
