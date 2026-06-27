@@ -1226,8 +1226,7 @@
     
 
 
-
-        function descargarPdfCinto() {
+    function descargarPdfCinto() {
         const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
         const responsable = document.getElementById('cargo-responsable').value;
         const fechaAsig = document.getElementById('cargo-fecha').value;
@@ -1257,33 +1256,33 @@
 
         // --- COORDENADAS PARA LA MITAD IZQUIERDA DE LA HOJA A4 ---
         // La hoja A4 mide 210mm de ancho x 297mm de alto.
-        // Usaremos X desde 20mm hasta 90mm para mantener todo en la mitad izquierda.
+        // Usaremos X desde 25mm hasta 85mm para mantener todo en la mitad izquierda.
 
-        // 1. PRIMERA LÍNEA VERTICAL (Extremo Izquierdo - X: 20)
+        // 1. PRIMERA LÍNEA VERTICAL (Extremo Izquierdo - X: 25)
         doc.setFontSize(14);
-        doc.text("FECHA AUDITORIA", 20, 60, { angle: 90, align: "center" });
-        doc.text(fechaFormateada, 20, 110, { angle: 90, align: "center" });
+        doc.text("FECHA AUDITORIA", 25, 60, { angle: 90, align: "center" });
+        doc.text(fechaFormateada, 25, 148, { angle: 90, align: "center" });
         
-        // Línea separadora vertical
+        doc.setFontSize(18);
+        doc.text(`CANT: ${cantidad}`, 25, 250, { angle: 90, align: "center" });
+        
+        // Pequeña línea separadora al lado de la cantidad (como en tu imagen)
         doc.setLineWidth(0.5);
-        doc.line(20, 180, 20, 210);
-
-        doc.setFontSize(20);
-        doc.text(`CANT:${cantidad}`, 20, 250, { angle: 90, align: "center" });
+        doc.line(32, 235, 32, 265);
 
         // 2. SEGUNDA LÍNEA VERTICAL (Centro de la mitad izquierda - X: 55)
         doc.setFontSize(85);
-        doc.text(paquete, 55, 148.5, { angle: 90, align: "center" });
+        doc.text(paquete, 55, 148, { angle: 90, align: "center" });
 
-        // 3. TERCERA LÍNEA VERTICAL (Derecha de la mitad izquierda - X: 90)
+        // 3. TERCERA LÍNEA VERTICAL (Derecha de la mitad izquierda - X: 85)
         doc.setFontSize(14);
-        doc.text("Auditor / Digitador", 90, 250, { angle: 90, align: "center" });
+        doc.text("Auditor / Digitador", 85, 250, { angle: 90, align: "center" });
         
         if (responsable) {
-            doc.text(responsable, 90, 150, { angle: 90, align: "center" });
+            doc.text(responsable, 85, 148, { angle: 90, align: "center" });
         } else {
             // Si no hay responsable, pone una línea para que firmen
-            doc.text("_________________________", 90, 150, { angle: 90, align: "center" });
+            doc.text("_________________________", 85, 148, { angle: 90, align: "center" });
         }
 
         doc.save(`Cinto_${paquete}.pdf`);
