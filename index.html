@@ -11,7 +11,7 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #121212; color: #ffffff; padding: 20px; }
-        .container { max-width: 1200px; margin: 0 auto; background: #1e1e1e; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5 ); }
+        .container { max-width: 1300px; margin: 0 auto; background: #1e1e1e; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5 ); }
         
         /* Header / Navegación */
         .header-nav { display: flex; justify-content: space-between; align-items: center; background: #2a2a2a; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; }
@@ -226,8 +226,33 @@
     <!-- Pestaña: Filtro de FUAs -->
     <div id="filtro" class="tab-content">
         <div class="fua-panel">
-            <h3>Buscador de FUAs</h3>
-            <p style="color: #888; margin-top: 10px;">La lógica de búsqueda se implementará en el siguiente paso.</p>
+            <h3 style="color: #f1c40f; margin-bottom: 15px;">Buscador y Cruce de FUAs</h3>
+            <p style="color: #aaa; margin-bottom: 15px; font-size: 14px;">Pega la lista del sistema a la izquierda, los números a buscar en el centro, y presiona "Encontrar".</p>
+            
+            <div style="display: flex; gap: 15px; align-items: stretch; flex-wrap: wrap;">
+                <!-- Cuadro 1: Lista del Sistema -->
+                <div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 10px;">
+                    <label style="color: #ccc; font-weight: bold;">1. Lista del Sistema</label>
+                    <textarea id="filtro-sistema" rows="15" style="width: 100%; background: #000; color: #2ecc71; padding: 10px; border: 1px solid #555; border-radius: 5px; outline: none; resize: vertical; font-family: monospace;" placeholder="Ejemplo:\n31 2600374945 23/06/2026...\n36 2600373299 23/06/2026..."></textarea>
+                </div>
+                
+                <!-- Cuadro 2: FUAs a Buscar -->
+                <div style="flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 10px;">
+                    <label style="color: #ccc; font-weight: bold;">2. FUAs a Buscar (7 dígitos)</label>
+                    <textarea id="filtro-buscar" rows="15" style="width: 100%; background: #000; color: #f1c40f; padding: 10px; border: 1px solid #555; border-radius: 5px; outline: none; resize: vertical; font-family: monospace;" placeholder="Ejemplo:\n0373299\n0374262"></textarea>
+                </div>
+                
+                <!-- Botón Encontrar -->
+                <div style="display: flex; align-items: center; justify-content: center;">
+                    <button onclick="procesarFiltro()" style="background: #3498db; color: white; border: none; padding: 15px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">Encontrar ➔</button>
+                </div>
+                
+                <!-- Cuadro 3: Resultados -->
+                <div style="flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 10px;">
+                    <label style="color: #ccc; font-weight: bold;">3. Resultados (Nº - FUA)</label>
+                    <textarea id="filtro-resultado" rows="15" readonly style="width: 100%; background: #111; color: #fff; padding: 10px; border: 1px solid #555; border-radius: 5px; outline: none; resize: vertical; font-family: monospace;" placeholder="Aquí aparecerán las coincidencias..."></textarea>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -269,7 +294,6 @@
                 todosLosDigitadores = data;
                 digitadoresConConsumo = data.filter(d => d.condicion === 'con consumo').map(d => d.nombre);
                 
-                // Llenar combo box de la pestaña Asignación
                 const selectAsig = document.getElementById('asig-digitador');
                 selectAsig.innerHTML = '<option value="">Seleccione un digitador...</option>';
                 data.forEach(d => {
@@ -331,7 +355,7 @@
     function iniciarTemporizador() {
         if (pollingTimer) clearInterval(pollingTimer);
         pollingTimer = setInterval(() => {
-            if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'SELECT') loadData();
+            if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'SELECT' && document.activeElement.tagName !== 'TEXTAREA') loadData();
         }, 10000);
     }
     async function loadData() {
@@ -378,7 +402,6 @@
             document.getElementById('table-consumo').innerHTML = tableHTML;
 
         } else if (currentTab === 'asignacion') {
-            // Cargar TODAS las asignaciones pendientes (Permanentes, no dependen del día seleccionado)
             const { data, error } = await supabase
                 .from('asignacion')
                 .select('id, digitador_asignado, cantidad_asignada, fecha_asignacion')
@@ -446,14 +469,12 @@
             
             const limitDateStr = limitDate.toISOString().split('T')[0];
             
-            // Borrar FUAs viejas, EXCEPTO las Reasignadas
             await supabase.from('asignacion')
                 .delete()
                 .not('nrofuasuelta', 'is', null)
                 .lt('fechafuasuelta', limitDateStr)
                 .neq('condicion_fuaobservada', 'Reasignada');
 
-            // Traer todas las pendientes
             const { data, error } = await supabase.from('asignacion')
                 .select('id, nrofuasuelta, fechafuasuelta, condicionfuasuelta, condicion_fuaobservada, observacion')
                 .eq('condicionfuasuelta', 'pendiente')
@@ -462,7 +483,6 @@
 
             if (error) throw error;
             
-            // Guardamos en memoria solo las Reasignadas o las que están dentro de la ventana de 10 días
             window.allFuas = (data || []).filter(f => f.condicion_fuaobservada === 'Reasignada' || f.fechafuasuelta >= limitDateStr);
 
             renderFuaTabs('consumo');
@@ -486,7 +506,6 @@
         while (iterDate <= baseDate) {
             const dateStr = iterDate.toISOString().split('T')[0];
             
-            // El contador NO incluye las Reasignadas
             const fuasDelDia = window.allFuas.filter(f => f.fechafuasuelta === dateStr && f.condicion_fuaobservada !== 'Reasignada');
             const count = fuasDelDia.length;
             
@@ -515,11 +534,8 @@
     function renderFuaLists(tab) {
         const selectedDate = window.selectedFuaDate_consumo;
         
-        // Filtramos por fecha seleccionada para Y66X y Sin Consumo
         const fuasY66X = window.allFuas.filter(f => f.fechafuasuelta === selectedDate && f.condicion_fuaobservada === 'Y66X');
         const fuasSinConsumo = window.allFuas.filter(f => f.fechafuasuelta === selectedDate && f.condicion_fuaobservada === 'Sin Consumo');
-        
-        // Reasignadas son independientes de la fecha seleccionada (mostramos TODAS)
         const fuasReasignada = window.allFuas.filter(f => f.condicion_fuaobservada === 'Reasignada');
         
         const cols = {
@@ -630,7 +646,6 @@
         } catch (err) { alert("Error al guardar: " + err.message); }
     }
 
-    // NUEVA FUNCIÓN: Guardar Asignación
     async function saveAsignacion() {
         const selectedDate = document.getElementById('current-date').value;
         const digitador = document.getElementById('asig-digitador').value;
@@ -647,37 +662,81 @@
                 digitador_asignado: digitador,
                 cantidad_asignada: cantidad,
                 fecha_asignacion: fechaAsig,
-                estado_asignacion: 'pendiente' // Se guarda como pendiente por defecto
+                estado_asignacion: 'pendiente'
             };
 
             const { error } = await supabase.from('asignacion').insert([payload]);
             if (error) throw error;
 
             alert("Asignación guardada correctamente.");
-            
-            // Limpiar campos para la siguiente asignación
             document.getElementById('asig-digitador').value = '';
             document.getElementById('asig-cantidad').value = '';
-            
-            loadData(); // Recargar la tabla de asignaciones
+            loadData(); 
         } catch (err) {
             alert("Error al guardar la asignación: " + err.message);
         }
     }
 
-    // NUEVA FUNCIÓN: Marcar Asignación como Entregada
     async function marcarEntregado(id, btnElement) {
         btnElement.innerText = 'Procesando...';
         try {
             const { error } = await supabase.from('asignacion').update({ estado_asignacion: 'entregado' }).eq('id', id);
             if (error) throw error;
-            
-            // Recargar la tabla para que desaparezca
             loadData();
         } catch (err) {
             alert("Error al actualizar: " + err.message);
             btnElement.innerText = 'Entregado ✓';
         }
+    }
+
+    // --- NUEVA LÓGICA: BUSCADOR Y CRUCE DE FUAS ---
+    function procesarFiltro() {
+        const sistemaText = document.getElementById('filtro-sistema').value.trim();
+        const buscarText = document.getElementById('filtro-buscar').value.trim();
+        const resultadoEl = document.getElementById('filtro-resultado');
+
+        if (!sistemaText || !buscarText) {
+            alert("Por favor, pega los datos en el Cuadro 1 y el Cuadro 2 para poder buscar.");
+            return;
+        }
+
+        // 1. Leer y mapear la lista del sistema (Cuadro 1)
+        const lineasSistema = sistemaText.split('\n');
+        const mapaSistema = {}; // Guardará { "0373299": "36" }
+
+        lineasSistema.forEach(linea => {
+            // Separar por espacios o tabulaciones
+            const partes = linea.trim().split(/\s+/); 
+            if (partes.length >= 2) {
+                const numPosicion = partes[0]; // La columna Nº
+                const idFuaCompleto = partes[1]; // La columna IdFUA (ej. 2600373299)
+                
+                if (idFuaCompleto.length >= 7) {
+                    const fua7Digitos = idFuaCompleto.slice(-7); // Extraer los últimos 7 dígitos
+                    mapaSistema[fua7Digitos] = numPosicion;
+                }
+            }
+        });
+
+        // 2. Buscar coincidencias con la lista a buscar (Cuadro 2)
+        const lineasBuscar = buscarText.split('\n');
+        let resultados = [];
+
+        lineasBuscar.forEach(linea => {
+            const fuaBuscar = linea.trim();
+            if (fuaBuscar) {
+                if (mapaSistema[fuaBuscar]) {
+                    // Si lo encuentra, formatea: Nº 36 - 0373299
+                    resultados.push(`Nº ${mapaSistema[fuaBuscar]} - ${fuaBuscar}`);
+                } else {
+                    // Si no lo encuentra, lo avisa
+                    resultados.push(`${fuaBuscar} - No encontrado`);
+                }
+            }
+        });
+
+        // 3. Mostrar el resultado en el Cuadro 3
+        resultadoEl.value = resultados.join('\n');
     }
 </script>
 </body>
