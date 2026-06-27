@@ -849,7 +849,7 @@
         }
     }
 
-      // --- NUEVA LÓGICA: CARGO Y CINTO ---
+    // --- NUEVA LÓGICA: CARGO Y CINTO ---
     let datosProcesadosCargo = []; // Variable global para guardar los datos filtrados
 
     function checkPaqueteType() {
@@ -894,22 +894,67 @@
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, { type: 'array' });
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
+                
+                // Leer como array de arrays para encontrar la fila de cabeceras dinámicamente (ya que están en la fila 5)
+                const rawData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: "" });
+                
+                let headerRowIndex = -1;
+                let headers = [];
+                
+                // Buscar la fila que contiene la palabra "PAQUET" (NomPaquete, NomPaquet, etc.)
+                for (let i = 0; i < Math.min(20, rawData.length); i++) {
+                    const row = rawData[i];
+                    if (row.some(cell => String(cell).toUpperCase().includes('PAQUET'))) {
+                        headerRowIndex = i;
+                        headers = row.map(h => String(h).trim().toUpperCase());
+                        break;
+                    }
+                }
 
-                // Filtrar por paquete (adaptado a los nombres de tu Excel: NomPaquete)
+                if (headerRowIndex === -1) {
+                    return showAlert('No se encontraron las cabeceras en el Excel. Asegúrate de que exista una columna de Paquete.', 'error');
+                }
+
+                // Convertir a JSON usando las cabeceras encontradas
+                const jsonData = [];
+                for (let i = headerRowIndex + 1; i < rawData.length; i++) {
+                    let obj = {};
+                    let hasData = false;
+                    rawData[i].forEach((cell, index) => {
+                        if (headers[index]) {
+                            obj[headers[index]] = cell;
+                            if (cell !== "") hasData = true;
+                        }
+                    });
+                    if (hasData) jsonData.push(obj);
+                }
+
+                // Filtrar por paquete buscando dinámicamente la columna
                 let filteredData = jsonData.filter(row => {
-                    const rowPaquete = String(row['NomPaquete'] || row['Paquete'] || row['PAQUETE'] || '').trim().toUpperCase();
-                    return rowPaquete === paquete;
+                    let val = '';
+                    for (let key in row) {
+                        if (key.includes('PAQUET')) {
+                            val = String(row[key]).trim().toUpperCase();
+                            break;
+                        }
+                    }
+                    return val === paquete;
                 });
 
                 if (filteredData.length === 0) {
                     return showAlert('No se encontraron registros para ese paquete.', 'error');
                 }
 
-                // Validación de Costo para PQE (adaptado a tu Excel: CostoTotal)
+                // Validación de Costo para PQE (Busca CostoTotal, Costo, etc.)
                 if (paquete.startsWith('PQE')) {
                     const tieneCostoCero = filteredData.some(row => {
-                        const costo = parseFloat(row['CostoTotal'] || row['Costo'] || row['COSTO'] || row['costo'] || 0);
+                        let costo = 0;
+                        for (let key in row) {
+                            if (key.includes('COSTO')) {
+                                costo = parseFloat(row[key]) || 0;
+                                break;
+                            }
+                        }
                         return costo === 0;
                     });
                     if (tieneCostoCero) {
@@ -917,12 +962,13 @@
                     }
                 }
 
-                // Ordenamiento para PQR (adaptado a tu Excel: FechaRegist)
+                // Ordenamiento para PQR (Busca FechaRegist, Fecha, etc.)
                 let isPQR = paquete.startsWith('PQR');
                 if (isPQR) {
                     filteredData.sort((a, b) => {
-                        const dateA = new Date(a['FechaRegist'] || a['Fecha'] || a['FECHA'] || 0);
-                        const dateB = new Date(b['FechaRegist'] || b['Fecha'] || b['FECHA'] || 0);
+                        let dateA = 0, dateB = 0;
+                        for (let key in a) { if (key.includes('FECHA')) { dateA = new Date(a[key]); break; } }
+                        for (let key in b) { if (key.includes('FECHA')) { dateB = new Date(b[key]); break; } }
                         return dateA - dateB;
                     });
                 }
@@ -975,11 +1021,15 @@
         const endPrio = prioFin ? new Date(prioFin + 'T23:59:59') : null;
 
         datosProcesadosCargo.forEach((row, index) => {
-            // Adaptado a posibles nombres de columnas en tu Excel
-            const fua = row['FUA'] || row['Fua'] || row['fua'] || row['NroFua'] || row['ItemsMedIn'] || '';
-            const fechaStr = row['FechaRegist'] || row['Fecha'] || row['FECHA'] || row['fecha'] || '';
-            const lote = row['Lote'] || row['LOTE'] || row['lote'] || '';
+            let fua = '', fechaStr = '', lote = '';
             
+            // Buscar dinámicamente los valores en la fila
+            for (let key in row) {
+                if (key === 'FUA' || key.includes('NROFUA') || key.includes('ITEMSMEDIN')) fua = row[key];
+                if (key.includes('FECHA')) fechaStr = row[key];
+                if (key.includes('LOTE')) lote = row[key];
+            }
+
             let isPriority = false;
             if (startPrio && endPrio && fechaStr) {
                 const rowDate = new Date(fechaStr);
@@ -1036,3 +1086,4 @@
 </script>
 </body>
 </html>
+
