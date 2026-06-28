@@ -1225,7 +1225,7 @@
 
     
 
-       function descargarPdfCinto() {
+    function descargarPdfCinto() {
         const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
         const responsable = document.getElementById('cargo-responsable').value;
         const fechaAsig = document.getElementById('cargo-fecha').value;
@@ -1267,20 +1267,21 @@
         doc.setFontSize(60);
         doc.text(paquete, 45, 60, { angle: -90 });
 
-        // 3. TERCERA LÍNEA VERTICAL (Auditor - X: 55) -> Movido más a la izquierda (antes 65)
+        // 3. TERCERA LÍNEA VERTICAL (Auditor - X: 75) -> Separado del paquete para que no se superpongan
         doc.setFontSize(14);
         if (responsable) {
-            doc.text(responsable, 55, 100, { angle: -90 });
+            // Movido más abajo (Y: 120) para que empiece después
+            doc.text(responsable, 75, 120, { angle: -90 });
         }
-        // ¡Línea de firma eliminada por completo!
         
-        doc.text("Auditor / Digitador", 55, 220, { angle: -90 });
+        // Movido más abajo (Y: 240) para dar espacio a nombres largos
+        doc.text("Auditor / Digitador", 75, 240, { angle: -90 });
 
         doc.save(`Cinto_${paquete}.pdf`);
     }
 
 
-
+    
     
 
   
