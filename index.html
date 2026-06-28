@@ -938,7 +938,9 @@
 
 
 
-        async function procesarData() {
+    
+
+    async function procesarData() {
         const fileInput = document.getElementById('cargo-file');
         const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
         const alertBox = document.getElementById('cargo-alert');
@@ -954,19 +956,17 @@
         const file = fileInput.files[0];
         const reader = new FileReader();
 
-        reader.onload = function(e) {
+        reader.onload = async function(e) {
             try {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, { type: 'array' });
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                 
-                // Leer como array de arrays para encontrar la fila de cabeceras dinámicamente
                 const rawData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: "" });
                 
                 let headerRowIndex = -1;
                 let headers = [];
                 
-                // Buscar la fila que contiene la palabra "PAQUET"
                 for (let i = 0; i < Math.min(20, rawData.length); i++) {
                     const row = rawData[i];
                     if (row.some(cell => String(cell).toUpperCase().includes('PAQUET'))) {
@@ -980,7 +980,6 @@
                     return showAlert('No se encontraron las cabeceras en el Excel. Asegúrate de que exista una columna de Paquete.', 'error');
                 }
 
-                // Convertir a JSON usando las cabeceras encontradas
                 const jsonData = [];
                 for (let i = headerRowIndex + 1; i < rawData.length; i++) {
                     let obj = {};
@@ -994,7 +993,6 @@
                     if (hasData) jsonData.push(obj);
                 }
 
-                // Filtrar por paquete buscando dinámicamente la columna
                 let filteredData = jsonData.filter(row => {
                     let val = '';
                     for (let key in row) {
@@ -1012,7 +1010,6 @@
 
                 let mensajeExito = `¡Éxito! Se encontraron ${filteredData.length} registros listos para descargar.`;
 
-                // Validación de Costo para PQE (Busca CostoTotal, Costo, etc.)
                 if (paquete.startsWith('PQE')) {
                     const registrosCero = filteredData.filter(row => {
                         let costo = 0;
@@ -1028,12 +1025,10 @@
                     if (registrosCero.length > 0) {
                         return showAlert(`¡ALERTA! Hay ${registrosCero.length} registros en este PQE con Costo 0.00. Revisa el Excel.`, 'error');
                     } else {
-                        // Reporte de validación exitosa para PQE
                         mensajeExito += ' Reporte: Todos los registros tienen costo mayor a 0.00.';
                     }
                 }
 
-                // Ordenamiento para PQR (Busca FechaRegist, Fecha, etc.)
                 let isPQR = paquete.startsWith('PQR');
                 if (isPQR) {
                     filteredData.sort((a, b) => {
@@ -1044,10 +1039,17 @@
                     });
                 }
 
-                // Guardar globalmente y mostrar botones
                 datosProcesadosCargo = filteredData;
                 showAlert(mensajeExito, 'success');
                 btnDescarga.style.display = 'flex';
+
+                // --- NUEVO: GUARDAR EN SUPABASE ---
+                const responsable = document.getElementById('cargo-responsable').value;
+                const fechaAsig = document.getElementById('cargo-fecha').value;
+                
+                if (responsable) {
+                    await guardarPaqueteAsignado(paquete, responsable, fechaAsig, filteredData.length);
+                }
 
             } catch (err) {
                 showAlert('Error al leer el archivo Excel: ' + err.message, 'error');
@@ -1055,6 +1057,38 @@
         };
         reader.readAsArrayBuffer(file);
     }
+
+    // Función para registrar el paquete en la base de datos
+    async function guardarPaqueteAsignado(paquete, responsable, fecha, cantidad) {
+        try {
+            // Verificar si el paquete ya existe para no duplicarlo
+            const { data: existe } = await supabase
+                .from('paquetes_asignados')
+                .select('id')
+                .eq('nro_paquete', paquete)
+                .limit(1);
+
+            const payload = {
+                nro_paquete: paquete,
+                asignado_a: responsable,
+                fecha_asignacion: fecha || new Date().toISOString().split('T')[0],
+                cantidad_registros: cantidad
+            };
+
+            if (existe && existe.length > 0) {
+                // Si ya existe, lo actualiza
+                await supabase.from('paquetes_asignados').update(payload).eq('id', existe[0].id);
+            } else {
+                // Si no existe, lo inserta nuevo
+                await supabase.from('paquetes_asignados').insert([payload]);
+            }
+        } catch (err) {
+            console.error("Error al guardar el paquete en Supabase:", err);
+        }
+    }
+
+
+
 
 
 
