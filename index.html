@@ -369,10 +369,14 @@
 
                 <div id="cargo-alert" class="alert-box"></div>
 
+
+
+                
                                <!-- Botones de Descarga (Ocultos inicialmente) -->
                 <div id="botones-descarga" style="display: none; gap: 15px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #444; flex-wrap: wrap;">
                     <button class="btn-excel" onclick="descargarExcelCargo()" style="background: #2ecc71; color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">📊 Descargar Excel</button>
                     <button class="btn-pdf" onclick="descargarPdfCinto()" style="background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">🖨️ Descargar Cinto (PDF)</button>
+                    <button onclick="guardarRegistrosSupabase()" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; box-shadow: 0 0 10px rgba(52,152,219,0.5);">💾 Guardar en BD (Registros)</button>
                     <button onclick="descargarCSVRegistros()" style="background: #9b59b6; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">📁 Descargar CSV (Registros)</button>
                 </div>
 
@@ -1389,8 +1393,87 @@
         document.body.removeChild(link);
     }
 
-    
 
+
+
+
+    
+    async function guardarRegistrosSupabase() {
+        if (datosProcesadosCargo.length === 0) return showAlert('No hay datos procesados.', 'error');
+
+        const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
+        const responsable = document.getElementById('cargo-responsable').value;
+        const fechaAuditoria = document.getElementById('cargo-fecha').value;
+        const fechaCreacion = new Date().toISOString().split('T')[0];
+
+        // 1. VERIFICACIÓN DE DUPLICADOS
+        // Buscamos si ya existe al menos 1 registro con este nombre de paquete
+        try {
+            const { data: existentes, error: errCheck } = await supabase
+                .from('registros')
+                .select('id')
+                .eq('NomPaquete', paquete)
+                .limit(1);
+
+            if (errCheck) throw errCheck;
+
+            if (existentes && existentes.length > 0) {
+                return showAlert(`⚠️ El paquete ${paquete} ya fue guardado anteriormente. No se puede duplicar.`, 'error');
+            }
+
+            // 2. PREPARAR LOS DATOS
+            const registrosAInsertar = datosProcesadosCargo.map(row => {
+                let fua = '', paciente = '', fecAte = '';
+                
+                for (let key in row) {
+                    const k = key.toUpperCase().trim();
+                    if (k === 'NFUA') fua = row[key];
+                    else if (!fua && (k === 'FUA' || k.includes('NROFUA'))) fua = row[key];
+                    else if (k.includes('PACIENTE') || k.includes('ASEGURADO') || k.includes('AFILIADO')) paciente = row[key];
+                    else if (k.includes('FEC') && k.includes('ATE')) fecAte = row[key];
+                }
+
+                // Formatear fecha a YYYY-MM-DD
+                let fecAteFormatted = null;
+                if (fecAte) {
+                    const strDate = String(fecAte).trim();
+                    const matchDDMMYYYY = strDate.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+                    if (matchDDMMYYYY) {
+                        const day = matchDDMMYYYY[1].padStart(2, '0');
+                        const month = matchDDMMYYYY[2].padStart(2, '0');
+                        const year = matchDDMMYYYY[3];
+                        fecAteFormatted = `${year}-${month}-${day}`;
+                    } else {
+                        const d = new Date(strDate);
+                        if (!isNaN(d.getTime())) fecAteFormatted = d.toISOString().split('T')[0];
+                    }
+                }
+
+                // Retornar el objeto exacto como lo pide Supabase
+                return {
+                    Nfua: String(fua),
+                    PACIENTE: String(paciente),
+                    FecAte: fecAteFormatted,
+                    FechaAuditoria: fechaAuditoria || null,
+                    Resp_Aud_Digi: responsable,
+                    NomPaquete: paquete,
+                    fecha_creacion: fechaCreacion
+                };
+            });
+
+            // 3. INSERTAR EN SUPABASE
+            const { error: errInsert } = await supabase.from('registros').insert(registrosAInsertar);
+            if (errInsert) throw errInsert;
+
+            showAlert(`✅ ¡Éxito! Se guardaron ${registrosAInsertar.length} registros del paquete ${paquete} en la base de datos.`, 'success');
+
+        } catch (error) {
+            showAlert('❌ Error al guardar en BD: ' + error.message, 'error');
+        }
+    }
+
+
+    
   
     
 </script>
