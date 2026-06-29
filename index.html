@@ -314,75 +314,96 @@
                 <button onclick="abrirCargoNuevo()" style="background: #e67e22; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 15px; transition: 0.3s;">➕ Cargo Nuevo</button>
             </div>
 
-            <!-- 2. Formulario Generador (Oculto inicialmente) -->
+
+            
+
+            
+                    <!-- 2. Formulario Generador (Oculto inicialmente) -->
             <div id="formulario-cargo" style="display: none; border-top: 1px solid #444; padding-top: 20px;">
-                <h3 style="color: #f1c40f;">Generador de Cargo y Cinto</h3>
+                <h3 style="color: #f1c40f; margin-bottom: 15px;">Generador de Cargo y Cinto</h3>
                 
-                <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px;">
-                    <div class="input-group" style="flex: 2; min-width: 250px;">
-                        <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Archivo Excel (Lista de Registros)</label>
-                        <input type="file" id="cargo-file" accept=".xlsx, .xls" style="width: 100%; padding: 10px; background: #000; color: #2ecc71; border: 1px solid #555; border-radius: 5px;">
-                    </div>
+                <div style="display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;">
                     
-                    <div class="input-group" style="flex: 1; min-width: 150px;">
-                        <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Paquete a buscar</label>
-                        <input type="text" id="cargo-paquete" placeholder="Ej: PQR000010" onkeyup="checkPaqueteType()" style="width: 100%; padding: 10px; background: #000; color: #fff; border: 1px solid #555; border-radius: 5px;">
+                    <!-- LADO IZQUIERDO: Controles -->
+                    <div style="flex: 1; min-width: 300px;">
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px;">
+                            <div class="input-group" style="flex: 2; min-width: 250px;">
+                                <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Archivo Excel (Lista de Registros)</label>
+                                <input type="file" id="cargo-file" accept=".xlsx, .xls" style="width: 100%; padding: 10px; background: #000; color: #2ecc71; border: 1px solid #555; border-radius: 5px;">
+                            </div>
+                            
+                            <div class="input-group" style="flex: 1; min-width: 150px;">
+                                <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Paquete a buscar</label>
+                                <input type="text" id="cargo-paquete" placeholder="Ej: PQR000010" onkeyup="checkPaqueteType()" style="width: 100%; padding: 10px; background: #000; color: #fff; border: 1px solid #555; border-radius: 5px;">
+                            </div>
+
+                            <div class="input-group" id="col-extra-pqr" style="flex: 1; min-width: 150px; display: none;">
+                                <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Columna Extra (Solo PQR)</label>
+                                <select id="cargo-extra-pqr" style="width: 100%; padding: 10px; background: #000; color: #fff; border: 1px solid #555; border-radius: 5px;">
+                                    <option value="comentario">Comentario</option>
+                                    <option value="consumo">Consumo</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px;">
+                            <div class="input-group" style="flex: 1; min-width: 150px;">
+                                <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Asignado a</label>
+                                <select id="cargo-responsable" style="width: 100%; padding: 10px; background: #000; color: #fff; border: 1px solid #555; border-radius: 5px;">
+                                    <option value="">En blanco...</option>
+                                </select>
+                            </div>
+                            
+                            <div class="input-group" style="flex: 1; min-width: 150px;">
+                                <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Fecha de Asignación</label>
+                                <input type="date" id="cargo-fecha" style="width: 100%; padding: 10px; background: #000; color: #2ecc71; border: 1px solid #555; border-radius: 5px;">
+                            </div>
+
+                            <div class="input-group" style="flex: 1; min-width: 150px;">
+                                <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Prioridad Desde</label>
+                                <input type="date" id="cargo-prio-inicio" style="width: 100%; padding: 10px; background: #000; color: #2ecc71; border: 1px solid #555; border-radius: 5px;">
+                            </div>
+                            
+                            <div class="input-group" style="flex: 1; min-width: 150px;">
+                                <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Prioridad Hasta</label>
+                                <input type="date" id="cargo-prio-fin" style="width: 100%; padding: 10px; background: #000; color: #2ecc71; border: 1px solid #555; border-radius: 5px;">
+                            </div>
+                        </div>
+
+                        <!-- Botones Procesar y Limpiar -->
+                        <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                            <button onclick="procesarData()" style="background: #3498db; color: white; border: none; padding: 12px 25px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s;">⚙️ Procesar Data</button>
+                            <button onclick="limpiarFormularioCargo()" style="background: #7f8c8d; color: white; border: none; padding: 12px 25px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s;">🧹 Limpiar Formulario</button>
+                        </div>
+
+                        <div id="cargo-alert" class="alert-box" style="display: none; padding: 15px; border-radius: 5px; margin-bottom: 15px; font-weight: bold;"></div>
+
+                        <!-- Botones de Descarga -->
+                        <div id="botones-descarga" style="display: none; gap: 15px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #444; flex-wrap: wrap;">
+                            <button class="btn-excel" onclick="descargarExcelCargo()" style="background: #2ecc71; color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">📊 Descargar Excel</button>
+                            <button class="btn-pdf" onclick="descargarPdfCinto()" style="background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">🖨️ Descargar Cinto (PDF)</button>
+                            <button onclick="guardarRegistrosSupabase()" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; box-shadow: 0 0 10px rgba(52,152,219,0.5);">💾 Guardar en BD (Registros)</button>
+                            <button onclick="descargarCSVRegistros()" style="background: #9b59b6; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">📁 Descargar CSV (Registros)</button>
+                        </div>
                     </div>
 
-                    <div class="input-group" id="col-extra-pqr" style="flex: 1; min-width: 150px; display: none;">
-                        <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Columna Extra (Solo PQR)</label>
-                        <select id="cargo-extra-pqr" style="width: 100%; padding: 10px; background: #000; color: #fff; border: 1px solid #555; border-radius: 5px;">
-                            <option value="comentario">Comentario</option>
-                            <option value="consumo">Consumo</option>
-                        </select>
+                    <!-- LADO DERECHO: Vista Previa del PDF -->
+                    <div id="contenedor-vista-previa" style="flex: 1; min-width: 300px; max-width: 400px; display: none; flex-direction: column; align-items: center; background: #1a1a1a; padding: 15px; border-radius: 8px; border: 1px solid #444;">
+                        <h4 style="color: #ccc; margin-bottom: 10px;">Vista Previa del Cinto</h4>
+                        <iframe id="pdf-preview" style="width: 100%; height: 450px; border: none; background: white; border-radius: 5px;"></iframe>
                     </div>
+
                 </div>
-
-                <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px;">
-                    <div class="input-group" style="flex: 1; min-width: 150px;">
-                        <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Asignado a</label>
-                        <select id="cargo-responsable" style="width: 100%; padding: 10px; background: #000; color: #fff; border: 1px solid #555; border-radius: 5px;">
-                            <option value="">En blanco...</option>
-                        </select>
-                    </div>
-                    
-                    <div class="input-group" style="flex: 1; min-width: 150px;">
-                        <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Fecha de Asignación</label>
-                        <input type="date" id="cargo-fecha" style="width: 100%; padding: 10px; background: #000; color: #2ecc71; border: 1px solid #555; border-radius: 5px;">
-                    </div>
-
-                    <div class="input-group" style="flex: 1; min-width: 150px;">
-                        <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Prioridad Desde</label>
-                        <input type="date" id="cargo-prio-inicio" style="width: 100%; padding: 10px; background: #000; color: #2ecc71; border: 1px solid #555; border-radius: 5px;">
-                    </div>
-                    
-                    <div class="input-group" style="flex: 1; min-width: 150px;">
-                        <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Prioridad Hasta</label>
-                        <input type="date" id="cargo-prio-fin" style="width: 100%; padding: 10px; background: #000; color: #2ecc71; border: 1px solid #555; border-radius: 5px;">
-                    </div>
-                </div>
-
-                <!-- Botón Procesar -->
-                <div style="display: flex; gap: 15px; margin-bottom: 15px;">
-                    <button onclick="procesarData()" style="background: #3498db; color: white; border: none; padding: 12px 25px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s;">⚙️ Procesar Data</button>
-                </div>
-
-                <div id="cargo-alert" class="alert-box"></div>
-
-
-
-                
-                               <!-- Botones de Descarga (Ocultos inicialmente) -->
-                <div id="botones-descarga" style="display: none; gap: 15px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #444; flex-wrap: wrap;">
-                    <button class="btn-excel" onclick="descargarExcelCargo()" style="background: #2ecc71; color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">📊 Descargar Excel</button>
-                    <button class="btn-pdf" onclick="descargarPdfCinto()" style="background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">🖨️ Descargar Cinto (PDF)</button>
-                    <button onclick="guardarRegistrosSupabase()" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; box-shadow: 0 0 10px rgba(52,152,219,0.5);">💾 Guardar en BD (Registros)</button>
-                    <button onclick="descargarCSVRegistros()" style="background: #9b59b6; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">📁 Descargar CSV (Registros)</button>
-                </div>
-
-
-                
             </div>
+        </div>
+    </div>
+</div> <!-- Cierre del container -->
+
+
+
+
+
+            
         </div>
     </div>
 
