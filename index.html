@@ -1290,7 +1290,7 @@
 
 
 
-           // --- NUEVA FUNCIÓN: Generar y dibujar el QR ---
+       // --- NUEVA FUNCIÓN: Generar y dibujar el QR ---
     function generarQRParaPDF(paquete, doc) {
         const incluirQR = document.getElementById('cargo-incluir-qr').checked;
         
@@ -1302,25 +1302,21 @@
             const qr = new QRious({
                 value: urlVisor,
                 size: 300,
-                level: 'H' // Alta calidad para que se escanee fácil
+                level: 'H'
             } );
             
             const qrImage = qr.toDataURL('image/jpeg');
             
-            // Dibujar el QR en la parte inferior (X: 45, Y: 250)
-            doc.addImage(qrImage, 'JPEG', 45, 250, 30, 30);
+            // QR movido un poco a la izquierda (X: 40) para alinear con el paquete
+            doc.addImage(qrImage, 'JPEG', 40, 250, 30, 30);
             
-            // Texto indicativo debajo del QR
+            // Texto indicativo centrado con el QR (X: 55)
             doc.setFontSize(8);
             doc.setFont("helvetica", "normal");
-            doc.text("Escanear para ver registros", 60, 285, { align: "center" });
+            doc.text("Escanear para ver registros", 55, 285, { align: "center" });
         }
     }
 
-
-
-
-    
     // --- DESCARGAR PDF CINTO (Actualizado) ---
     function descargarPdfCinto() {
         const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
@@ -1353,9 +1349,9 @@
         if (responsable) doc.text(responsable, 30, 120, { angle: -90 });
         doc.text("Auditor / Digitador", 30, 240, { angle: -90 });
 
-        // 3. TERCERA LÍNEA VERTICAL (X: 60)
+        // 3. TERCERA LÍNEA VERTICAL (Movido a la izquierda -> X: 50)
         doc.setFontSize(60);
-        doc.text(paquete, 60, 60, { angle: -90 });
+        doc.text(paquete, 50, 60, { angle: -90 });
 
         // Dibujar el QR si el checkbox está marcado
         generarQRParaPDF(paquete, doc);
@@ -1390,8 +1386,9 @@
         if (responsable) doc.text(responsable, 30, 120, { angle: -90 });
         doc.text("Auditor / Digitador", 30, 240, { angle: -90 });
 
+        // 3. TERCERA LÍNEA VERTICAL (Movido a la izquierda -> X: 50)
         doc.setFontSize(60);
-        doc.text(paquete, 60, 60, { angle: -90 });
+        doc.text(paquete, 50, 60, { angle: -90 });
 
         // Dibujar el QR si el checkbox está marcado
         generarQRParaPDF(paquete, doc);
