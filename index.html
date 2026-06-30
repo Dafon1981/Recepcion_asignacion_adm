@@ -1295,7 +1295,7 @@
 
 
 
-    // --- NUEVA FUNCIÓN: Generar y dibujar el QR ---
+         // --- NUEVA FUNCIÓN: Generar y dibujar el QR ---
     function generarQRParaPDF(paquete, doc) {
         const incluirQR = document.getElementById('cargo-incluir-qr').checked;
         
@@ -1312,16 +1312,20 @@
             
             const qrImage = qr.toDataURL('image/jpeg');
             
-            // QR movido 1 cm más a la izquierda (X: 30)
-            doc.addImage(qrImage, 'JPEG', 30, 250, 30, 30);
+            // QR movido 1 cm a la derecha (X: 40) para no tapar "Auditor / Digitador"
+            doc.addImage(qrImage, 'JPEG', 40, 250, 30, 30);
             
-            // Texto indicativo centrado con el QR (X: 45)
+            // Texto indicativo centrado con el QR (X: 55)
             doc.setFontSize(8);
             doc.setFont("helvetica", "normal");
-            doc.text("Escanear para ver registros", 45, 285, { align: "center" });
+            doc.text("Escanear para ver registros", 55, 285, { align: "center" });
         }
     }
 
+
+
+
+    
     // --- DESCARGAR PDF CINTO (Actualizado) ---
     function descargarPdfCinto() {
         const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
