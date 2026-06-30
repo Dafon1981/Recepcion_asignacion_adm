@@ -1303,13 +1303,13 @@
 
 
 
-        // --- NUEVA FUNCIÓN: Generar y dibujar el QR ---
+           // --- NUEVA FUNCIÓN: Generar y dibujar el QR ---
     function generarQRParaPDF(paquete, doc) {
         const incluirQR = document.getElementById('cargo-incluir-qr').checked;
         
         if (incluirQR) {
-            // ⚠️ IMPORTANTE: Cambia esta URL por la dirección real donde alojes tu App Visor
-            const urlVisor = `https://tu-sitio-web.com/visor.html?paquete=${paquete}`;
+            // URL real de tu App Visor en GitHub Pages
+            const urlVisor = `https://dafon1981.github.io/cargosautomaticos/?paquete=${paquete}`;
             
             // Crear el QR
             const qr = new QRious({
@@ -1330,6 +1330,10 @@
         }
     }
 
+
+
+
+    
     // --- DESCARGAR PDF CINTO (Actualizado) ---
     function descargarPdfCinto() {
         const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
