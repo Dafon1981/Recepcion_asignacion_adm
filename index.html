@@ -1290,7 +1290,8 @@
 
 
 
-       // --- NUEVA FUNCIÓN: Generar y dibujar el QR ---
+
+    // --- NUEVA FUNCIÓN: Generar y dibujar el QR ---
     function generarQRParaPDF(paquete, doc) {
         const incluirQR = document.getElementById('cargo-incluir-qr').checked;
         
@@ -1307,13 +1308,13 @@
             
             const qrImage = qr.toDataURL('image/jpeg');
             
-            // QR movido un poco a la izquierda (X: 40) para alinear con el paquete
-            doc.addImage(qrImage, 'JPEG', 40, 250, 30, 30);
+            // QR movido 1 cm más a la izquierda (X: 30)
+            doc.addImage(qrImage, 'JPEG', 30, 250, 30, 30);
             
-            // Texto indicativo centrado con el QR (X: 55)
+            // Texto indicativo centrado con el QR (X: 45)
             doc.setFontSize(8);
             doc.setFont("helvetica", "normal");
-            doc.text("Escanear para ver registros", 55, 285, { align: "center" });
+            doc.text("Escanear para ver registros", 45, 285, { align: "center" });
         }
     }
 
@@ -1349,9 +1350,9 @@
         if (responsable) doc.text(responsable, 30, 120, { angle: -90 });
         doc.text("Auditor / Digitador", 30, 240, { angle: -90 });
 
-        // 3. TERCERA LÍNEA VERTICAL (Movido a la izquierda -> X: 50)
+        // 3. TERCERA LÍNEA VERTICAL (Movido 1 cm más a la izquierda -> X: 40)
         doc.setFontSize(60);
-        doc.text(paquete, 50, 60, { angle: -90 });
+        doc.text(paquete, 40, 60, { angle: -90 });
 
         // Dibujar el QR si el checkbox está marcado
         generarQRParaPDF(paquete, doc);
@@ -1386,9 +1387,9 @@
         if (responsable) doc.text(responsable, 30, 120, { angle: -90 });
         doc.text("Auditor / Digitador", 30, 240, { angle: -90 });
 
-        // 3. TERCERA LÍNEA VERTICAL (Movido a la izquierda -> X: 50)
+        // 3. TERCERA LÍNEA VERTICAL (Movido 1 cm más a la izquierda -> X: 40)
         doc.setFontSize(60);
-        doc.text(paquete, 50, 60, { angle: -90 });
+        doc.text(paquete, 40, 60, { angle: -90 });
 
         // Dibujar el QR si el checkbox está marcado
         generarQRParaPDF(paquete, doc);
@@ -1399,6 +1400,9 @@
     }
 
 
+
+
+    
   
 
 
