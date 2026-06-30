@@ -7,9 +7,10 @@
     
     <!-- Bibliotecas Base -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8"></script>
-        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- Nueva librería para generar Códigos QR -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 
     <!-- Bibliotecas para Excel (con estilos ) y PDF -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
@@ -1302,30 +1303,34 @@
 
 
 
-        function generarQRParaPDF(paquete, doc) {
+        // --- NUEVA FUNCIÓN: Generar y dibujar el QR ---
+    function generarQRParaPDF(paquete, doc) {
         const incluirQR = document.getElementById('cargo-incluir-qr').checked;
+        
         if (incluirQR) {
-            // Esta será la URL de tu nueva aplicación (la cambiaremos cuando la subas a internet)
-            const urlVisor = `https://mi-visor-fua.com/index.html?paquete=${paquete}`;
+            // ⚠️ IMPORTANTE: Cambia esta URL por la dirección real donde alojes tu App Visor
+            const urlVisor = `https://tu-sitio-web.com/visor.html?paquete=${paquete}`;
             
-            // Generar el QR en base64
+            // Crear el QR
             const qr = new QRious({
                 value: urlVisor,
                 size: 300,
-                level: 'H' // Alta calidad
+                level: 'H' // Alta calidad para que se escanee fácil
             } );
             
             const qrImage = qr.toDataURL('image/jpeg');
             
-            // Dibujar el QR en la columna 3 (X: 45, Y: 240) justo debajo del número de paquete
-            doc.addImage(qrImage, 'JPEG', 45, 240, 35, 35);
+            // Dibujar el QR en la parte inferior (X: 45, Y: 250)
+            doc.addImage(qrImage, 'JPEG', 45, 250, 30, 30);
             
-            // Texto pequeñito debajo del QR
+            // Texto indicativo debajo del QR
             doc.setFontSize(8);
-            doc.text("Escanear para ver registros", 62.5, 278, { align: "center" });
+            doc.setFont("helvetica", "normal");
+            doc.text("Escanear para ver registros", 60, 285, { align: "center" });
         }
     }
 
+    // --- DESCARGAR PDF CINTO (Actualizado) ---
     function descargarPdfCinto() {
         const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
         const responsable = document.getElementById('cargo-responsable').value;
@@ -1361,12 +1366,13 @@
         doc.setFontSize(60);
         doc.text(paquete, 60, 60, { angle: -90 });
 
-        // --- AGREGAR EL QR SI ESTÁ MARCADO ---
+        // Dibujar el QR si el checkbox está marcado
         generarQRParaPDF(paquete, doc);
 
         doc.save(`Cinto_${paquete}.pdf`);
     }
 
+    // --- VISTA PREVIA PDF (Actualizado) ---
     function actualizarVistaPreviaPDF() {
         const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
         const responsable = document.getElementById('cargo-responsable').value;
@@ -1396,13 +1402,16 @@
         doc.setFontSize(60);
         doc.text(paquete, 60, 60, { angle: -90 });
 
-        // --- AGREGAR EL QR SI ESTÁ MARCADO ---
+        // Dibujar el QR si el checkbox está marcado
         generarQRParaPDF(paquete, doc);
 
         const pdfDataUri = doc.output('datauristring');
         document.getElementById('pdf-preview').src = pdfDataUri;
         document.getElementById('contenedor-vista-previa').style.display = 'flex';
     }
+
+
+  
 
 
 
