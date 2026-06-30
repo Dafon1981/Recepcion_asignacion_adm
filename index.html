@@ -983,7 +983,7 @@
 
     
 
-       function procesarData() {
+          function procesarData() {
         const fileInput = document.getElementById('cargo-file');
         const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
         const extraCol = document.getElementById('cargo-extra-pqr').value;
@@ -1029,10 +1029,8 @@
                         // --- LIMPIEZA DE FECHA (Quitar la hora) ---
                         let fechaStr = (row['FecAte'] || row['Fecha de Atención'] || '').toString().trim();
                         if (fechaStr.includes(' ')) {
-                            // Si viene como "17/06/2026 12:00:00 a. m.", lo corta en el espacio
                             fechaStr = fechaStr.split(' ')[0]; 
                         } else if (fechaStr.includes('T')) {
-                            // Si viene en formato ISO "2026-06-17T00:00:00", lo formatea
                             const p = fechaStr.split('T')[0].split('-');
                             fechaStr = `${p[2]}/${p[1]}/${p[0]}`;
                         }
@@ -1056,15 +1054,20 @@
                     return;
                 }
 
-                encontrados.sort((a, b) => {
-                    const parseDate = (d) => {
-                        if (!d) return 0;
-                        const parts = d.split('/');
-                        if (parts.length === 3) return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`).getTime();
-                        return 0;
-                    };
-                    return parseDate(a.fecha) - parseDate(b.fecha);
-                });
+                // --- NUEVA LÓGICA DE ORDENAMIENTO ---
+                // Solo ordena por fecha si es un PQR. Si es PQE, mantiene el orden original del Excel.
+                if (isPQR) {
+                    encontrados.sort((a, b) => {
+                        const parseDate = (d) => {
+                            if (!d) return 0;
+                            const parts = d.split('/');
+                            if (parts.length === 3) return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`).getTime();
+                            return 0;
+                        };
+                        return parseDate(a.fecha) - parseDate(b.fecha);
+                    });
+                }
+                // ------------------------------------
 
                 datosProcesadosCargo = encontrados;
                 
@@ -1081,6 +1084,7 @@
         };
         reader.readAsArrayBuffer(fileInput.files[0]);
     }
+
 
 
 
