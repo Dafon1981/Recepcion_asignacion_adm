@@ -980,126 +980,113 @@
 
 
 
+
     
 
-    async function procesarData() {
+       function procesarData() {
         const fileInput = document.getElementById('cargo-file');
         const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
-        const alertBox = document.getElementById('cargo-alert');
-        const btnDescarga = document.getElementById('botones-descarga');
+        const extraCol = document.getElementById('cargo-extra-pqr').value;
+        const isPQR = paquete.startsWith('PQR');
 
-        alertBox.style.display = 'none';
-        btnDescarga.style.display = 'none';
-        datosProcesadosCargo = [];
+        if (!fileInput.files.length) return showAlert('Por favor, selecciona un archivo Excel.', 'error');
+        if (!paquete) return showAlert('Por favor, ingresa el paquete a buscar.', 'error');
 
-        if (!fileInput.files.length) return showAlert('Sube un archivo Excel.', 'error');
-        if (!paquete) return showAlert('Ingresa el nombre del paquete.', 'error');
-
-        const file = fileInput.files[0];
         const reader = new FileReader();
-
-        reader.onload = async function(e) {
+        reader.onload = function(e) {
             try {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, { type: 'array' });
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                 
-                const rawData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: "" });
-                
+                const jsonDataRaw = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: "" });
                 let headerRowIndex = -1;
-                let headers = [];
                 
-                for (let i = 0; i < Math.min(20, rawData.length); i++) {
-                    const row = rawData[i];
-                    if (row.some(cell => String(cell).toUpperCase().includes('PAQUET'))) {
+                for (let i = 0; i < jsonDataRaw.length; i++) {
+                    const row = jsonDataRaw[i];
+                    if (Object.values(row).some(val => typeof val === 'string' && val.includes('NomPaquete'))) {
                         headerRowIndex = i;
-                        headers = row.map(h => String(h).trim().toUpperCase());
                         break;
                     }
                 }
 
-                if (headerRowIndex === -1) {
-                    return showAlert('No se encontraron las cabeceras en el Excel. Asegúrate de que exista una columna de Paquete.', 'error');
-                }
+                if (headerRowIndex === -1) return showAlert('No se encontró la columna "NomPaquete" en el Excel.', 'error');
 
-                const jsonData = [];
-                for (let i = headerRowIndex + 1; i < rawData.length; i++) {
-                    let obj = {};
-                    let hasData = false;
-                    rawData[i].forEach((cell, index) => {
-                        if (headers[index]) {
-                            obj[headers[index]] = cell;
-                            if (cell !== "") hasData = true;
-                        }
-                    });
-                    if (hasData) jsonData.push(obj);
-                }
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet, { range: headerRowIndex, defval: "" });
+                
+                let encontrados = [];
+                let erroresCosto = 0;
 
-                let filteredData = jsonData.filter(row => {
-                    let val = '';
-                    for (let key in row) {
-                        if (key.includes('PAQUET')) {
-                            val = String(row[key]).trim().toUpperCase();
-                            break;
+                jsonData.forEach(row => {
+                    const nomPaquete = (row['NomPaquete'] || '').toString().trim().toUpperCase();
+                    if (nomPaquete === paquete) {
+                        const costo = parseFloat(row['CostoTotal']) || 0;
+                        if (costo <= 0) erroresCosto++;
+
+                        let fua = (row['NFUA'] || row['FUA'] || '').toString().trim();
+                        const paciente = (row['PACIENTE'] || row['Asegurado'] || '').toString().trim();
+                        
+                        // --- LIMPIEZA DE FECHA (Quitar la hora) ---
+                        let fechaStr = (row['FecAte'] || row['Fecha de Atención'] || '').toString().trim();
+                        if (fechaStr.includes(' ')) {
+                            // Si viene como "17/06/2026 12:00:00 a. m.", lo corta en el espacio
+                            fechaStr = fechaStr.split(' ')[0]; 
+                        } else if (fechaStr.includes('T')) {
+                            // Si viene en formato ISO "2026-06-17T00:00:00", lo formatea
+                            const p = fechaStr.split('T')[0].split('-');
+                            fechaStr = `${p[2]}/${p[1]}/${p[0]}`;
                         }
+                        // ------------------------------------------
+
+                        let consumoTexto = "";
+                        if (isPQR && extraCol === 'consumo') {
+                            consumoTexto = costo > 0 ? "CON CONSUMO" : "";
+                        }
+
+                        encontrados.push({ fua, paciente, fecha: fechaStr, consumo: consumoTexto, costo });
                     }
-                    return val === paquete;
                 });
 
-                if (filteredData.length === 0) {
-                    return showAlert('No se encontraron registros para ese paquete.', 'error');
+                if (encontrados.length === 0) {
+                    return showAlert(`No se encontraron registros para el paquete ${paquete}.`, 'error');
                 }
 
-                let mensajeExito = `¡Éxito! Se encontraron ${filteredData.length} registros listos para descargar.`;
-
-                if (paquete.startsWith('PQE')) {
-                    const registrosCero = filteredData.filter(row => {
-                        let costo = 0;
-                        for (let key in row) {
-                            if (key.includes('COSTO')) {
-                                costo = parseFloat(row[key]) || 0;
-                                break;
-                            }
-                        }
-                        return costo === 0;
-                    });
-                    
-                    if (registrosCero.length > 0) {
-                        return showAlert(`¡ALERTA! Hay ${registrosCero.length} registros en este PQE con Costo 0.00. Revisa el Excel.`, 'error');
-                    } else {
-                        mensajeExito += ' Reporte: Todos los registros tienen costo mayor a 0.00.';
-                    }
+                if (!isPQR && erroresCosto > 0) {
+                    showAlert(`¡Atención! Se encontraron ${erroresCosto} registros con costo 0.00 en este PQE.`, 'error');
+                    return;
                 }
 
-                let isPQR = paquete.startsWith('PQR');
-                if (isPQR) {
-                    filteredData.sort((a, b) => {
-                        let dateA = 0, dateB = 0;
-                        for (let key in a) { if (key.includes('FECHA')) { dateA = new Date(a[key]); break; } }
-                        for (let key in b) { if (key.includes('FECHA')) { dateB = new Date(b[key]); break; } }
-                        return dateA - dateB;
-                    });
-                }
+                encontrados.sort((a, b) => {
+                    const parseDate = (d) => {
+                        if (!d) return 0;
+                        const parts = d.split('/');
+                        if (parts.length === 3) return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`).getTime();
+                        return 0;
+                    };
+                    return parseDate(a.fecha) - parseDate(b.fecha);
+                });
 
-                datosProcesadosCargo = filteredData;
-                showAlert(mensajeExito, 'success');
-                btnDescarga.style.display = 'flex';
-
-                // --- NUEVO: GUARDAR EN SUPABASE ---
-                const responsable = document.getElementById('cargo-responsable').value;
-                const fechaAsig = document.getElementById('cargo-fecha').value;
+                datosProcesadosCargo = encontrados;
                 
-                if (responsable) {
-                    await guardarPaqueteAsignado(paquete, responsable, fechaAsig, filteredData.length);
-                }
+                let msjExito = `¡Éxito! Se encontraron ${encontrados.length} registros listos para descargar.`;
+                if (!isPQR) msjExito += ` Reporte: Todos los registros tienen costo mayor a 0.00.`;
+                
+                showAlert(msjExito, 'success');
+                document.getElementById('botones-descarga').style.display = 'flex';
+                actualizarVistaPreviaPDF();
 
             } catch (err) {
-                showAlert('Error al leer el archivo Excel: ' + err.message, 'error');
+                showAlert('Error al procesar el Excel: ' + err.message, 'error');
             }
         };
-        reader.readAsArrayBuffer(file);
+        reader.readAsArrayBuffer(fileInput.files[0]);
     }
 
+
+
+
+
+    
     // Función para registrar el paquete en la base de datos
     async function guardarPaqueteAsignado(paquete, responsable, fecha, cantidad) {
         try {
