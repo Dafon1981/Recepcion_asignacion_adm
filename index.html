@@ -159,6 +159,18 @@
             
             <div class="fua-tabs-container" id="fua-tabs-consumo"></div>
 
+
+            
+            <!-- NUEVA SECCIÓN: Botones Globales del Día -->
+            <div style="display: flex; gap: 10px; margin-bottom: 15px; background: #222; padding: 10px; border-radius: 6px; border: 1px solid #444; align-items: center; flex-wrap: wrap;">
+                <span style="color: #f1c40f; font-weight: bold; margin-right: 10px;">Acciones del Día:</span>
+                <button onclick="resolverTodoDia('Y66X')" style="background: #2ecc71; color: #000; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.3s;">✅ Resolver Todo Y66X</button>
+                <button onclick="resolverTodoDia('Sin Consumo')" style="background: #2ecc71; color: #000; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.3s;">✅ Resolver Todo Sin Consumo</button>
+                <button onclick="copiarTodoDia()" style="background: #e67e22; color: #fff; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.3s;">📋 Copiar Y66X + Sin Consumo</button>
+            </div>
+
+
+            
             <div class="fua-tables-grid">
                 <div class="fua-table-col">
                     <h4>Y66X <button class="btn-copy-col" onclick="copyFuasCol('consumo', 'Y66X')">📋 Copiar</button></h4>
@@ -840,6 +852,8 @@
         });
     }
 
+
+    
     async function resolveFua(id, btnElement) {
         btnElement.classList.add('resolved');
         btnElement.innerText = 'Resuelto ✓';
@@ -857,6 +871,65 @@
         }, 500);
     }
 
+
+
+
+        // --- NUEVAS FUNCIONES GLOBALES DEL DÍA ---
+    async function resolverTodoDia(condicion) {
+        const selectedDate = window.selectedFuaDate_consumo;
+        // Filtramos las FUAs del día seleccionado y de la condición específica
+        const fuasToResolve = window.allFuas.filter(f => f.fechafuasuelta === selectedDate && f.condicion_fuaobservada === condicion);
+        
+        if (fuasToResolve.length === 0) {
+            return alert(`No hay FUAs pendientes de ${condicion} para el día seleccionado.`);
+        }
+
+        if (!confirm(`¿Estás seguro de resolver TODAS las FUAs de ${condicion} del día ${selectedDate}?`)) return;
+
+        // Extraemos todos los IDs para actualizarlos de golpe
+        const ids = fuasToResolve.map(f => f.id);
+
+        try {
+            // Actualizamos en Supabase usando .in() para afectar a múltiples IDs a la vez
+            const { error } = await supabase.from('asignacion')
+                .update({ condicionfuasuelta: 'resuelto' })
+                .in('id', ids);
+                
+            if (error) throw error;
+            
+            alert(`¡Se resolvieron ${ids.length} FUAs de ${condicion} correctamente!`);
+            loadFuas(); // Recargamos la lista para que desaparezcan
+        } catch (err) {
+            alert("Error al resolver las FUAs: " + err.message);
+        }
+    }
+
+    function copiarTodoDia() {
+        const selectedDate = window.selectedFuaDate_consumo;
+        // Filtramos las FUAs del día que sean Y66X o Sin Consumo
+        const fuasToCopy = window.allFuas.filter(f => 
+            f.fechafuasuelta === selectedDate && 
+            (f.condicion_fuaobservada === 'Y66X' || f.condicion_fuaobservada === 'Sin Consumo')
+        );
+
+        if (fuasToCopy.length === 0) {
+            return alert("No hay FUAs de Y66X ni Sin Consumo para copiar en este día.");
+        }
+
+        // Extraemos los números y los unimos con saltos de línea
+        const textToCopy = fuasToCopy.map(f => f.nrofuasuelta).join('\n');
+        
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            alert(`¡Se copiaron ${fuasToCopy.length} números de FUA (Y66X + Sin Consumo) al portapapeles!`);
+        }).catch(err => {
+            alert("Error al copiar: " + err);
+        });
+    }
+
+
+
+
+    
     // --- LÓGICA DE GUARDADO GLOBAL Y ASIGNACIÓN ---
 
     function toggleRowCheck(checkbox, digi) {
