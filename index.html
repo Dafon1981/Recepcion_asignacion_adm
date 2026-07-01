@@ -259,7 +259,11 @@
             </tbody>
         </table>
     </div>
-    <!-- Pestaña: Filtro de FUAs -->
+
+
+
+
+        <!-- Pestaña: Filtro de FUAs -->
     <div id="filtro" class="tab-content">
         <div class="fua-panel">
             <h3 style="color: #f1c40f; margin-bottom: 15px;">Buscador y Cruce de FUAs</h3>
@@ -268,19 +272,21 @@
             <div style="display: flex; gap: 15px; align-items: stretch; flex-wrap: wrap;">
                 <!-- Cuadro 1: Lista del Sistema -->
                 <div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 10px;">
-                    <label style="color: #ccc; font-weight: bold;">1. Lista del Sistema</label>
+                    <label style="color: #ccc; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
+                        <span>1. Lista del Sistema</span>
+                        <button onclick="document.getElementById('filtro-sistema').value=''" style="background: transparent; border: none; color: #e74c3c; cursor: pointer; font-size: 13px; font-weight: bold;">🗑️ Limpiar</button>
+                    </label>
                     <textarea id="filtro-sistema" rows="15" style="width: 100%; background: #000; color: #2ecc71; padding: 10px; border: 1px solid #555; border-radius: 5px; outline: none; resize: vertical; font-family: monospace;" placeholder="Ejemplo:\n31 2600374945 23/06/2026...\n36 2600373299 23/06/2026..."></textarea>
                 </div>
-
-
-
                 
-                
-                            <!-- Cuadro 2: FUAs a Buscar -->
+                <!-- Cuadro 2: FUAs a Buscar -->
                 <div style="flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 10px;">
                     <label style="color: #ccc; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
                         <span>2. FUAs a Buscar (7 dígitos)</span>
-                        <span id="count-buscar" style="background: #333; color: #f1c40f; padding: 2px 8px; border-radius: 12px; font-size: 12px;">0</span>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span id="count-buscar" style="background: #333; color: #f1c40f; padding: 2px 8px; border-radius: 12px; font-size: 12px;">0</span>
+                            <button onclick="document.getElementById('filtro-buscar').value=''; actualizarContadorBuscar()" style="background: transparent; border: none; color: #e74c3c; cursor: pointer; font-size: 13px; font-weight: bold;">🗑️ Limpiar</button>
+                        </div>
                     </label>
                     <textarea id="filtro-buscar" rows="15" oninput="actualizarContadorBuscar()" style="width: 100%; background: #000; color: #f1c40f; padding: 10px; border: 1px solid #555; border-radius: 5px; outline: none; resize: vertical; font-family: monospace;" placeholder="Ejemplo:\n0373299\n0374262"></textarea>
                 </div>
@@ -294,7 +300,10 @@
                 <div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 10px;">
                     <label style="color: #ccc; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
                         <span>3. Resultados</span>
-                        <span id="count-resultados" style="background: #333; color: #f1c40f; padding: 2px 8px; border-radius: 12px; font-size: 12px;">0 / 0</span>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span id="count-resultados" style="background: #333; color: #f1c40f; padding: 2px 8px; border-radius: 12px; font-size: 12px;">0 / 0</span>
+                            <button onclick="limpiarResultadosFiltro()" style="background: transparent; border: none; color: #e74c3c; cursor: pointer; font-size: 13px; font-weight: bold;">🗑️ Limpiar</button>
+                        </div>
                     </label>
                     <div style="background: #111; border: 1px solid #555; border-radius: 5px; padding: 10px; height: 100%; min-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px;">
                         
@@ -321,11 +330,6 @@
 
                     </div>
                 </div>
-
-
-                
-
-                
             </div>
         </div>
     </div>
@@ -1095,6 +1099,26 @@
         document.getElementById('count-buscar').innerText = lineas.length;
     }
 
+
+
+
+
+    // --- LÓGICA: BUSCADOR Y CRUCE DE FUAS ---
+    
+    function actualizarContadorBuscar() {
+        const buscarText = document.getElementById('filtro-buscar').value.trim();
+        const lineas = buscarText ? buscarText.split('\n').filter(l => l.trim() !== '') : [];
+        document.getElementById('count-buscar').innerText = lineas.length;
+    }
+
+    function limpiarResultadosFiltro() {
+        document.getElementById('resultado-encontrados').innerHTML = '<li style="color: #666;">Esperando búsqueda...</li>';
+        document.getElementById('resultado-no-encontrados').innerHTML = '';
+        document.getElementById('count-encontrados').innerText = '0';
+        document.getElementById('count-no-encontrados').innerText = '0';
+        document.getElementById('count-resultados').innerText = '0 / 0';
+    }
+
     function procesarFiltro() {
         const sistemaText = document.getElementById('filtro-sistema').value.trim();
         const buscarText = document.getElementById('filtro-buscar').value.trim();
@@ -1122,7 +1146,6 @@
             }
         });
 
-        // Filtramos las líneas vacías para no contarlas por error
         const lineasBuscar = buscarText.split('\n').filter(l => l.trim() !== '');
         let encontrados = [];
         let noEncontrados = [];
@@ -1140,8 +1163,23 @@
 
         encontrados.sort((a, b) => a.pos - b.pos);
 
+        // --- LÓGICA DE COLORES SECUENCIALES ---
         if (encontrados.length > 0) {
-            ulEncontrados.innerHTML = encontrados.map(item => `<li>Nº ${item.pos} - ${item.fua}</li>`).join('');
+            let expectedPos = encontrados[0].pos; // El primer número marca el inicio de la secuencia
+            let htmlEncontrados = '';
+
+            encontrados.forEach(item => {
+                if (item.pos === expectedPos) {
+                    // Secuencia normal (Verde)
+                    htmlEncontrados += `<li style="color: #2ecc71;">Nº ${item.pos} - ${item.fua}</li>`;
+                } else {
+                    // Salto en la secuencia (Naranja y Negrita)
+                    htmlEncontrados += `<li style="color: #f39c12; font-weight: bold;">⚠️ Nº ${item.pos} - ${item.fua} <span style="font-size: 11px; color: #aaa;">(Salto)</span></li>`;
+                    expectedPos = item.pos; // Reiniciamos la expectativa al nuevo número
+                }
+                expectedPos++; // El siguiente debería ser este + 1
+            });
+            ulEncontrados.innerHTML = htmlEncontrados;
         } else {
             ulEncontrados.innerHTML = `<li style="color: #666;">Ninguna coincidencia</li>`;
         }
@@ -1152,15 +1190,14 @@
             ulNoEncontrados.innerHTML = `<li style="color: #666;">Todos fueron encontrados</li>`;
         }
 
-        // --- ACTUALIZAR LOS CONTADORES EN PANTALLA ---
         document.getElementById('count-encontrados').innerText = encontrados.length;
         document.getElementById('count-no-encontrados').innerText = noEncontrados.length;
         document.getElementById('count-resultados').innerText = `${encontrados.length} / ${lineasBuscar.length}`;
     }
 
-  
+    
 
-
+    
 
 
     
