@@ -271,11 +271,18 @@
                     <label style="color: #ccc; font-weight: bold;">1. Lista del Sistema</label>
                     <textarea id="filtro-sistema" rows="15" style="width: 100%; background: #000; color: #2ecc71; padding: 10px; border: 1px solid #555; border-radius: 5px; outline: none; resize: vertical; font-family: monospace;" placeholder="Ejemplo:\n31 2600374945 23/06/2026...\n36 2600373299 23/06/2026..."></textarea>
                 </div>
+
+
+
                 
-                <!-- Cuadro 2: FUAs a Buscar -->
+                
+                            <!-- Cuadro 2: FUAs a Buscar -->
                 <div style="flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 10px;">
-                    <label style="color: #ccc; font-weight: bold;">2. FUAs a Buscar (7 dígitos)</label>
-                    <textarea id="filtro-buscar" rows="15" style="width: 100%; background: #000; color: #f1c40f; padding: 10px; border: 1px solid #555; border-radius: 5px; outline: none; resize: vertical; font-family: monospace;" placeholder="Ejemplo:\n0373299\n0374262"></textarea>
+                    <label style="color: #ccc; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
+                        <span>2. FUAs a Buscar (7 dígitos)</span>
+                        <span id="count-buscar" style="background: #333; color: #f1c40f; padding: 2px 8px; border-radius: 12px; font-size: 12px;">0</span>
+                    </label>
+                    <textarea id="filtro-buscar" rows="15" oninput="actualizarContadorBuscar()" style="width: 100%; background: #000; color: #f1c40f; padding: 10px; border: 1px solid #555; border-radius: 5px; outline: none; resize: vertical; font-family: monospace;" placeholder="Ejemplo:\n0373299\n0374262"></textarea>
                 </div>
                 
                 <!-- Botón Encontrar -->
@@ -285,12 +292,18 @@
                 
                 <!-- Cuadro 3: Resultados Dinámicos (Verde y Rojo) -->
                 <div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 10px;">
-                    <label style="color: #ccc; font-weight: bold;">3. Resultados</label>
+                    <label style="color: #ccc; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
+                        <span>3. Resultados</span>
+                        <span id="count-resultados" style="background: #333; color: #f1c40f; padding: 2px 8px; border-radius: 12px; font-size: 12px;">0 / 0</span>
+                    </label>
                     <div style="background: #111; border: 1px solid #555; border-radius: 5px; padding: 10px; height: 100%; min-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px;">
                         
                         <!-- Lista Verde -->
                         <div>
-                            <h4 style="color: #2ecc71; border-bottom: 1px solid #2ecc71; padding-bottom: 5px; margin-bottom: 10px;">✅ Encontrados</h4>
+                            <h4 style="color: #2ecc71; border-bottom: 1px solid #2ecc71; padding-bottom: 5px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                                <span>✅ Encontrados</span>
+                                <span id="count-encontrados" style="color: #2ecc71; font-size: 14px;">0</span>
+                            </h4>
                             <ul id="resultado-encontrados" style="list-style: none; padding: 0; margin: 0; color: #2ecc71; font-family: monospace; font-size: 14px; display: flex; flex-direction: column; gap: 4px;">
                                 <li style="color: #666;">Esperando búsqueda...</li>
                             </ul>
@@ -298,13 +311,21 @@
 
                         <!-- Lista Roja -->
                         <div>
-                            <h4 style="color: #e74c3c; border-bottom: 1px solid #e74c3c; padding-bottom: 5px; margin-bottom: 10px;">❌ No Encontrados</h4>
+                            <h4 style="color: #e74c3c; border-bottom: 1px solid #e74c3c; padding-bottom: 5px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                                <span>❌ No Encontrados</span>
+                                <span id="count-no-encontrados" style="color: #e74c3c; font-size: 14px;">0</span>
+                            </h4>
                             <ul id="resultado-no-encontrados" style="list-style: none; padding: 0; margin: 0; color: #e74c3c; font-family: monospace; font-size: 14px; display: flex; flex-direction: column; gap: 4px;">
                             </ul>
                         </div>
 
                     </div>
                 </div>
+
+
+                
+
+                
             </div>
         </div>
     </div>
@@ -1062,7 +1083,18 @@
         }
     }
 
-    // --- LÓGICA: BUSCADOR Y CRUCE DE FUAS ---
+
+
+
+        // --- LÓGICA: BUSCADOR Y CRUCE DE FUAS ---
+    
+    // Nueva función para contar en tiempo real lo que pegas en el cuadro 2
+    function actualizarContadorBuscar() {
+        const buscarText = document.getElementById('filtro-buscar').value.trim();
+        const lineas = buscarText ? buscarText.split('\n').filter(l => l.trim() !== '') : [];
+        document.getElementById('count-buscar').innerText = lineas.length;
+    }
+
     function procesarFiltro() {
         const sistemaText = document.getElementById('filtro-sistema').value.trim();
         const buscarText = document.getElementById('filtro-buscar').value.trim();
@@ -1090,7 +1122,8 @@
             }
         });
 
-        const lineasBuscar = buscarText.split('\n');
+        // Filtramos las líneas vacías para no contarlas por error
+        const lineasBuscar = buscarText.split('\n').filter(l => l.trim() !== '');
         let encontrados = [];
         let noEncontrados = [];
 
@@ -1118,10 +1151,22 @@
         } else {
             ulNoEncontrados.innerHTML = `<li style="color: #666;">Todos fueron encontrados</li>`;
         }
+
+        // --- ACTUALIZAR LOS CONTADORES EN PANTALLA ---
+        document.getElementById('count-encontrados').innerText = encontrados.length;
+        document.getElementById('count-no-encontrados').innerText = noEncontrados.length;
+        document.getElementById('count-resultados').innerText = `${encontrados.length} / ${lineasBuscar.length}`;
     }
 
+  
+
+
+
+
+    
     // --- NUEVA LÓGICA: CARGO Y CINTO ---
     let datosProcesadosCargo = []; // Variable global para guardar los datos filtrados
+
 
     function checkPaqueteType() {
         const pq = document.getElementById('cargo-paquete').value.trim().toUpperCase();
