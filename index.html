@@ -1767,21 +1767,54 @@
         if (tabId === 'recuento') loadRecuento();
     };
 
-    async function loadRecuento() {
+
+    
+       async function loadRecuento() {
         try {
+            // 1. Traemos solo las columnas necesarias de la tabla 'registros'
             const { data, error } = await supabase
-                .from('paquetes_asignados')
-                .select('*')
-                .order('fecha_asignacion', { ascending: false });
+                .from('registros')
+                .select('NomPaquete, Resp_Aud_Digi, FechaAuditoria');
             
             if (error) throw error;
-            paquetesRecuentoGlobal = data || [];
+
+            // 2. Agrupamos y contamos las FUAs por cada paquete
+            const paquetesMap = {};
+            
+            if (data) {
+                data.forEach(row => {
+                    const paquete = row.NomPaquete;
+                    if (!paquete) return; // Ignorar si por alguna razón está vacío
+
+                    if (!paquetesMap[paquete]) {
+                        paquetesMap[paquete] = {
+                            nro_paquete: paquete,
+                            asignado_a: row.Resp_Aud_Digi || 'Sin asignar',
+                            fecha_asignacion: row.FechaAuditoria || '-',
+                            cantidad_registros: 0
+                        };
+                    }
+                    // Sumamos 1 al contador de este paquete
+                    paquetesMap[paquete].cantidad_registros++;
+                });
+            }
+
+            // 3. Convertimos el resultado en una lista y la ordenamos (los más recientes arriba)
+            paquetesRecuentoGlobal = Object.values(paquetesMap).sort((a, b) => {
+                return b.nro_paquete.localeCompare(a.nro_paquete);
+            });
+
+            // 4. Dibujamos la tabla
             renderRecuento(paquetesRecuentoGlobal);
+            
         } catch (err) {
-            console.error("Error al cargar recuento:", err);
+            console.error("Error al cargar recuento desde registros:", err);
         }
     }
 
+
+
+    
     function renderRecuento(datos) {
         const tbody = document.getElementById('table-recuento');
         tbody.innerHTML = '';
