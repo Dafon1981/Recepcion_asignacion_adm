@@ -453,11 +453,13 @@
             
             <input type="text" id="buscador-recuento" placeholder="🔍 Buscar por número de paquete o auditor..." onkeyup="filtrarRecuento()" style="width: 100%; max-width: 400px; padding: 10px; background: #000; color: #fff; border: 1px solid #555; border-radius: 5px; margin-bottom: 15px; outline: none;">
 
+            
             <table>
                 <thead>
                     <tr>
                         <th>Paquete</th>
                         <th>Asignado a</th>
+                         <th style="text-align: center;">Fecha Creación</th> <!-- NUEVA COLUMNA -->
                         <th style="text-align: center;">Fecha Asignación</th>
                         <th style="text-align: center;">Cant. Registros</th>
                         <th style="text-align: center;">Acción</th>
@@ -1768,43 +1770,40 @@
     };
 
 
-    
-       async function loadRecuento() {
+
+  async function loadRecuento() {
         try {
-            // 1. Traemos solo las columnas necesarias de la tabla 'registros'
+            // 1. Traemos también la fecha_creacion
             const { data, error } = await supabase
                 .from('registros')
-                .select('NomPaquete, Resp_Aud_Digi, FechaAuditoria');
+                .select('NomPaquete, Resp_Aud_Digi, FechaAuditoria, fecha_creacion');
             
             if (error) throw error;
 
-            // 2. Agrupamos y contamos las FUAs por cada paquete
             const paquetesMap = {};
             
             if (data) {
                 data.forEach(row => {
                     const paquete = row.NomPaquete;
-                    if (!paquete) return; // Ignorar si por alguna razón está vacío
+                    if (!paquete) return;
 
                     if (!paquetesMap[paquete]) {
                         paquetesMap[paquete] = {
                             nro_paquete: paquete,
                             asignado_a: row.Resp_Aud_Digi || 'Sin asignar',
                             fecha_asignacion: row.FechaAuditoria || '-',
+                            fecha_creacion: row.fecha_creacion || '-', // Guardamos la fecha de creación
                             cantidad_registros: 0
                         };
                     }
-                    // Sumamos 1 al contador de este paquete
                     paquetesMap[paquete].cantidad_registros++;
                 });
             }
 
-            // 3. Convertimos el resultado en una lista y la ordenamos (los más recientes arriba)
             paquetesRecuentoGlobal = Object.values(paquetesMap).sort((a, b) => {
                 return b.nro_paquete.localeCompare(a.nro_paquete);
             });
 
-            // 4. Dibujamos la tabla
             renderRecuento(paquetesRecuentoGlobal);
             
         } catch (err) {
@@ -1812,14 +1811,12 @@
         }
     }
 
-
-
-    
     function renderRecuento(datos) {
         const tbody = document.getElementById('table-recuento');
         tbody.innerHTML = '';
         if (datos.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888;">No hay paquetes registrados</td></tr>';
+            // Cambiamos el colspan a 6 porque ahora hay una columna más
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#888;">No hay paquetes registrados</td></tr>';
             return;
         }
         datos.forEach(p => {
@@ -1827,6 +1824,7 @@
                 <tr>
                     <td style="color: #f1c40f; font-size: 16px;"><strong>${p.nro_paquete}</strong></td>
                     <td>${p.asignado_a}</td>
+                    <td style="text-align: center; color: #3498db;">${p.fecha_creacion}</td> <!-- NUEVO DATO -->
                     <td style="text-align: center;">${p.fecha_asignacion}</td>
                     <td style="text-align: center; font-weight: bold; font-size: 15px;">${p.cantidad_registros}</td>
                     <td style="text-align: center;">
@@ -1836,7 +1834,8 @@
             `;
         });
     }
-
+    
+    
 
     
     function filtrarRecuento() {
@@ -1848,21 +1847,33 @@
         renderRecuento(filtrados);
     }
 
-    function prepararActualizacion(paquete, asignado) {
+
+    
+   function prepararActualizacion(paquete, asignado) {
         // Cambiar a la pestaña Cargo
         switchTab('cargo');
         document.getElementById('formulario-cargo').style.display = 'block';
         
-        // Pre-llenar los datos
+        // Pre-llenar el paquete
         document.getElementById('cargo-paquete').value = paquete;
-        document.getElementById('cargo-responsable').value = asignado;
+        
+        // Pre-llenar el responsable (y arreglar si dice "Sin asignar")
+        const selectResp = document.getElementById('cargo-responsable');
+        if (asignado === 'Sin asignar') {
+            selectResp.value = ''; // Lo deja en "En blanco..."
+        } else {
+            selectResp.value = asignado;
+        }
+        
+        // IMPORTANTE: Desbloqueamos el select para que puedas cambiar al auditor
+        selectResp.disabled = false; 
+        
         checkPaqueteType();
         
-        // Mostrar instrucción
-        showAlert(`Sube el nuevo Excel corregido para el paquete ${paquete} y presiona "Procesar Data" para actualizarlo.`, 'success');
+        // Mostrar instrucción actualizada
+        showAlert(`Sube el nuevo Excel para el paquete ${paquete}, selecciona al nuevo auditor si deseas cambiarlo, y presiona "Procesar Data".`, 'success');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-
 
 
 
