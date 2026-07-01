@@ -873,8 +873,8 @@
 
 
 
-
-        // --- NUEVAS FUNCIONES GLOBALES DEL DÍA ---
+    
+    // --- NUEVAS FUNCIONES GLOBALES DEL DÍA ---
     async function resolverTodoDia(condicion) {
         const selectedDate = window.selectedFuaDate_consumo;
         // Filtramos las FUAs del día seleccionado y de la condición específica
@@ -884,7 +884,17 @@
             return alert(`No hay FUAs pendientes de ${condicion} para el día seleccionado.`);
         }
 
-        if (!confirm(`¿Estás seguro de resolver TODAS las FUAs de ${condicion} del día ${selectedDate}?`)) return;
+        // --- MENSAJE DE CONFIRMACIÓN DETALLADO ---
+        const mensaje = `⚠️ ADVERTENCIA DE ACCIÓN MASIVA ⚠️\n\n` +
+                        `Estás a punto de RESOLVER (dar por concluidas) TODAS las FUAs de la lista "${condicion}".\n\n` +
+                        `📅 Día afectado: ${selectedDate}\n` +
+                        `🔢 Cantidad a resolver: ${fuasToResolve.length} FUAs\n\n` +
+                        `¿Estás completamente seguro de que deseas continuar?`;
+
+        if (!confirm(mensaje)) {
+            return; // Si el usuario presiona "Cancelar", se detiene todo y no pasa nada
+        }
+        // -----------------------------------------
 
         // Extraemos todos los IDs para actualizarlos de golpe
         const ids = fuasToResolve.map(f => f.id);
@@ -897,13 +907,17 @@
                 
             if (error) throw error;
             
-            alert(`¡Se resolvieron ${ids.length} FUAs de ${condicion} correctamente!`);
+            alert(`✅ ¡Se resolvieron ${ids.length} FUAs de ${condicion} correctamente!`);
             loadFuas(); // Recargamos la lista para que desaparezcan
         } catch (err) {
-            alert("Error al resolver las FUAs: " + err.message);
+            alert("❌ Error al resolver las FUAs: " + err.message);
         }
     }
 
+
+
+
+    
     function copiarTodoDia() {
         const selectedDate = window.selectedFuaDate_consumo;
         // Filtramos las FUAs del día que sean Y66X o Sin Consumo
