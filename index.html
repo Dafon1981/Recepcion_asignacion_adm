@@ -122,13 +122,20 @@
         <div class="nav-right"><button onclick="changeDate(1)">Día Siguiente ▶</button></div>
     </div>
 
-    <div class="tabs">
-        <div class="tab active" onclick="switchTab('consumo')">Digitadores con consumo</div>
+
+    
+       <div class="tabs">
+        <div class="tab active" onclick="switchTab('consumo')">Registros</div>
         <div class="tab" onclick="switchTab('asignacion')">Asignación</div>
         <div class="tab" onclick="switchTab('filtro')">Filtro de FUAs</div>
         <div class="tab" onclick="switchTab('cargo')">Cargo y Cinto</div>
+        <!-- NUEVA PESTAÑA -->
+        <div class="tab" onclick="switchTab('recuento')">Recuento</div>
     </div>
 
+
+
+    
     <!-- Pestaña: Con Consumo -->
     <div id="consumo" class="tab-content active">
         <div class="fua-panel">
@@ -161,13 +168,14 @@
 
 
             
-            <!-- NUEVA SECCIÓN: Botones Globales del Día -->
+                       <!-- NUEVA SECCIÓN: Botones Globales del Día -->
             <div style="display: flex; gap: 10px; margin-bottom: 15px; background: #222; padding: 10px; border-radius: 6px; border: 1px solid #444; align-items: center; flex-wrap: wrap;">
                 <span style="color: #f1c40f; font-weight: bold; margin-right: 10px;">Acciones del Día:</span>
-                <button onclick="resolverTodoDia('Y66X')" style="background: #2ecc71; color: #000; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.3s;">✅ Resolver Todo Y66X</button>
-                <button onclick="resolverTodoDia('Sin Consumo')" style="background: #2ecc71; color: #000; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.3s;">✅ Resolver Todo Sin Consumo</button>
+                <button onclick="resolverTodoDia('Y66X')" style="background: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.3s;">✅ Resolver Todo Y66X</button>
+                <button onclick="resolverTodoDia('Sin Consumo')" style="background: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.3s;">✅ Resolver Todo Sin Consumo</button>
                 <button onclick="copiarTodoDia()" style="background: #e67e22; color: #fff; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.3s;">📋 Copiar Y66X + Sin Consumo</button>
             </div>
+
 
 
             
@@ -437,6 +445,32 @@
 
 
 
+    <!-- NUEVA Pestaña: Recuento -->
+    <div id="recuento" class="tab-content">
+        <div class="fua-panel" style="border-left-color: #9b59b6;">
+            <h3 style="color: #9b59b6; margin-bottom: 15px;">Recuento y Actualización de Paquetes</h3>
+            <p style="color: #aaa; margin-bottom: 15px; font-size: 14px;">Aquí puedes ver el historial de paquetes asignados. Si un auditor devolvió FUAs y necesitas actualizar el paquete, búscalo aquí y presiona "Actualizar".</p>
+            
+            <input type="text" id="buscador-recuento" placeholder="🔍 Buscar por número de paquete o auditor..." onkeyup="filtrarRecuento()" style="width: 100%; max-width: 400px; padding: 10px; background: #000; color: #fff; border: 1px solid #555; border-radius: 5px; margin-bottom: 15px; outline: none;">
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Paquete</th>
+                        <th>Asignado a</th>
+                        <th style="text-align: center;">Fecha Asignación</th>
+                        <th style="text-align: center;">Cant. Registros</th>
+                        <th style="text-align: center;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="table-recuento">
+                    <!-- Datos dinámicos -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    
 
     
 
@@ -1628,7 +1662,6 @@
 
 
 
-    
     async function guardarRegistrosSupabase() {
         if (datosProcesadosCargo.length === 0) return showAlert('No hay datos procesados.', 'error');
 
@@ -1637,9 +1670,8 @@
         const fechaAuditoria = document.getElementById('cargo-fecha').value;
         const fechaCreacion = new Date().toISOString().split('T')[0];
 
-        // 1. VERIFICACIÓN DE DUPLICADOS
-        // Buscamos si ya existe al menos 1 registro con este nombre de paquete
         try {
+            // 1. VERIFICACIÓN DE EXISTENCIA
             const { data: existentes, error: errCheck } = await supabase
                 .from('registros')
                 .select('id')
@@ -1648,14 +1680,20 @@
 
             if (errCheck) throw errCheck;
 
+            let esActualizacion = false;
+
             if (existentes && existentes.length > 0) {
-                return showAlert(`⚠️ El paquete ${paquete} ya fue guardado anteriormente. No se puede duplicar.`, 'error');
+                // PREGUNTAR SI DESEA ACTUALIZAR EN LUGAR DE BLOQUEAR
+                const confirmar = confirm(`⚠️ El paquete ${paquete} ya existe en la base de datos.\n\n¿Deseas ACTUALIZARLO?\nEsto reemplazará las FUAs anteriores con las de este nuevo Excel.`);
+                if (!confirmar) {
+                    return showAlert('Guardado cancelado por el usuario.', 'error');
+                }
+                esActualizacion = true;
             }
 
             // 2. PREPARAR LOS DATOS
             const registrosAInsertar = datosProcesadosCargo.map(row => {
                 let fua = '', paciente = '', fecAte = '';
-                
                 for (let key in row) {
                     const k = key.toUpperCase().trim();
                     if (k === 'NFUA') fua = row[key];
@@ -1664,23 +1702,18 @@
                     else if (k.includes('FEC') && k.includes('ATE')) fecAte = row[key];
                 }
 
-                // Formatear fecha a YYYY-MM-DD
                 let fecAteFormatted = null;
                 if (fecAte) {
                     const strDate = String(fecAte).trim();
                     const matchDDMMYYYY = strDate.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
                     if (matchDDMMYYYY) {
-                        const day = matchDDMMYYYY[1].padStart(2, '0');
-                        const month = matchDDMMYYYY[2].padStart(2, '0');
-                        const year = matchDDMMYYYY[3];
-                        fecAteFormatted = `${year}-${month}-${day}`;
+                        fecAteFormatted = `${matchDDMMYYYY[3]}-${matchDDMMYYYY[2].padStart(2, '0')}-${matchDDMMYYYY[1].padStart(2, '0')}`;
                     } else {
                         const d = new Date(strDate);
                         if (!isNaN(d.getTime())) fecAteFormatted = d.toISOString().split('T')[0];
                     }
                 }
 
-                // Retornar el objeto exacto como lo pide Supabase
                 return {
                     Nfua: String(fua),
                     PACIENTE: String(paciente),
@@ -1692,20 +1725,115 @@
                 };
             });
 
-            // 3. INSERTAR EN SUPABASE
+            // 3. SI ES ACTUALIZACIÓN, BORRAR LOS REGISTROS VIEJOS PRIMERO
+            if (esActualizacion) {
+                const { error: errDelete } = await supabase
+                    .from('registros')
+                    .delete()
+                    .eq('NomPaquete', paquete);
+                if (errDelete) throw errDelete;
+            }
+
+            // 4. INSERTAR LOS NUEVOS REGISTROS
             const { error: errInsert } = await supabase.from('registros').insert(registrosAInsertar);
             if (errInsert) throw errInsert;
 
-            showAlert(`✅ ¡Éxito! Se guardaron ${registrosAInsertar.length} registros del paquete ${paquete} en la base de datos.`, 'success');
+            // 5. ACTUALIZAR LA TABLA DE PAQUETES ASIGNADOS (Para que el recuento se actualice)
+            await guardarPaqueteAsignado(paquete, responsable, fechaAuditoria, registrosAInsertar.length);
+
+            if (esActualizacion) {
+                showAlert(`✅ ¡Éxito! El paquete ${paquete} fue ACTUALIZADO correctamente con ${registrosAInsertar.length} registros.`, 'success');
+            } else {
+                showAlert(`✅ ¡Éxito! Se guardaron ${registrosAInsertar.length} registros del paquete ${paquete} en la base de datos.`, 'success');
+            }
 
         } catch (error) {
             showAlert('❌ Error al guardar en BD: ' + error.message, 'error');
         }
     }
 
+    
+    
+
+
+
+        // --- LÓGICA DE LA PESTAÑA RECUENTO ---
+    let paquetesRecuentoGlobal = [];
+
+    // Modificamos switchTab para que cargue el recuento al hacer clic
+    const originalSwitchTab = switchTab;
+    switchTab = function(tabId) {
+        originalSwitchTab(tabId);
+        if (tabId === 'recuento') loadRecuento();
+    };
+
+    async function loadRecuento() {
+        try {
+            const { data, error } = await supabase
+                .from('paquetes_asignados')
+                .select('*')
+                .order('fecha_asignacion', { ascending: false });
+            
+            if (error) throw error;
+            paquetesRecuentoGlobal = data || [];
+            renderRecuento(paquetesRecuentoGlobal);
+        } catch (err) {
+            console.error("Error al cargar recuento:", err);
+        }
+    }
+
+    function renderRecuento(datos) {
+        const tbody = document.getElementById('table-recuento');
+        tbody.innerHTML = '';
+        if (datos.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888;">No hay paquetes registrados</td></tr>';
+            return;
+        }
+        datos.forEach(p => {
+            tbody.innerHTML += `
+                <tr>
+                    <td style="color: #f1c40f; font-size: 16px;"><strong>${p.nro_paquete}</strong></td>
+                    <td>${p.asignado_a}</td>
+                    <td style="text-align: center;">${p.fecha_asignacion}</td>
+                    <td style="text-align: center; font-weight: bold; font-size: 15px;">${p.cantidad_registros}</td>
+                    <td style="text-align: center;">
+                        <button onclick="prepararActualizacion('${p.nro_paquete}', '${p.asignado_a}')" style="background: #9b59b6; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.3s;">🔄 Actualizar</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
 
     
-  
+    function filtrarRecuento() {
+        const texto = document.getElementById('buscador-recuento').value.toLowerCase();
+        const filtrados = paquetesRecuentoGlobal.filter(p => 
+            (p.nro_paquete && p.nro_paquete.toLowerCase().includes(texto)) ||
+            (p.asignado_a && p.asignado_a.toLowerCase().includes(texto))
+        );
+        renderRecuento(filtrados);
+    }
+
+    function prepararActualizacion(paquete, asignado) {
+        // Cambiar a la pestaña Cargo
+        switchTab('cargo');
+        document.getElementById('formulario-cargo').style.display = 'block';
+        
+        // Pre-llenar los datos
+        document.getElementById('cargo-paquete').value = paquete;
+        document.getElementById('cargo-responsable').value = asignado;
+        checkPaqueteType();
+        
+        // Mostrar instrucción
+        showAlert(`Sube el nuevo Excel corregido para el paquete ${paquete} y presiona "Procesar Data" para actualizarlo.`, 'success');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+
+
+
+
     
 </script>
 </body>
