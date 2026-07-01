@@ -443,20 +443,64 @@
 
     const MIN_START_DATE = new Date('2026-06-15T00:00:00');
 
-    document.addEventListener('DOMContentLoaded', async () => {
+
+
+
+    
+       document.addEventListener('DOMContentLoaded', async () => {
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('current-date').value = today;
         document.getElementById('fua-fecha-consumo').value = today;
         document.getElementById('asig-fecha').value = today;
-        document.getElementById('cargo-fecha').value = today; // Para la pestaña Cargo
         
         window.selectedFuaDate_consumo = today;
+
+        // --- NUEVA LÓGICA: Fechas por defecto para Cargo y Cinto ---
+        
+        // 1. Dejar la fecha de asignación en blanco
+        if (document.getElementById('cargo-fecha')) {
+            document.getElementById('cargo-fecha').value = '';
+        }
+
+        // 2. Calcular fechas de prioridad automáticamente
+        const fechaActual = new Date();
+        
+        // Fecha Inicio: Exactamente 1 mes atrás
+        const fechaInicio = new Date(fechaActual);
+        fechaInicio.setMonth(fechaInicio.getMonth() - 1); 
+        
+        // Fecha Fin: 1 mes atrás + 10 días
+        const fechaFin = new Date(fechaInicio);
+        fechaFin.setDate(fechaFin.getDate() + 10); 
+
+        // Función para formatear la fecha a YYYY-MM-DD (formato que aceptan los inputs)
+        const formatLocal = (date) => {
+            const yyyy = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        };
+
+        // Asignar las fechas a los cuadros de prioridad
+        if (document.getElementById('cargo-prio-inicio')) {
+            document.getElementById('cargo-prio-inicio').value = formatLocal(fechaInicio);
+        }
+        if (document.getElementById('cargo-prio-fin')) {
+            document.getElementById('cargo-prio-fin').value = formatLocal(fechaFin);
+        }
+        // -----------------------------------------------------------
         
         await cargarDigitadores();
         await loadData();
         iniciarTemporizador();
     });
 
+
+
+    
+
+
+    
     async function cargarDigitadores() {
         try {
             const { data, error } = await supabase.from('digitadores').select('*');
