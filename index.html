@@ -140,18 +140,21 @@
     <div id="consumo" class="tab-content active">
         <div class="fua-panel">
             <h3>FUAs Observadas (Ventana de 10 días)</h3>
-            <div class="fua-add-section">
+
+            
+                        <div class="fua-add-section">
                 <div class="input-group" style="max-width: 150px;">
                     <label>Nro FUA</label>
-                    <input type="number" id="fua-nro-consumo" placeholder="Ej: 123456" min="0">
+                    <!-- Agregamos la detección de la tecla Enter -->
+                    <input type="number" id="fua-nro-consumo" placeholder="Ej: 123456" min="0" onkeypress="if(event.key === 'Enter') addFua('consumo')">
                 </div>
                 <div class="input-group" style="max-width: 160px;">
                     <label>Fecha FUA</label>
-                    <input type="date" id="fua-fecha-consumo">
+                    <input type="date" id="fua-fecha-consumo" onkeypress="if(event.key === 'Enter') addFua('consumo')">
                 </div>
                 <div class="input-group" style="max-width: 160px;">
                     <label>Condición</label>
-                    <select id="fua-condicion-consumo">
+                    <select id="fua-condicion-consumo" onkeypress="if(event.key === 'Enter') addFua('consumo')">
                         <option value="Y66X">Y66X</option>
                         <option value="Sin Consumo">Sin Consumo</option>
                         <option value="Reasignada">Reasignada</option>
@@ -159,10 +162,16 @@
                 </div>
                 <div class="input-group" style="flex-grow: 1;">
                     <label>Observación</label>
-                    <input type="text" id="fua-obs-consumo" placeholder="Detalle de la observación...">
+                    <!-- Agregamos la detección de la tecla Enter -->
+                    <input type="text" id="fua-obs-consumo" placeholder="Detalle de la observación..." onkeypress="if(event.key === 'Enter') addFua('consumo')">
                 </div>
                 <button class="btn-add-fua" onclick="addFua('consumo')">Guardar</button>
             </div>
+
+
+
+
+
             
             <div class="fua-tabs-container" id="fua-tabs-consumo"></div>
 
@@ -753,7 +762,7 @@
 
 
     
-    async function addFua(tab) {
+       async function addFua(tab) {
         const selectedDate = document.getElementById('current-date').value;
         const nroInput = document.getElementById(`fua-nro-${tab}`);
         const fechaInput = document.getElementById(`fua-fecha-${tab}`);
@@ -775,12 +784,21 @@
             const { error } = await supabase.from('asignacion').insert([payload]);
             if (error) throw error;
 
+            // Limpiamos las cajas
             nroInput.value = '';
             obsInput.value = '';
             loadFuas(); 
+
+            // --- NUEVO: Devolver el foco a la caja de Nro FUA ---
+            nroInput.focus();
+
         } catch (err) { alert("Error al guardar la FUA: " + err.message); }
     }
 
+
+
+
+    
     async function loadFuas() {
         try {
             const baseDateStr = document.getElementById('current-date').value;
