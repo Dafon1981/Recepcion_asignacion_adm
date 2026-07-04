@@ -1238,8 +1238,10 @@
         if (!fileInput.files.length) return showAlert('Por favor, selecciona un archivo Excel.', 'error');
         if (!paquete) return showAlert('Por favor, ingresa el paquete a buscar.', 'error');
 
+              
         const reader = new FileReader();
-        reader.onload = function(e) {
+              
+       reader.onload = async function(e) { 
             try {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, { type: 'array' });
@@ -1322,7 +1324,9 @@
                 
                 showAlert(msjExito, 'success');
                 document.getElementById('botones-descarga').style.display = 'flex';
-                actualizarVistaPreviaPDF();
+
+                
+                await actualizarVistaPreviaPDF(); 
 
             } catch (err) {
                 showAlert('Error al procesar el Excel: ' + err.message, 'error');
@@ -1534,6 +1538,47 @@
 
     
 
+    
+    // --- NUEVAS FUNCIONES PARA LA ALERTA DE PRIORIDAD ---
+    function verificarPrioridad() {
+        const prioFin = document.getElementById('cargo-prio-fin').value;
+        if (!prioFin) return false;
+        const endPrio = new Date(prioFin + 'T23:59:59');
+        
+        for (let i = 0; i < datosProcesadosCargo.length; i++) {
+            const fecAte = datosProcesadosCargo[i].fecha;
+            if (fecAte) {
+                let rowDate = null;
+                const strDate = String(fecAte).trim();
+                const matchDDMMYYYY = strDate.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+                if (matchDDMMYYYY) {
+                    rowDate = new Date(`${matchDDMMYYYY[3]}-${matchDDMMYYYY[2].padStart(2, '0')}-${matchDDMMYYYY[1].padStart(2, '0')}T00:00:00`);
+                } else {
+                    rowDate = new Date(strDate);
+                }
+
+                if (rowDate && !isNaN(rowDate.getTime()) && rowDate <= endPrio) {
+                    return true; // Si encuentra al menos UNA fua con prioridad, retorna true
+                }
+            }
+        }
+        return false;
+    }
+
+    async function getBase64ImageFromUrl(imageUrl) {
+        const res = await fetch(imageUrl);
+        const blob = await res.blob();
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    }
+
+
+
+    
 
 
 
@@ -1567,9 +1612,11 @@
 
 
 
+
     
-    // --- DESCARGAR PDF CINTO (Actualizado) ---
-    function descargarPdfCinto() {
+    
+       // --- DESCARGAR PDF CINTO (Actualizado con Alerta) ---
+    async function descargarPdfCinto() {
         const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
         const responsable = document.getElementById('cargo-responsable').value;
         const fechaAsig = document.getElementById('cargo-fecha').value;
@@ -1588,21 +1635,42 @@
         const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
         doc.setFont("helvetica", "bold");
 
-        // 1. PRIMERA LÍNEA VERTICAL (X: 15)
+        // 1. PRIMERA LÍNEA VERTICAL
         doc.setFontSize(14);
         doc.text("FECHA AUDITORIA", 15, 40, { angle: -90 });
         doc.text(fechaFormateada, 15, 100, { angle: -90 });
         doc.setFontSize(18);
         doc.text(`CANT: ${cantidad}`, 15, 240, { angle: -90 });
 
-        // 2. SEGUNDA LÍNEA VERTICAL (X: 30)
+        // 2. SEGUNDA LÍNEA VERTICAL
         doc.setFontSize(14);
         if (responsable) doc.text(responsable, 30, 120, { angle: -90 });
         doc.text("Auditor / Digitador", 30, 240, { angle: -90 });
 
-        // 3. TERCERA LÍNEA VERTICAL (Movido 1 cm más a la izquierda -> X: 40)
+        // 3. TERCERA LÍNEA VERTICAL
         doc.setFontSize(60);
         doc.text(paquete, 40, 60, { angle: -90 });
+
+        // --- NUEVO: ALERTA DE PRIORIDAD ---
+        const tienePrioridad = verificarPrioridad();
+        if (tienePrioridad) {
+            try {
+                // Usamos la URL "raw" de GitHub para obtener la imagen directa
+                const imgUrl = 'https://raw.githubusercontent.com/Dafon1981/Recepcion_asignacion_adm/main/alerta.png';
+                const imgData = await getBase64ImageFromUrl(imgUrl );
+                
+                // Dibujamos la imagen entre el número de paquete y el QR (X: 32, Y: 170)
+                doc.addImage(imgData, 'PNG', 32, 170, 15, 15); 
+                
+                // Agregamos el texto en rojo
+                doc.setFontSize(12);
+                doc.setTextColor(231, 76, 60); // Color rojo
+                doc.text("PAQUETE CON PRIORIDAD", 40, 190, { angle: -90 });
+                doc.setTextColor(0, 0, 0); // Restauramos el color negro para el resto
+            } catch (e) {
+                console.error("No se pudo cargar la imagen de alerta", e);
+            }
+        }
 
         // Dibujar el QR si el checkbox está marcado
         generarQRParaPDF(paquete, doc);
@@ -1610,8 +1678,8 @@
         doc.save(`Cinto_${paquete}.pdf`);
     }
 
-    // --- VISTA PREVIA PDF (Actualizado) ---
-    function actualizarVistaPreviaPDF() {
+    // --- VISTA PREVIA PDF (Actualizado con Alerta) ---
+    async function actualizarVistaPreviaPDF() {
         const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
         const responsable = document.getElementById('cargo-responsable').value;
         const fechaAsig = document.getElementById('cargo-fecha').value;
@@ -1637,17 +1705,33 @@
         if (responsable) doc.text(responsable, 30, 120, { angle: -90 });
         doc.text("Auditor / Digitador", 30, 240, { angle: -90 });
 
-        // 3. TERCERA LÍNEA VERTICAL (Movido 1 cm más a la izquierda -> X: 40)
         doc.setFontSize(60);
         doc.text(paquete, 40, 60, { angle: -90 });
 
-        // Dibujar el QR si el checkbox está marcado
+        // --- NUEVO: ALERTA DE PRIORIDAD ---
+        const tienePrioridad = verificarPrioridad();
+        if (tienePrioridad) {
+            try {
+                const imgUrl = 'https://raw.githubusercontent.com/Dafon1981/Recepcion_asignacion_adm/main/alerta.png';
+                const imgData = await getBase64ImageFromUrl(imgUrl );
+                
+                doc.addImage(imgData, 'PNG', 32, 170, 15, 15); 
+                doc.setFontSize(12);
+                doc.setTextColor(231, 76, 60); 
+                doc.text("PAQUETE CON PRIORIDAD", 40, 190, { angle: -90 });
+                doc.setTextColor(0, 0, 0); 
+            } catch (e) {
+                console.error("No se pudo cargar la imagen de alerta", e);
+            }
+        }
+
         generarQRParaPDF(paquete, doc);
 
         const pdfDataUri = doc.output('datauristring');
         document.getElementById('pdf-preview').src = pdfDataUri;
         document.getElementById('contenedor-vista-previa').style.display = 'flex';
     }
+
 
 
 
