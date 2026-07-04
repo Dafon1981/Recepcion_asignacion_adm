@@ -1669,40 +1669,32 @@
         doc.text(paquete, 40, 60, { angle: -90 });
 
 
-        
 
-            // --- NUEVO: ALERTA DE PRIORIDAD ---
+                // --- NUEVO: ALERTA DE PRIORIDAD (Vectorial y sin fondo negro) ---
         const tienePrioridad = verificarPrioridad();
         if (tienePrioridad) {
-            try {
-                const imgUrl = 'https://raw.githubusercontent.com/Dafon1981/Recepcion_asignacion_adm/main/alerta.png';
-                const imgData = await getBase64ImageFromUrl(imgUrl );
-                
-                // Texto en rojo
-                doc.setFontSize(12);
-                doc.setTextColor(231, 76, 60); 
-                doc.text("PAQUETE CON PRIORIDAD", 40, 190, { angle: -90 });
-                doc.setTextColor(0, 0, 0); 
-                
-                // Imagen rotada -90 grados. 
-                // X: 60 (Movida 2 centímetros a la derecha)
-                // Y: 205 (Posición vertical)
-                doc.addImage(imgData, 'PNG', 60, 205, 12, 12, undefined, 'FAST', -90); 
-                
-            } catch (e) {
-                console.error("No se pudo cargar la imagen de alerta", e);
-            }
+            // 1. Texto en rojo
+            doc.setFontSize(12);
+            doc.setTextColor(231, 76, 60); 
+            doc.text("PAQUETE CON PRIORIDAD", 40, 190, { angle: -90 });
+            
+            // 2. Dibujamos el fondo del icono (Círculo Amarillo)
+            // X: 50 (Movido 1 cm a la izquierda respecto al 60 anterior)
+            // Y: 205
+            doc.setFillColor(241, 196, 15); // Color amarillo alerta
+            doc.circle(50, 205, 6, 'F'); // Dibuja un círculo relleno de 6mm de radio
+            
+            // 3. Dibujamos el signo de exclamación dentro del círculo
+            doc.setTextColor(0, 0, 0); // Letra negra
+            doc.setFontSize(16);
+            doc.setFont("helvetica", "bold");
+            doc.text("!", 50, 205, { angle: -90, align: "center", baseline: "middle" });
+            
+            // Restauramos el color negro y fuente normal para el resto del documento
+            doc.setTextColor(0, 0, 0); 
+            doc.setFont("helvetica", "bold");
         }
 
-
-
-        
-
-        // Dibujar el QR si el checkbox está marcado
-        generarQRParaPDF(paquete, doc);
-
-        doc.save(`Cinto_${paquete}.pdf`);
-    }
 
 
 
@@ -1738,43 +1730,33 @@
         doc.setFontSize(60);
         doc.text(paquete, 40, 60, { angle: -90 });
 
-
         
 
-                      // --- NUEVO: ALERTA DE PRIORIDAD ---
+        
+        // --- NUEVO: ALERTA DE PRIORIDAD (Vectorial y sin fondo negro) ---
         const tienePrioridad = verificarPrioridad();
         if (tienePrioridad) {
-            try {
-                const imgUrl = 'https://raw.githubusercontent.com/Dafon1981/Recepcion_asignacion_adm/main/alerta.png';
-                const imgData = await getBase64ImageFromUrl(imgUrl );
-                
-                // Texto en rojo
-                doc.setFontSize(12);
-                doc.setTextColor(231, 76, 60); 
-                doc.text("PAQUETE CON PRIORIDAD", 40, 190, { angle: -90 });
-                doc.setTextColor(0, 0, 0); 
-                
-                // Imagen rotada -90 grados. 
-                // X: 60 (Movida 2 centímetros a la derecha)
-                // Y: 205 (Posición vertical)
-                doc.addImage(imgData, 'PNG', 60, 205, 12, 12, undefined, 'FAST', -90); 
-                
-            } catch (e) {
-                console.error("No se pudo cargar la imagen de alerta", e);
-            }
+            // 1. Texto en rojo
+            doc.setFontSize(12);
+            doc.setTextColor(231, 76, 60); 
+            doc.text("PAQUETE CON PRIORIDAD", 40, 190, { angle: -90 });
+            
+            // 2. Dibujamos el fondo del icono (Círculo Amarillo)
+            // X: 50 (Movido 1 cm a la izquierda respecto al 60 anterior)
+            // Y: 205
+            doc.setFillColor(241, 196, 15); // Color amarillo alerta
+            doc.circle(50, 205, 6, 'F'); // Dibuja un círculo relleno de 6mm de radio
+            
+            // 3. Dibujamos el signo de exclamación dentro del círculo
+            doc.setTextColor(0, 0, 0); // Letra negra
+            doc.setFontSize(16);
+            doc.setFont("helvetica", "bold");
+            doc.text("!", 50, 205, { angle: -90, align: "center", baseline: "middle" });
+            
+            // Restauramos el color negro y fuente normal para el resto del documento
+            doc.setTextColor(0, 0, 0); 
+            doc.setFont("helvetica", "bold");
         }
-
-
-
-
-
-        
-        generarQRParaPDF(paquete, doc);
-
-        const pdfDataUri = doc.output('datauristring');
-        document.getElementById('pdf-preview').src = pdfDataUri;
-        document.getElementById('contenedor-vista-previa').style.display = 'flex';
-    }
 
 
 
