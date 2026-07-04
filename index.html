@@ -1671,7 +1671,7 @@
 
         
 
-        // --- NUEVO: ALERTA DE PRIORIDAD (Reemplaza este bloque en ambas funciones PDF) ---
+            // --- NUEVO: ALERTA DE PRIORIDAD ---
         const tienePrioridad = verificarPrioridad();
         if (tienePrioridad) {
             try {
@@ -1685,14 +1685,15 @@
                 doc.setTextColor(0, 0, 0); 
                 
                 // Imagen rotada -90 grados. 
-                // X: 42 (un poco a la derecha del texto que está en 40)
-                // Y: 205 (más abajo del texto que empieza en 190)
-                doc.addImage(imgData, 'PNG', 42, 205, 12, 12, undefined, 'FAST', -90); 
+                // X: 60 (Movida 2 centímetros a la derecha)
+                // Y: 205 (Posición vertical)
+                doc.addImage(imgData, 'PNG', 60, 205, 12, 12, undefined, 'FAST', -90); 
                 
             } catch (e) {
                 console.error("No se pudo cargar la imagen de alerta", e);
             }
         }
+
 
 
         
@@ -1740,7 +1741,7 @@
 
         
 
-                // --- NUEVO: ALERTA DE PRIORIDAD (Reemplaza este bloque en ambas funciones PDF) ---
+                      // --- NUEVO: ALERTA DE PRIORIDAD ---
         const tienePrioridad = verificarPrioridad();
         if (tienePrioridad) {
             try {
@@ -1754,14 +1755,15 @@
                 doc.setTextColor(0, 0, 0); 
                 
                 // Imagen rotada -90 grados. 
-                // X: 42 (un poco a la derecha del texto que está en 40)
-                // Y: 205 (más abajo del texto que empieza en 190)
-                doc.addImage(imgData, 'PNG', 42, 205, 12, 12, undefined, 'FAST', -90); 
+                // X: 60 (Movida 2 centímetros a la derecha)
+                // Y: 205 (Posición vertical)
+                doc.addImage(imgData, 'PNG', 60, 205, 12, 12, undefined, 'FAST', -90); 
                 
             } catch (e) {
                 console.error("No se pudo cargar la imagen de alerta", e);
             }
         }
+
 
 
 
