@@ -419,15 +419,14 @@
                                 <input type="date" id="cargo-fecha" style="width: 100%; padding: 10px; background: #000; color: #2ecc71; border: 1px solid #555; border-radius: 5px;">
                             </div>
 
-                            <div class="input-group" style="flex: 1; min-width: 150px;">
-                                <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Prioridad Desde</label>
-                                <input type="date" id="cargo-prio-inicio" style="width: 100%; padding: 10px; background: #000; color: #2ecc71; border: 1px solid #555; border-radius: 5px;">
-                            </div>
+
                             
-                            <div class="input-group" style="flex: 1; min-width: 150px;">
-                                <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Prioridad Hasta</label>
-                                <input type="date" id="cargo-prio-fin" style="width: 100%; padding: 10px; background: #000; color: #2ecc71; border: 1px solid #555; border-radius: 5px;">
+                                                       <div class="input-group" style="flex: 1; min-width: 150px;">
+                                <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Prioridad (Vencimiento Hasta)</label>
+                                <input type="date" id="cargo-prio-fin" style="width: 100%; padding: 10px; background: #000; color: #e74c3c; border: 1px solid #555; border-radius: 5px;">
                             </div>
+
+                            
                         </div>
 
                         <!-- Checkbox para el QR -->
@@ -529,53 +528,33 @@
 
 
     
-       document.addEventListener('DOMContentLoaded', async () => {
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('current-date').value = today;
-        document.getElementById('fua-fecha-consumo').value = today;
-        document.getElementById('asig-fecha').value = today;
+     document.addEventListener('DOMContentLoaded', async () => {
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
         
-        window.selectedFuaDate_consumo = today;
-
-        // --- NUEVA LÓGICA: Fechas por defecto para Cargo y Cinto ---
+        document.getElementById('current-date').value = todayStr;
+        document.getElementById('fua-fecha-consumo').value = todayStr;
+        document.getElementById('asig-fecha').value = todayStr;
         
-        // 1. Dejar la fecha de asignación en blanco
-        if (document.getElementById('cargo-fecha')) {
-            document.getElementById('cargo-fecha').value = '';
+        // La fecha de asignación en Cargo y Cinto queda en blanco por defecto
+        if(document.getElementById('cargo-fecha')) document.getElementById('cargo-fecha').value = ''; 
+        
+        // Calcular Prioridad Hasta (Hace 1 mes + 10 días)
+        let prioFinDate = new Date();
+        prioFinDate.setMonth(prioFinDate.getMonth() - 1);
+        prioFinDate.setDate(prioFinDate.getDate() + 10);
+        
+        if(document.getElementById('cargo-prio-fin')) {
+            document.getElementById('cargo-prio-fin').value = prioFinDate.toISOString().split('T')[0];
         }
-
-        // 2. Calcular fechas de prioridad automáticamente
-        const fechaActual = new Date();
         
-        // Fecha Inicio: Exactamente 1 mes atrás
-        const fechaInicio = new Date(fechaActual);
-        fechaInicio.setMonth(fechaInicio.getMonth() - 1); 
-        
-        // Fecha Fin: 1 mes atrás + 10 días
-        const fechaFin = new Date(fechaInicio);
-        fechaFin.setDate(fechaFin.getDate() + 10); 
-
-        // Función para formatear la fecha a YYYY-MM-DD (formato que aceptan los inputs)
-        const formatLocal = (date) => {
-            const yyyy = date.getFullYear();
-            const mm = String(date.getMonth() + 1).padStart(2, '0');
-            const dd = String(date.getDate()).padStart(2, '0');
-            return `${yyyy}-${mm}-${dd}`;
-        };
-
-        // Asignar las fechas a los cuadros de prioridad
-        if (document.getElementById('cargo-prio-inicio')) {
-            document.getElementById('cargo-prio-inicio').value = formatLocal(fechaInicio);
-        }
-        if (document.getElementById('cargo-prio-fin')) {
-            document.getElementById('cargo-prio-fin').value = formatLocal(fechaFin);
-        }
-        // -----------------------------------------------------------
+        window.selectedFuaDate_consumo = todayStr;
         
         await cargarDigitadores();
         await loadData();
         iniciarTemporizador();
     });
+
 
 
 
