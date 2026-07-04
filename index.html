@@ -1399,15 +1399,16 @@
 
 
     
+    
 
-
-      function descargarExcelCargo() {
+    function descargarExcelCargo() {
         if (datosProcesadosCargo.length === 0) return showAlert('No hay datos procesados.', 'error');
 
         const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
         const responsable = document.getElementById('cargo-responsable').value;
         const fechaAsig = document.getElementById('cargo-fecha').value;
-        const prioFin = document.getElementById('cargo-prio-fin').value;
+        
+        // ¡AQUÍ ESTABA EL ERROR! Eliminamos la línea que buscaba 'cargo-prio-fin' porque ya no existe en el HTML.
         
         let isPQR = paquete.startsWith('PQR');
         const extraColType = document.getElementById('cargo-extra-pqr').value;
@@ -1424,10 +1425,8 @@
         wsData.push([{ v: "Fecha Asignación:", s: { font: { bold: true } } }, { v: fechaAsig }]);
         wsData.push([]);
 
-        // Datos y cálculo de prioridad (Solo usamos el límite HASTA)
-               // EN LA FUNCIÓN descargarExcelCargo(), REEMPLAZA LA LÍNEA DE endPrio POR ESTA:
+        // Datos y cálculo de prioridad (Usamos la función automática de los 20 días)
         const endPrio = getAutomaticPriorityDate();
-
         
         let countPrioridad = 0;
         const filasDatos = [];
@@ -1536,6 +1535,8 @@
     }
 
 
+
+    
 
 
 
