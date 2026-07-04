@@ -1398,13 +1398,12 @@
     
 
 
-        function descargarExcelCargo() {
+      function descargarExcelCargo() {
         if (datosProcesadosCargo.length === 0) return showAlert('No hay datos procesados.', 'error');
 
         const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
         const responsable = document.getElementById('cargo-responsable').value;
         const fechaAsig = document.getElementById('cargo-fecha').value;
-        const prioInicio = document.getElementById('cargo-prio-inicio').value;
         const prioFin = document.getElementById('cargo-prio-fin').value;
         
         let isPQR = paquete.startsWith('PQR');
@@ -1422,8 +1421,7 @@
         wsData.push([{ v: "Fecha Asignación:", s: { font: { bold: true } } }, { v: fechaAsig }]);
         wsData.push([]);
 
-        // Datos y cálculo de prioridad
-        const startPrio = prioInicio ? new Date(prioInicio + 'T00:00:00') : null;
+        // Datos y cálculo de prioridad (Solo usamos el límite HASTA)
         const endPrio = prioFin ? new Date(prioFin + 'T23:59:59') : null;
         
         let countPrioridad = 0;
@@ -1449,25 +1447,23 @@
             let isPriority = false;
             
             // Validar prioridad arreglando el formato de fecha DD/MM/YYYY del Excel
-            if (startPrio && endPrio && fecAte) {
+            if (endPrio && fecAte) {
                 let rowDate = null;
                 const strDate = String(fecAte).trim();
                 
-                // Extraer DD/MM/YYYY si viene en ese formato (ej: 09/06/2026 12:00:00 a. m.)
                 const matchDDMMYYYY = strDate.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
                 if (matchDDMMYYYY) {
                     const day = matchDDMMYYYY[1].padStart(2, '0');
                     const month = matchDDMMYYYY[2].padStart(2, '0');
                     const year = matchDDMMYYYY[3];
-                    // Convertir a formato YYYY-MM-DD para que JavaScript lo entienda perfecto
                     rowDate = new Date(`${year}-${month}-${day}T00:00:00`);
                 } else {
-                    // Intento de parseo normal si no tiene ese formato
                     rowDate = new Date(strDate);
                 }
 
                 if (rowDate && !isNaN(rowDate.getTime())) {
-                    if (rowDate >= startPrio && rowDate <= endPrio) {
+                    // LA MAGIA: Si la fecha es menor o igual al límite, es prioridad (atrapa todo el pasado)
+                    if (rowDate <= endPrio) {
                         isPriority = true;
                         countPrioridad++;
                     }
@@ -1517,7 +1513,7 @@
 
         const ws = XLSX.utils.aoa_to_sheet(wsData);
         
-        // Ajustar anchos de columna (hice la fecha un poco más ancha para que quepa bien)
+        // Ajustar anchos de columna
         ws['!cols'] = [{ wch: 5 }, { wch: 15 }, { wch: 35 }, { wch: 22 }];
         if (isPQR) ws['!cols'].push({ wch: 20 });
 
