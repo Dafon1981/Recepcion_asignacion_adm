@@ -1782,91 +1782,6 @@
 
     
   
-
-
-
-
-
-
-    
-
-        function descargarCSVRegistros() {
-        if (datosProcesadosCargo.length === 0) return showAlert('No hay datos procesados.', 'error');
-
-        const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
-        const responsable = document.getElementById('cargo-responsable').value;
-        const fechaAuditoria = document.getElementById('cargo-fecha').value; // Fecha de asignación
-        const fechaCreacion = new Date().toISOString().split('T')[0]; // Fecha de hoy
-
-        // Cabeceras exactas de tu tabla en Supabase
-        const headers = ["Nfua", "PACIENTE", "FecAte", "FechaAuditoria", "Resp_Aud_Digi", "NomPaquete", "fecha_creacion"];
-        let csvContent = headers.join(",") + "\n";
-
-        datosProcesadosCargo.forEach(row => {
-            let fua = '', paciente = '', fecAte = '';
-            
-            // Extraer datos de la fila
-            for (let key in row) {
-                const k = key.toUpperCase().trim();
-                if (k === 'NFUA') fua = row[key];
-                else if (!fua && (k === 'FUA' || k.includes('NROFUA'))) fua = row[key];
-                else if (k.includes('PACIENTE') || k.includes('ASEGURADO') || k.includes('AFILIADO')) paciente = row[key];
-                else if (k.includes('FEC') && k.includes('ATE')) fecAte = row[key];
-            }
-
-            // Formatear FecAte a YYYY-MM-DD para que Supabase lo acepte sin errores
-            let fecAteFormatted = "";
-            if (fecAte) {
-                const strDate = String(fecAte).trim();
-                const matchDDMMYYYY = strDate.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-                if (matchDDMMYYYY) {
-                    const day = matchDDMMYYYY[1].padStart(2, '0');
-                    const month = matchDDMMYYYY[2].padStart(2, '0');
-                    const year = matchDDMMYYYY[3];
-                    fecAteFormatted = `${year}-${month}-${day}`;
-                } else {
-                    const d = new Date(strDate);
-                    if (!isNaN(d.getTime())) {
-                        fecAteFormatted = d.toISOString().split('T')[0];
-                    } else {
-                        fecAteFormatted = strDate; // Si no se puede formatear, se manda tal cual
-                    }
-                }
-            }
-
-            // Función para escapar comas y comillas dentro de los textos (ej: nombres de pacientes)
-            const escapeCSV = (str) => `"${String(str).replace(/"/g, '""')}"`;
-
-            // Armar la fila en el orden exacto de las cabeceras
-            const rowData = [
-                escapeCSV(fua),
-                escapeCSV(paciente),
-                escapeCSV(fecAteFormatted),
-                escapeCSV(fechaAuditoria),
-                escapeCSV(responsable),
-                escapeCSV(paquete),
-                escapeCSV(fechaCreacion)
-            ];
-
-            csvContent += rowData.join(",") + "\n";
-        });
-
-        // Crear el archivo CSV y forzar la descarga (con BOM para que reconozca tildes y eñes)
-        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `Registros_${paquete}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-
-
-
-
-
     async function guardarRegistrosSupabase() {
         if (datosProcesadosCargo.length === 0) return showAlert('No hay datos procesados.', 'error');
 
@@ -1888,7 +1803,6 @@
             let esActualizacion = false;
 
             if (existentes && existentes.length > 0) {
-                // PREGUNTAR SI DESEA ACTUALIZAR EN LUGAR DE BLOQUEAR
                 const confirmar = confirm(`⚠️ El paquete ${paquete} ya existe en la base de datos.\n\n¿Deseas ACTUALIZARLO?\nEsto reemplazará las FUAs anteriores con las de este nuevo Excel.`);
                 if (!confirmar) {
                     return showAlert('Guardado cancelado por el usuario.', 'error');
@@ -1896,16 +1810,12 @@
                 esActualizacion = true;
             }
 
-            // 2. PREPARAR LOS DATOS
+            // 2. PREPARAR LOS DATOS (¡AQUÍ ESTÁ LA CORRECCIÓN!)
             const registrosAInsertar = datosProcesadosCargo.map(row => {
-                let fua = '', paciente = '', fecAte = '';
-                for (let key in row) {
-                    const k = key.toUpperCase().trim();
-                    if (k === 'NFUA') fua = row[key];
-                    else if (!fua && (k === 'FUA' || k.includes('NROFUA'))) fua = row[key];
-                    else if (k.includes('PACIENTE') || k.includes('ASEGURADO') || k.includes('AFILIADO')) paciente = row[key];
-                    else if (k.includes('FEC') && k.includes('ATE')) fecAte = row[key];
-                }
+                // Ahora tomamos los datos directamente de como los procesó el sistema
+                let fua = row.fua || '';
+                let paciente = row.paciente || '';
+                let fecAte = row.fecha || '';
 
                 let fecAteFormatted = null;
                 if (fecAte) {
@@ -1943,7 +1853,7 @@
             const { error: errInsert } = await supabase.from('registros').insert(registrosAInsertar);
             if (errInsert) throw errInsert;
 
-            // 5. ACTUALIZAR LA TABLA DE PAQUETES ASIGNADOS (Para que el recuento se actualice)
+            // 5. ACTUALIZAR LA TABLA DE PAQUETES ASIGNADOS
             await guardarPaqueteAsignado(paquete, responsable, fechaAuditoria, registrosAInsertar.length);
 
             if (esActualizacion) {
@@ -1956,6 +1866,71 @@
             showAlert('❌ Error al guardar en BD: ' + error.message, 'error');
         }
     }
+
+    function descargarCSVRegistros() {
+        if (datosProcesadosCargo.length === 0) return showAlert('No hay datos procesados.', 'error');
+
+        const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
+        const responsable = document.getElementById('cargo-responsable').value;
+        const fechaAuditoria = document.getElementById('cargo-fecha').value; 
+        const fechaCreacion = new Date().toISOString().split('T')[0]; 
+
+        const headers = ["Nfua", "PACIENTE", "FecAte", "FechaAuditoria", "Resp_Aud_Digi", "NomPaquete", "fecha_creacion"];
+        let csvContent = headers.join(",") + "\n";
+
+        datosProcesadosCargo.forEach(row => {
+            // ¡AQUÍ TAMBIÉN ESTÁ LA CORRECCIÓN!
+            let fua = row.fua || '';
+            let paciente = row.paciente || '';
+            let fecAte = row.fecha || '';
+
+            let fecAteFormatted = "";
+            if (fecAte) {
+                const strDate = String(fecAte).trim();
+                const matchDDMMYYYY = strDate.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+                if (matchDDMMYYYY) {
+                    fecAteFormatted = `${matchDDMMYYYY[3]}-${matchDDMMYYYY[2].padStart(2, '0')}-${matchDDMMYYYY[1].padStart(2, '0')}`;
+                } else {
+                    const d = new Date(strDate);
+                    if (!isNaN(d.getTime())) {
+                        fecAteFormatted = d.toISOString().split('T')[0];
+                    } else {
+                        fecAteFormatted = strDate; 
+                    }
+                }
+            }
+
+            const escapeCSV = (str) => `"${String(str).replace(/"/g, '""')}"`;
+
+            const rowData = [
+                escapeCSV(fua),
+                escapeCSV(paciente),
+                escapeCSV(fecAteFormatted),
+                escapeCSV(fechaAuditoria),
+                escapeCSV(responsable),
+                escapeCSV(paquete),
+                escapeCSV(fechaCreacion)
+            ];
+
+            csvContent += rowData.join(",") + "\n";
+        });
+
+        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `Registros_${paquete}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+
+
+
+
+
 
     
     
