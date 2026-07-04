@@ -1630,9 +1630,9 @@
 
 
 
-    
-    
-       // --- DESCARGAR PDF CINTO (Actualizado con Alerta) ---
+
+
+ // --- DESCARGAR PDF CINTO (Actualizado con Alerta Vectorial) ---
     async function descargarPdfCinto() {
         const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
         const responsable = document.getElementById('cargo-responsable').value;
@@ -1668,24 +1668,20 @@
         doc.setFontSize(60);
         doc.text(paquete, 40, 60, { angle: -90 });
 
-
-
-                // --- NUEVO: ALERTA DE PRIORIDAD (Vectorial y sin fondo negro) ---
+        // --- NUEVO: ALERTA DE PRIORIDAD (Vectorial y sin fondo negro) ---
         const tienePrioridad = verificarPrioridad();
         if (tienePrioridad) {
-            // 1. Texto en rojo
+            // Texto en rojo
             doc.setFontSize(12);
             doc.setTextColor(231, 76, 60); 
             doc.text("PAQUETE CON PRIORIDAD", 40, 190, { angle: -90 });
             
-            // 2. Dibujamos el fondo del icono (Círculo Amarillo)
-            // X: 50 (Movido 1 cm a la izquierda respecto al 60 anterior)
-            // Y: 205
-            doc.setFillColor(241, 196, 15); // Color amarillo alerta
-            doc.circle(50, 205, 6, 'F'); // Dibuja un círculo relleno de 6mm de radio
+            // Dibujamos el fondo del icono (Círculo Amarillo)
+            doc.setFillColor(241, 196, 15); 
+            doc.circle(50, 205, 6, 'F'); 
             
-            // 3. Dibujamos el signo de exclamación dentro del círculo
-            doc.setTextColor(0, 0, 0); // Letra negra
+            // Dibujamos el signo de exclamación dentro del círculo
+            doc.setTextColor(0, 0, 0); 
             doc.setFontSize(16);
             doc.setFont("helvetica", "bold");
             doc.text("!", 50, 205, { angle: -90, align: "center", baseline: "middle" });
@@ -1695,12 +1691,18 @@
             doc.setFont("helvetica", "bold");
         }
 
+        // Dibujar el QR si el checkbox está marcado
+        generarQRParaPDF(paquete, doc);
 
-
-
-
+        doc.save(`Cinto_${paquete}.pdf`);
+    }
     
-    // --- VISTA PREVIA PDF (Actualizado con Alerta) ---
+
+
+
+        
+    
+// --- VISTA PREVIA PDF (Actualizado con Alerta Vectorial) ---
     async function actualizarVistaPreviaPDF() {
         const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
         const responsable = document.getElementById('cargo-responsable').value;
@@ -1730,25 +1732,20 @@
         doc.setFontSize(60);
         doc.text(paquete, 40, 60, { angle: -90 });
 
-        
-
-        
         // --- NUEVO: ALERTA DE PRIORIDAD (Vectorial y sin fondo negro) ---
         const tienePrioridad = verificarPrioridad();
         if (tienePrioridad) {
-            // 1. Texto en rojo
+            // Texto en rojo
             doc.setFontSize(12);
             doc.setTextColor(231, 76, 60); 
             doc.text("PAQUETE CON PRIORIDAD", 40, 190, { angle: -90 });
             
-            // 2. Dibujamos el fondo del icono (Círculo Amarillo)
-            // X: 50 (Movido 1 cm a la izquierda respecto al 60 anterior)
-            // Y: 205
-            doc.setFillColor(241, 196, 15); // Color amarillo alerta
-            doc.circle(50, 205, 6, 'F'); // Dibuja un círculo relleno de 6mm de radio
+            // Dibujamos el fondo del icono (Círculo Amarillo)
+            doc.setFillColor(241, 196, 15); 
+            doc.circle(50, 205, 6, 'F'); 
             
-            // 3. Dibujamos el signo de exclamación dentro del círculo
-            doc.setTextColor(0, 0, 0); // Letra negra
+            // Dibujamos el signo de exclamación dentro del círculo
+            doc.setTextColor(0, 0, 0); 
             doc.setFontSize(16);
             doc.setFont("helvetica", "bold");
             doc.text("!", 50, 205, { angle: -90, align: "center", baseline: "middle" });
@@ -1758,6 +1755,12 @@
             doc.setFont("helvetica", "bold");
         }
 
+        generarQRParaPDF(paquete, doc);
+
+        const pdfDataUri = doc.output('datauristring');
+        document.getElementById('pdf-preview').src = pdfDataUri;
+        document.getElementById('contenedor-vista-previa').style.display = 'flex';
+    }
 
 
 
@@ -1971,6 +1974,9 @@
         }
     }
 
+
+
+        
     function renderRecuento(datos) {
         const tbody = document.getElementById('table-recuento');
         tbody.innerHTML = '';
