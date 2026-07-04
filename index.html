@@ -413,6 +413,8 @@
                                     <option value="">En blanco...</option>
                                 </select>
                             </div>
+
+
                             
                             <div class="input-group" style="flex: 1; min-width: 150px;">
                                 <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Fecha de Asignación</label>
@@ -421,10 +423,7 @@
 
 
                             
-                                                       <div class="input-group" style="flex: 1; min-width: 150px;">
-                                <label style="color: #ccc; font-weight: bold; font-size: 14px; margin-bottom: 5px; display: block;">Prioridad (Vencimiento Hasta)</label>
-                                <input type="date" id="cargo-prio-fin" style="width: 100%; padding: 10px; background: #000; color: #e74c3c; border: 1px solid #555; border-radius: 5px;">
-                            </div>
+                                                       
 
                             
                         </div>
@@ -1426,7 +1425,9 @@
         wsData.push([]);
 
         // Datos y cálculo de prioridad (Solo usamos el límite HASTA)
-        const endPrio = prioFin ? new Date(prioFin + 'T23:59:59') : null;
+               // EN LA FUNCIÓN descargarExcelCargo(), REEMPLAZA LA LÍNEA DE endPrio POR ESTA:
+        const endPrio = getAutomaticPriorityDate();
+
         
         let countPrioridad = 0;
         const filasDatos = [];
@@ -1536,14 +1537,29 @@
 
 
 
-    
+
+
 
     
+    
+
     // --- NUEVAS FUNCIONES PARA LA ALERTA DE PRIORIDAD ---
+    function getAutomaticPriorityDate() {
+        // Calcula automáticamente la fecha límite: Hoy menos 20 días
+        let prioDate = new Date();
+        prioDate.setDate(prioDate.getDate() - 20);
+        prioDate.setHours(23, 59, 59, 999);
+        return prioDate;
+    }
+
+    
+
+
+
+    
+
     function verificarPrioridad() {
-        const prioFin = document.getElementById('cargo-prio-fin').value;
-        if (!prioFin) return false;
-        const endPrio = new Date(prioFin + 'T23:59:59');
+        const endPrio = getAutomaticPriorityDate(); // Usa la fecha automática
         
         for (let i = 0; i < datosProcesadosCargo.length; i++) {
             const fecAte = datosProcesadosCargo[i].fecha;
@@ -1651,26 +1667,34 @@
         doc.setFontSize(60);
         doc.text(paquete, 40, 60, { angle: -90 });
 
-        // --- NUEVO: ALERTA DE PRIORIDAD ---
+
+        
+
+        // --- NUEVO: ALERTA DE PRIORIDAD (Reemplaza este bloque en ambas funciones PDF) ---
         const tienePrioridad = verificarPrioridad();
         if (tienePrioridad) {
             try {
-                // Usamos la URL "raw" de GitHub para obtener la imagen directa
                 const imgUrl = 'https://raw.githubusercontent.com/Dafon1981/Recepcion_asignacion_adm/main/alerta.png';
                 const imgData = await getBase64ImageFromUrl(imgUrl );
                 
-                // Dibujamos la imagen entre el número de paquete y el QR (X: 32, Y: 170)
-                doc.addImage(imgData, 'PNG', 32, 170, 15, 15); 
-                
-                // Agregamos el texto en rojo
+                // Texto en rojo
                 doc.setFontSize(12);
-                doc.setTextColor(231, 76, 60); // Color rojo
+                doc.setTextColor(231, 76, 60); 
                 doc.text("PAQUETE CON PRIORIDAD", 40, 190, { angle: -90 });
-                doc.setTextColor(0, 0, 0); // Restauramos el color negro para el resto
+                doc.setTextColor(0, 0, 0); 
+                
+                // Imagen rotada -90 grados. 
+                // X: 42 (un poco a la derecha del texto que está en 40)
+                // Y: 205 (más abajo del texto que empieza en 190)
+                doc.addImage(imgData, 'PNG', 42, 205, 12, 12, undefined, 'FAST', -90); 
+                
             } catch (e) {
                 console.error("No se pudo cargar la imagen de alerta", e);
             }
         }
+
+
+        
 
         // Dibujar el QR si el checkbox está marcado
         generarQRParaPDF(paquete, doc);
@@ -1678,6 +1702,10 @@
         doc.save(`Cinto_${paquete}.pdf`);
     }
 
+
+
+
+    
     // --- VISTA PREVIA PDF (Actualizado con Alerta) ---
     async function actualizarVistaPreviaPDF() {
         const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
@@ -1708,23 +1736,36 @@
         doc.setFontSize(60);
         doc.text(paquete, 40, 60, { angle: -90 });
 
-        // --- NUEVO: ALERTA DE PRIORIDAD ---
+
+        
+
+                // --- NUEVO: ALERTA DE PRIORIDAD (Reemplaza este bloque en ambas funciones PDF) ---
         const tienePrioridad = verificarPrioridad();
         if (tienePrioridad) {
             try {
                 const imgUrl = 'https://raw.githubusercontent.com/Dafon1981/Recepcion_asignacion_adm/main/alerta.png';
                 const imgData = await getBase64ImageFromUrl(imgUrl );
                 
-                doc.addImage(imgData, 'PNG', 32, 170, 15, 15); 
+                // Texto en rojo
                 doc.setFontSize(12);
                 doc.setTextColor(231, 76, 60); 
                 doc.text("PAQUETE CON PRIORIDAD", 40, 190, { angle: -90 });
                 doc.setTextColor(0, 0, 0); 
+                
+                // Imagen rotada -90 grados. 
+                // X: 42 (un poco a la derecha del texto que está en 40)
+                // Y: 205 (más abajo del texto que empieza en 190)
+                doc.addImage(imgData, 'PNG', 42, 205, 12, 12, undefined, 'FAST', -90); 
+                
             } catch (e) {
                 console.error("No se pudo cargar la imagen de alerta", e);
             }
         }
 
+
+
+
+        
         generarQRParaPDF(paquete, doc);
 
         const pdfDataUri = doc.output('datauristring');
