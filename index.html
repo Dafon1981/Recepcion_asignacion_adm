@@ -1668,34 +1668,37 @@
         doc.setFontSize(60);
         doc.text(paquete, 40, 60, { angle: -90 });
 
-        // --- NUEVO: ALERTA DE PRIORIDAD (Vectorial y sin fondo negro) ---
+
+
+        
+
+               // --- NUEVO: ALERTA DE PRIORIDAD (Diseño Actualizado) ---
         const tienePrioridad = verificarPrioridad();
         if (tienePrioridad) {
-            // Texto en rojo
-            doc.setFontSize(12);
-            doc.setTextColor(231, 76, 60); 
-            doc.text("PAQUETE CON PRIORIDAD", 40, 190, { angle: -90 });
-            
-            // Dibujamos el fondo del icono (Círculo Amarillo)
-            doc.setFillColor(241, 196, 15); 
-            doc.circle(50, 205, 6, 'F'); 
-            
-            // Dibujamos el signo de exclamación dentro del círculo
-            doc.setTextColor(0, 0, 0); 
-            doc.setFontSize(16);
-            doc.setFont("helvetica", "bold");
-            doc.text("!", 50, 205, { angle: -90, align: "center", baseline: "middle" });
-            
-            // Restauramos el color negro y fuente normal para el resto del documento
-            doc.setTextColor(0, 0, 0); 
-            doc.setFont("helvetica", "bold");
+            try {
+                // Usamos tu nueva imagen JPG (fondo blanco perfecto)
+                const imgUrl = 'https://raw.githubusercontent.com/Dafon1981/Recepcion_asignacion_adm/main/alerta.jpg';
+                const imgData = await getBase64ImageFromUrl(imgUrl );
+                
+                // Configuramos el texto grande y negro
+                doc.setTextColor(0, 0, 0); 
+                doc.setFontSize(35); 
+                
+                // 1. Texto "CUIDADO" (Línea más a la izquierda, X: 28)
+                doc.text("CUIDADO", 28, 190, { angle: -90 });
+                
+                // 2. Texto "PRIORIDAD" (Línea central, X: 42)
+                doc.text("PRIORIDAD", 42, 190, { angle: -90 });
+                
+                // 3. Imagen de Alerta (Más a la derecha, X: 56)
+                // Y: 195 para que quede bien alineada con las palabras
+                doc.addImage(imgData, 'JPEG', 56, 195, 18, 18, undefined, 'FAST', -90); 
+                
+            } catch (e) {
+                console.error("No se pudo cargar la imagen de alerta", e);
+            }
         }
 
-        // Dibujar el QR si el checkbox está marcado
-        generarQRParaPDF(paquete, doc);
-
-        doc.save(`Cinto_${paquete}.pdf`);
-    }
     
 
 
@@ -1732,38 +1735,43 @@
         doc.setFontSize(60);
         doc.text(paquete, 40, 60, { angle: -90 });
 
-        // --- NUEVO: ALERTA DE PRIORIDAD (Vectorial y sin fondo negro) ---
+
+
+
+        
+             // --- NUEVO: ALERTA DE PRIORIDAD (Diseño Actualizado) ---
         const tienePrioridad = verificarPrioridad();
         if (tienePrioridad) {
-            // Texto en rojo
-            doc.setFontSize(12);
-            doc.setTextColor(231, 76, 60); 
-            doc.text("PAQUETE CON PRIORIDAD", 40, 190, { angle: -90 });
-            
-            // Dibujamos el fondo del icono (Círculo Amarillo)
-            doc.setFillColor(241, 196, 15); 
-            doc.circle(50, 205, 6, 'F'); 
-            
-            // Dibujamos el signo de exclamación dentro del círculo
-            doc.setTextColor(0, 0, 0); 
-            doc.setFontSize(16);
-            doc.setFont("helvetica", "bold");
-            doc.text("!", 50, 205, { angle: -90, align: "center", baseline: "middle" });
-            
-            // Restauramos el color negro y fuente normal para el resto del documento
-            doc.setTextColor(0, 0, 0); 
-            doc.setFont("helvetica", "bold");
+            try {
+                // Usamos tu nueva imagen JPG (fondo blanco perfecto)
+                const imgUrl = 'https://raw.githubusercontent.com/Dafon1981/Recepcion_asignacion_adm/main/alerta.jpg';
+                const imgData = await getBase64ImageFromUrl(imgUrl );
+                
+                // Configuramos el texto grande y negro
+                doc.setTextColor(0, 0, 0); 
+                doc.setFontSize(35); 
+                
+                // 1. Texto "CUIDADO" (Línea más a la izquierda, X: 28)
+                doc.text("CUIDADO", 28, 190, { angle: -90 });
+                
+                // 2. Texto "PRIORIDAD" (Línea central, X: 42)
+                doc.text("PRIORIDAD", 42, 190, { angle: -90 });
+                
+                // 3. Imagen de Alerta (Más a la derecha, X: 56)
+                // Y: 195 para que quede bien alineada con las palabras
+                doc.addImage(imgData, 'JPEG', 56, 195, 18, 18, undefined, 'FAST', -90); 
+                
+            } catch (e) {
+                console.error("No se pudo cargar la imagen de alerta", e);
+            }
         }
 
-        generarQRParaPDF(paquete, doc);
-
-        const pdfDataUri = doc.output('datauristring');
-        document.getElementById('pdf-preview').src = pdfDataUri;
-        document.getElementById('contenedor-vista-previa').style.display = 'flex';
-    }
 
 
 
+
+
+    
 
     
   
@@ -1934,6 +1942,8 @@
 
 
 
+    
+
   async function loadRecuento() {
         try {
             // 1. Traemos también la fecha_creacion
@@ -1976,6 +1986,8 @@
 
 
 
+
+    
         
     function renderRecuento(datos) {
         const tbody = document.getElementById('table-recuento');
@@ -2002,6 +2014,8 @@
     }
     
     
+
+
 
     
     function filtrarRecuento() {
