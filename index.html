@@ -1631,6 +1631,8 @@
 
 
 
+
+
         // --- DESCARGAR PDF CINTO (Actualizado con Alerta) ---
     async function descargarPdfCinto() {
         const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
@@ -1667,7 +1669,7 @@
         doc.setFontSize(60);
         doc.text(paquete, 40, 60, { angle: -90 });
 
-        // --- NUEVO: ALERTA DE PRIORIDAD (Diseño Ajustado) ---
+        // --- NUEVO: ALERTA DE PRIORIDAD (Diseño Ajustado - Medio cm más abajo) ---
         const tienePrioridad = verificarPrioridad();
         if (tienePrioridad) {
             try {
@@ -1675,15 +1677,14 @@
                 const imgData = await getBase64ImageFromUrl(imgUrl );
                 
                 doc.setTextColor(0, 0, 0); 
-                // Bajamos 2 puntos a la letra (de 35 a 33)
                 doc.setFontSize(25); 
                 
-                // Subimos 1.5 cm hacia arriba (Y pasa de 190 a 175)
-                doc.text("CUIDADO", 28, 175, { angle: -90 });
-                doc.text("PRIORIDAD", 42, 175, { angle: -90 });
+                // Bajamos 0.5 cm (Y pasa de 175 a 180)
+                doc.text("CUIDADO", 28, 180, { angle: -90 });
+                doc.text("PRIORIDAD", 42, 180, { angle: -90 });
                 
-                // La imagen también sube para acompañar al texto (Y pasa de 195 a 180)
-                doc.addImage(imgData, 'JPEG', 56, 180, 18, 18, undefined, 'FAST', -90); 
+                // La imagen también baja 0.5 cm (Y pasa de 180 a 185)
+                doc.addImage(imgData, 'JPEG', 56, 185, 18, 18, undefined, 'FAST', -90); 
                 
                 // Restauramos el tamaño y color por si acaso
                 doc.setFontSize(14);
@@ -1729,7 +1730,7 @@
         doc.setFontSize(60);
         doc.text(paquete, 40, 60, { angle: -90 });
 
-        // --- NUEVO: ALERTA DE PRIORIDAD (Diseño Ajustado) ---
+        // --- NUEVO: ALERTA DE PRIORIDAD (Diseño Ajustado - Medio cm más abajo) ---
         const tienePrioridad = verificarPrioridad();
         if (tienePrioridad) {
             try {
@@ -1737,15 +1738,14 @@
                 const imgData = await getBase64ImageFromUrl(imgUrl );
                 
                 doc.setTextColor(0, 0, 0); 
-                // Bajamos 2 puntos a la letra (de 35 a 33)
                 doc.setFontSize(25); 
                 
-                // Subimos 1.5 cm hacia arriba (Y pasa de 190 a 175)
-                doc.text("CUIDADO", 28, 175, { angle: -90 });
-                doc.text("PRIORIDAD", 42, 175, { angle: -90 });
+                // Bajamos 0.5 cm (Y pasa de 175 a 180)
+                doc.text("CUIDADO", 28, 180, { angle: -90 });
+                doc.text("PRIORIDAD", 42, 180, { angle: -90 });
                 
-                // La imagen también sube para acompañar al texto (Y pasa de 195 a 180)
-                doc.addImage(imgData, 'JPEG', 56, 180, 18, 18, undefined, 'FAST', -90); 
+                // La imagen también baja 0.5 cm (Y pasa de 180 a 185)
+                doc.addImage(imgData, 'JPEG', 56, 185, 18, 18, undefined, 'FAST', -90); 
                 
                 doc.setFontSize(14);
                 doc.setTextColor(0, 0, 0);
@@ -1761,7 +1761,6 @@
         document.getElementById('contenedor-vista-previa').style.display = 'flex';
     }
 
- 
 
     
 
