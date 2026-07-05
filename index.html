@@ -1540,22 +1540,17 @@
 
 
 
-
-    
-    
-
     // --- NUEVAS FUNCIONES PARA LA ALERTA DE PRIORIDAD ---
     function getAutomaticPriorityDate() {
-        // Calcula automáticamente la fecha límite: Hoy menos 20 días
+        // Calcula automáticamente la fecha límite: Hoy menos 22 días (faltan 8 para el mes)
         let prioDate = new Date();
-        prioDate.setDate(prioDate.getDate() - 20);
+        prioDate.setDate(prioDate.getDate() - 22);
         prioDate.setHours(23, 59, 59, 999);
         return prioDate;
     }
 
     
-
-
+ 
 
     
 
