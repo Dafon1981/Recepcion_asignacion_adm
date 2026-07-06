@@ -1538,24 +1538,27 @@
 
     
 
-
-
     // --- NUEVAS FUNCIONES PARA LA ALERTA DE PRIORIDAD ---
     function getAutomaticPriorityDate() {
-        // Calcula automáticamente la fecha límite: Hoy menos 22 días (faltan 8 para el mes)
+        // Fecha límite para prioridad NORMAL: Hoy menos 22 días (faltan 8 para el mes)
         let prioDate = new Date();
         prioDate.setDate(prioDate.getDate() - 22);
         prioDate.setHours(23, 59, 59, 999);
         return prioDate;
     }
 
-    
- 
-
-    
+    function getHighPriorityDate() {
+        // Fecha límite para prioridad ALTA: Hoy menos 25 días (faltan 5 para el mes)
+        let prioDate = new Date();
+        prioDate.setDate(prioDate.getDate() - 25);
+        prioDate.setHours(23, 59, 59, 999);
+        return prioDate;
+    }
 
     function verificarPrioridad() {
-        const endPrio = getAutomaticPriorityDate(); // Usa la fecha automática
+        const normalPrio = getAutomaticPriorityDate(); 
+        const highPrio = getHighPriorityDate();
+        let nivel = 0; // 0 = Sin prioridad, 1 = Prioridad Normal, 2 = Prioridad Alta
         
         for (let i = 0; i < datosProcesadosCargo.length; i++) {
             const fecAte = datosProcesadosCargo[i].fecha;
@@ -1569,14 +1572,25 @@
                     rowDate = new Date(strDate);
                 }
 
-                if (rowDate && !isNaN(rowDate.getTime()) && rowDate <= endPrio) {
-                    return true; // Si encuentra al menos UNA fua con prioridad, retorna true
+                if (rowDate && !isNaN(rowDate.getTime())) {
+                    if (rowDate <= highPrio) {
+                        return 2; // Si encuentra una de ALTA prioridad, retorna 2 de inmediato
+                    } else if (rowDate <= normalPrio) {
+                        nivel = 1; // Registra que hay prioridad normal, pero sigue buscando por si hay una alta
+                    }
                 }
             }
         }
-        return false;
+        return nivel;
     }
 
+
+
+
+    
+
+
+    
     async function getBase64ImageFromUrl(imageUrl) {
         const res = await fetch(imageUrl);
         const blob = await res.blob();
@@ -1630,10 +1644,7 @@
 
 
 
-
-
-
-        // --- DESCARGAR PDF CINTO (Actualizado con Alerta) ---
+    // --- DESCARGAR PDF CINTO (Actualizado con Niveles de Prioridad) ---
     async function descargarPdfCinto() {
         const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
         const responsable = document.getElementById('cargo-responsable').value;
@@ -1669,9 +1680,9 @@
         doc.setFontSize(60);
         doc.text(paquete, 40, 60, { angle: -90 });
 
-        // --- NUEVO: ALERTA DE PRIORIDAD (Diseño Ajustado - Medio cm más abajo) ---
-        const tienePrioridad = verificarPrioridad();
-        if (tienePrioridad) {
+        // --- NUEVO: ALERTA DE PRIORIDAD (Con Niveles) ---
+        const nivelPrioridad = verificarPrioridad();
+        if (nivelPrioridad > 0) {
             try {
                 const imgUrl = 'https://raw.githubusercontent.com/Dafon1981/Recepcion_asignacion_adm/main/alerta.jpg';
                 const imgData = await getBase64ImageFromUrl(imgUrl );
@@ -1679,14 +1690,17 @@
                 doc.setTextColor(0, 0, 0); 
                 doc.setFontSize(25); 
                 
-                // Bajamos 0.5 cm (Y pasa de 175 a 180)
                 doc.text("CUIDADO", 28, 180, { angle: -90 });
-                doc.text("PRIORIDAD", 42, 180, { angle: -90 });
                 
-                // La imagen también baja 0.5 cm (Y pasa de 180 a 185)
+                // Cambia el texto dependiendo del nivel de urgencia
+                if (nivelPrioridad === 2) {
+                    doc.text("PRIORIDAD ALTA", 42, 180, { angle: -90 });
+                } else {
+                    doc.text("PRIORIDAD", 42, 180, { angle: -90 });
+                }
+                
                 doc.addImage(imgData, 'JPEG', 56, 185, 18, 18, undefined, 'FAST', -90); 
                 
-                // Restauramos el tamaño y color por si acaso
                 doc.setFontSize(14);
                 doc.setTextColor(0, 0, 0);
             } catch (e) {
@@ -1700,7 +1714,7 @@
         doc.save(`Cinto_${paquete}.pdf`);
     }
 
-    // --- VISTA PREVIA PDF (Actualizado con Alerta) ---
+    // --- VISTA PREVIA PDF (Actualizado con Niveles de Prioridad) ---
     async function actualizarVistaPreviaPDF() {
         const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
         const responsable = document.getElementById('cargo-responsable').value;
@@ -1730,9 +1744,9 @@
         doc.setFontSize(60);
         doc.text(paquete, 40, 60, { angle: -90 });
 
-        // --- NUEVO: ALERTA DE PRIORIDAD (Diseño Ajustado - Medio cm más abajo) ---
-        const tienePrioridad = verificarPrioridad();
-        if (tienePrioridad) {
+        // --- NUEVO: ALERTA DE PRIORIDAD (Con Niveles) ---
+        const nivelPrioridad = verificarPrioridad();
+        if (nivelPrioridad > 0) {
             try {
                 const imgUrl = 'https://raw.githubusercontent.com/Dafon1981/Recepcion_asignacion_adm/main/alerta.jpg';
                 const imgData = await getBase64ImageFromUrl(imgUrl );
@@ -1740,11 +1754,15 @@
                 doc.setTextColor(0, 0, 0); 
                 doc.setFontSize(25); 
                 
-                // Bajamos 0.5 cm (Y pasa de 175 a 180)
                 doc.text("CUIDADO", 28, 180, { angle: -90 });
-                doc.text("PRIORIDAD", 42, 180, { angle: -90 });
                 
-                // La imagen también baja 0.5 cm (Y pasa de 180 a 185)
+                // Cambia el texto dependiendo del nivel de urgencia
+                if (nivelPrioridad === 2) {
+                    doc.text("PRIORIDAD ALTA", 42, 180, { angle: -90 });
+                } else {
+                    doc.text("PRIORIDAD", 42, 180, { angle: -90 });
+                }
+                
                 doc.addImage(imgData, 'JPEG', 56, 185, 18, 18, undefined, 'FAST', -90); 
                 
                 doc.setFontSize(14);
@@ -1760,7 +1778,6 @@
         document.getElementById('pdf-preview').src = pdfDataUri;
         document.getElementById('contenedor-vista-previa').style.display = 'flex';
     }
-
 
     
 
