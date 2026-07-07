@@ -1644,7 +1644,7 @@
 
 
 
-    // --- DESCARGAR PDF CINTO (Actualizado con Niveles de Prioridad) ---
+        // --- DESCARGAR PDF CINTO (Actualizado con Niveles de Prioridad) ---
     async function descargarPdfCinto() {
         const paquete = document.getElementById('cargo-paquete').value.trim().toUpperCase();
         const responsable = document.getElementById('cargo-responsable').value;
@@ -1688,14 +1688,15 @@
                 const imgData = await getBase64ImageFromUrl(imgUrl );
                 
                 doc.setTextColor(0, 0, 0); 
-                doc.setFontSize(20); 
-                
-                doc.text("CUIDADO", 28, 180, { angle: -90 });
+                doc.setFontSize(33); 
                 
                 // Cambia el texto dependiendo del nivel de urgencia
                 if (nivelPrioridad === 2) {
+                    // Si es prioridad ALTA, quitamos la palabra "CUIDADO" para que no choque
                     doc.text("PRIORIDAD ALTA", 42, 180, { angle: -90 });
                 } else {
+                    // Si es prioridad normal, ponemos ambas
+                    doc.text("CUIDADO", 28, 180, { angle: -90 });
                     doc.text("PRIORIDAD", 42, 180, { angle: -90 });
                 }
                 
@@ -1752,14 +1753,15 @@
                 const imgData = await getBase64ImageFromUrl(imgUrl );
                 
                 doc.setTextColor(0, 0, 0); 
-                doc.setFontSize(20); 
-                
-                doc.text("CUIDADO", 28, 180, { angle: -90 });
+                doc.setFontSize(33); 
                 
                 // Cambia el texto dependiendo del nivel de urgencia
                 if (nivelPrioridad === 2) {
+                    // Si es prioridad ALTA, quitamos la palabra "CUIDADO" para que no choque
                     doc.text("PRIORIDAD ALTA", 42, 180, { angle: -90 });
                 } else {
+                    // Si es prioridad normal, ponemos ambas
+                    doc.text("CUIDADO", 28, 180, { angle: -90 });
                     doc.text("PRIORIDAD", 42, 180, { angle: -90 });
                 }
                 
@@ -1779,7 +1781,6 @@
         document.getElementById('contenedor-vista-previa').style.display = 'flex';
     }
 
-    
 
 
 
