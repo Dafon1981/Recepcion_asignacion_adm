@@ -354,7 +354,10 @@
                 </div>
             </div>
 
-            <!-- MODO 2: ANÁLISIS DE FECHAS (El Nuevo) -->
+
+
+            
+                    <!-- MODO 2: ANÁLISIS DE FECHAS (El Nuevo) -->
             <div id="modo-fechas" style="display: none;">
                 <p style="color: #aaa; margin-bottom: 15px; font-size: 14px;">Pega una lista de fechas de atención (DD-MM-YYYY o DD/MM/YYYY) para calcular automáticamente cuáles están más cerca de caducar (30 días).</p>
                 
@@ -368,14 +371,17 @@
                         <textarea id="filtro-fechas-input" rows="15" style="width: 100%; background: #000; color: #9b59b6; padding: 10px; border: 1px solid #555; border-radius: 5px; outline: none; resize: vertical; font-family: monospace;" placeholder="Ejemplo:\n29-06-2026\n26-06-2026\n27-06-2026"></textarea>
                     </div>
                     
-                    <!-- Botón Analizar -->
-                    <div style="display: flex; align-items: center; justify-content: center;">
+                    <!-- Botón Analizar (Alineado arriba) -->
+                    <div style="display: flex; align-items: flex-start; justify-content: center; padding-top: 35px;">
                         <button onclick="analizarFechas()" style="background: #9b59b6; color: white; border: none; padding: 15px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">Analizar ➔</button>
                     </div>
                     
                     <!-- Cuadro 2: Resultados Fechas -->
                     <div style="flex: 2; min-width: 300px; display: flex; flex-direction: column; gap: 10px;">
-                        <label style="color: #ccc; font-weight: bold;">2. Resultados del Análisis</label>
+                        <label style="color: #ccc; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
+                            <span>2. Resultados del Análisis</span>
+                            <button onclick="limpiarResultadosFechas()" style="background: transparent; border: none; color: #e74c3c; cursor: pointer; font-size: 13px; font-weight: bold;">🗑️ Limpiar</button>
+                        </label>
                         <div style="background: #111; border: 1px solid #555; border-radius: 5px; padding: 15px; height: 100%; min-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px;">
                             
                             <!-- Resumen Crítico -->
@@ -399,6 +405,7 @@
 
 
 
+    
     
 
 
@@ -2244,7 +2251,15 @@
     }
 
 
+    function limpiarResultadosFechas() {
+        const resumenDiv = document.getElementById('resumen-fechas');
+        resumenDiv.style.borderLeftColor = '#555';
+        resumenDiv.innerHTML = '<span style="color: #888;">Esperando datos para analizar...</span>';
+        document.getElementById('lista-fechas-resultado').innerHTML = '';
+    }
 
+
+    
     
     
 </script>
