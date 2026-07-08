@@ -272,78 +272,134 @@
 
 
 
+
         <!-- Pestaña: Filtro de FUAs -->
     <div id="filtro" class="tab-content">
         <div class="fua-panel">
-            <h3 style="color: #f1c40f; margin-bottom: 15px;">Buscador y Cruce de FUAs</h3>
-            <p style="color: #aaa; margin-bottom: 15px; font-size: 14px;">Pega la lista del sistema a la izquierda, los números a buscar en el centro, y presiona "Encontrar".</p>
             
-            <div style="display: flex; gap: 15px; align-items: stretch; flex-wrap: wrap;">
-                <!-- Cuadro 1: Lista del Sistema -->
-                <div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 10px;">
-                    <label style="color: #ccc; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
-                        <span>1. Lista del Sistema</span>
-                        <button onclick="document.getElementById('filtro-sistema').value=''" style="background: transparent; border: none; color: #e74c3c; cursor: pointer; font-size: 13px; font-weight: bold;">🗑️ Limpiar</button>
-                    </label>
-                    <textarea id="filtro-sistema" rows="15" style="width: 100%; background: #000; color: #2ecc71; padding: 10px; border: 1px solid #555; border-radius: 5px; outline: none; resize: vertical; font-family: monospace;" placeholder="Ejemplo:\n31 2600374945 23/06/2026...\n36 2600373299 23/06/2026..."></textarea>
-                </div>
-                
-                <!-- Cuadro 2: FUAs a Buscar -->
-                <div style="flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 10px;">
-                    <label style="color: #ccc; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
-                        <span>2. FUAs a Buscar (7 dígitos)</span>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span id="count-buscar" style="background: #333; color: #f1c40f; padding: 2px 8px; border-radius: 12px; font-size: 12px;">0</span>
-                            <button onclick="document.getElementById('filtro-buscar').value=''; actualizarContadorBuscar()" style="background: transparent; border: none; color: #e74c3c; cursor: pointer; font-size: 13px; font-weight: bold;">🗑️ Limpiar</button>
-                        </div>
-                    </label>
-                    <textarea id="filtro-buscar" rows="15" oninput="actualizarContadorBuscar()" style="width: 100%; background: #000; color: #f1c40f; padding: 10px; border: 1px solid #555; border-radius: 5px; outline: none; resize: vertical; font-family: monospace;" placeholder="Ejemplo:\n0373299\n0374262"></textarea>
-                </div>
-                
-                <!-- Botón Encontrar -->
-                <div style="display: flex; align-items: center; justify-content: center;">
-                    <button onclick="procesarFiltro()" style="background: #3498db; color: white; border: none; padding: 15px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">Encontrar ➔</button>
-                </div>
-                
-                <!-- Cuadro 3: Resultados Dinámicos (Verde y Rojo) -->
-                <div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 10px;">
-                    <label style="color: #ccc; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
-                        <span>3. Resultados</span>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span id="count-resultados" style="background: #333; color: #f1c40f; padding: 2px 8px; border-radius: 12px; font-size: 12px;">0 / 0</span>
-                            <button onclick="limpiarResultadosFiltro()" style="background: transparent; border: none; color: #e74c3c; cursor: pointer; font-size: 13px; font-weight: bold;">🗑️ Limpiar</button>
-                        </div>
-                    </label>
-                    <div style="background: #111; border: 1px solid #555; border-radius: 5px; padding: 10px; height: 100%; min-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px;">
-                        
-                        <!-- Lista Verde -->
-                        <div>
-                            <h4 style="color: #2ecc71; border-bottom: 1px solid #2ecc71; padding-bottom: 5px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-                                <span>✅ Encontrados</span>
-                                <span id="count-encontrados" style="color: #2ecc71; font-size: 14px;">0</span>
-                            </h4>
-                            <ul id="resultado-encontrados" style="list-style: none; padding: 0; margin: 0; color: #2ecc71; font-family: monospace; font-size: 14px; display: flex; flex-direction: column; gap: 4px;">
-                                <li style="color: #666;">Esperando búsqueda...</li>
-                            </ul>
-                        </div>
+            <!-- Selector de Modo -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 15px;">
+                <h3 style="color: #f1c40f; margin: 0;">Herramientas de Filtro</h3>
+                <select id="filtro-modo" onchange="cambiarModoFiltro()" style="padding: 8px 15px; background: #222; color: #f1c40f; border: 1px solid #555; border-radius: 5px; font-weight: bold; outline: none; cursor: pointer; font-size: 14px;">
+                    <option value="cruce">🔍 Modo: Cruce de FUAs (Buscar faltantes)</option>
+                    <option value="fechas">📅 Modo: Análisis de Fechas (Vencimientos)</option>
+                </select>
+            </div>
 
-                        <!-- Lista Roja -->
-                        <div>
-                            <h4 style="color: #e74c3c; border-bottom: 1px solid #e74c3c; padding-bottom: 5px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-                                <span>❌ No Encontrados</span>
-                                <span id="count-no-encontrados" style="color: #e74c3c; font-size: 14px;">0</span>
-                            </h4>
-                            <ul id="resultado-no-encontrados" style="list-style: none; padding: 0; margin: 0; color: #e74c3c; font-family: monospace; font-size: 14px; display: flex; flex-direction: column; gap: 4px;">
-                            </ul>
-                        </div>
+            <!-- MODO 1: CRUCE DE FUAS (Tu código original intacto) -->
+            <div id="modo-cruce">
+                <p style="color: #aaa; margin-bottom: 15px; font-size: 14px;">Pega la lista del sistema a la izquierda, los números a buscar en el centro, y presiona "Encontrar".</p>
+                
+                <div style="display: flex; gap: 15px; align-items: stretch; flex-wrap: wrap;">
+                    <!-- Cuadro 1: Lista del Sistema -->
+                    <div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 10px;">
+                        <label style="color: #ccc; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
+                            <span>1. Lista del Sistema</span>
+                            <button onclick="document.getElementById('filtro-sistema').value=''" style="background: transparent; border: none; color: #e74c3c; cursor: pointer; font-size: 13px; font-weight: bold;">🗑️ Limpiar</button>
+                        </label>
+                        <textarea id="filtro-sistema" rows="15" style="width: 100%; background: #000; color: #2ecc71; padding: 10px; border: 1px solid #555; border-radius: 5px; outline: none; resize: vertical; font-family: monospace;" placeholder="Ejemplo:\n31 2600374945 23/06/2026...\n36 2600373299 23/06/2026..."></textarea>
+                    </div>
+                    
+                    <!-- Cuadro 2: FUAs a Buscar -->
+                    <div style="flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 10px;">
+                        <label style="color: #ccc; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
+                            <span>2. FUAs a Buscar (7 dígitos)</span>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span id="count-buscar" style="background: #333; color: #f1c40f; padding: 2px 8px; border-radius: 12px; font-size: 12px;">0</span>
+                                <button onclick="document.getElementById('filtro-buscar').value=''; actualizarContadorBuscar()" style="background: transparent; border: none; color: #e74c3c; cursor: pointer; font-size: 13px; font-weight: bold;">🗑️ Limpiar</button>
+                            </div>
+                        </label>
+                        <textarea id="filtro-buscar" rows="15" oninput="actualizarContadorBuscar()" style="width: 100%; background: #000; color: #f1c40f; padding: 10px; border: 1px solid #555; border-radius: 5px; outline: none; resize: vertical; font-family: monospace;" placeholder="Ejemplo:\n0373299\n0374262"></textarea>
+                    </div>
+                    
+                    <!-- Botón Encontrar -->
+                    <div style="display: flex; align-items: center; justify-content: center;">
+                        <button onclick="procesarFiltro()" style="background: #3498db; color: white; border: none; padding: 15px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">Encontrar ➔</button>
+                    </div>
+                    
+                    <!-- Cuadro 3: Resultados Dinámicos -->
+                    <div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 10px;">
+                        <label style="color: #ccc; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
+                            <span>3. Resultados</span>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span id="count-resultados" style="background: #333; color: #f1c40f; padding: 2px 8px; border-radius: 12px; font-size: 12px;">0 / 0</span>
+                                <button onclick="limpiarResultadosFiltro()" style="background: transparent; border: none; color: #e74c3c; cursor: pointer; font-size: 13px; font-weight: bold;">🗑️ Limpiar</button>
+                            </div>
+                        </label>
+                        <div style="background: #111; border: 1px solid #555; border-radius: 5px; padding: 10px; height: 100%; min-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px;">
+                            
+                            <!-- Lista Verde -->
+                            <div>
+                                <h4 style="color: #2ecc71; border-bottom: 1px solid #2ecc71; padding-bottom: 5px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                                    <span>✅ Encontrados</span>
+                                    <span id="count-encontrados" style="color: #2ecc71; font-size: 14px;">0</span>
+                                </h4>
+                                <ul id="resultado-encontrados" style="list-style: none; padding: 0; margin: 0; color: #2ecc71; font-family: monospace; font-size: 14px; display: flex; flex-direction: column; gap: 4px;">
+                                    <li style="color: #666;">Esperando búsqueda...</li>
+                                </ul>
+                            </div>
 
+                            <!-- Lista Roja -->
+                            <div>
+                                <h4 style="color: #e74c3c; border-bottom: 1px solid #e74c3c; padding-bottom: 5px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                                    <span>❌ No Encontrados</span>
+                                    <span id="count-no-encontrados" style="color: #e74c3c; font-size: 14px;">0</span>
+                                </h4>
+                                <ul id="resultado-no-encontrados" style="list-style: none; padding: 0; margin: 0; color: #e74c3c; font-family: monospace; font-size: 14px; display: flex; flex-direction: column; gap: 4px;">
+                                </ul>
+                            </div>
+
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <!-- MODO 2: ANÁLISIS DE FECHAS (El Nuevo) -->
+            <div id="modo-fechas" style="display: none;">
+                <p style="color: #aaa; margin-bottom: 15px; font-size: 14px;">Pega una lista de fechas de atención (DD-MM-YYYY o DD/MM/YYYY) para calcular automáticamente cuáles están más cerca de caducar (30 días).</p>
+                
+                <div style="display: flex; gap: 15px; align-items: stretch; flex-wrap: wrap;">
+                    <!-- Cuadro 1: Lista de Fechas -->
+                    <div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 10px;">
+                        <label style="color: #ccc; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
+                            <span>1. Lista de Fechas</span>
+                            <button onclick="document.getElementById('filtro-fechas-input').value=''" style="background: transparent; border: none; color: #e74c3c; cursor: pointer; font-size: 13px; font-weight: bold;">🗑️ Limpiar</button>
+                        </label>
+                        <textarea id="filtro-fechas-input" rows="15" style="width: 100%; background: #000; color: #9b59b6; padding: 10px; border: 1px solid #555; border-radius: 5px; outline: none; resize: vertical; font-family: monospace;" placeholder="Ejemplo:\n29-06-2026\n26-06-2026\n27-06-2026"></textarea>
+                    </div>
+                    
+                    <!-- Botón Analizar -->
+                    <div style="display: flex; align-items: center; justify-content: center;">
+                        <button onclick="analizarFechas()" style="background: #9b59b6; color: white; border: none; padding: 15px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">Analizar ➔</button>
+                    </div>
+                    
+                    <!-- Cuadro 2: Resultados Fechas -->
+                    <div style="flex: 2; min-width: 300px; display: flex; flex-direction: column; gap: 10px;">
+                        <label style="color: #ccc; font-weight: bold;">2. Resultados del Análisis</label>
+                        <div style="background: #111; border: 1px solid #555; border-radius: 5px; padding: 15px; height: 100%; min-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px;">
+                            
+                            <!-- Resumen Crítico -->
+                            <div id="resumen-fechas" style="background: #222; padding: 15px; border-radius: 5px; border-left: 4px solid #555;">
+                                <span style="color: #888;">Esperando datos para analizar...</span>
+                            </div>
+
+                            <!-- Lista Detallada -->
+                            <div>
+                                <h4 style="color: #ccc; border-bottom: 1px solid #444; padding-bottom: 5px; margin-bottom: 10px;">Detalle Ordenado (De más urgente a menos urgente)</h4>
+                                <ul id="lista-fechas-resultado" style="list-style: none; padding: 0; margin: 0; font-family: monospace; font-size: 14px; display: flex; flex-direction: column; gap: 6px;">
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
 
+
+    
 
 
     
@@ -2080,6 +2136,66 @@
 
 
 
+
+        // --- NUEVAS FUNCIONES: ANÁLISIS DE FECHAS ---
+    
+    function cambiarModoFiltro() {
+        const modo = document.getElementById('filtro-modo').value;
+        if (modo === 'cruce') {
+            document.getElementById('modo-cruce').style.display = 'block';
+            document.getElementById('modo-fechas').style.display = 'none';
+        } else {
+            document.getElementById('modo-cruce').style.display = 'none';
+            document.getElementById('modo-fechas').style.display = 'block';
+        }
+    }
+
+    function analizarFechas() {
+        const texto = document.getElementById('filtro-fechas-input').value.trim();
+        if (!texto) return alert("Por favor, pega una lista de fechas.");
+
+        const lineas = texto.split('\n').map(l => l.trim()).filter(l => l !== '');
+        
+        // Usamos la fecha actual para calcular
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+
+        let resultados = [];
+
+        lineas.forEach(linea => {
+            // Extraer fecha (soporta DD-MM-YYYY o DD/MM/YYYY)
+            const match = linea.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+            if (match) {
+                const dia = parseInt(match[1], 10);
+                const mes = parseInt(match[2], 10) - 1; // Los meses en JS van de 0 a 11
+                const anio = parseInt(match[3], 10);
+                const fechaAtencion = new Date(anio, mes, dia);
+                
+                // Calcular diferencia en días
+                const diffTime = hoy - fechaAtencion;
+                const diasAntiguedad = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                const diasFaltantes = 30 - diasAntiguedad; // Caduca a los 30 días
+
+                resultados.push({
+                    original: linea,
+                    diasFaltantes: diasFaltantes
+                });
+            }
+        });
+
+        if (resultados.length === 0) {
+            return alert("No se encontraron fechas válidas. Usa el formato DD-MM-YYYY o DD/MM/YYYY.");
+        }
+
+        // Ordenar de menor a mayor días faltantes (los más críticos primero)
+        resultados.sort((a, b) => a.diasFaltantes - b.diasFaltantes);
+
+        // Identificar el más crítico (el primero de la lista ordenada)
+        const masCritico =
+
+
+
+    
     
 </script>
 </body>
