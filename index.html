@@ -2137,7 +2137,7 @@
 
 
 
-        // --- NUEVAS FUNCIONES: ANÁLISIS DE FECHAS ---
+    // --- NUEVAS FUNCIONES: ANÁLISIS DE FECHAS ---
     
     function cambiarModoFiltro() {
         const modo = document.getElementById('filtro-modo').value;
@@ -2172,13 +2172,14 @@
                 const fechaAtencion = new Date(anio, mes, dia);
                 
                 // Calcular diferencia en días
-                const diffTime = hoy - fechaAtencion;
+                const diffTime = hoy.getTime() - fechaAtencion.getTime();
                 const diasAntiguedad = Math.floor(diffTime / (1000 * 60 * 60 * 24));
                 const diasFaltantes = 30 - diasAntiguedad; // Caduca a los 30 días
 
                 resultados.push({
                     original: linea,
-                    diasFaltantes: diasFaltantes
+                    diasFaltantes: diasFaltantes,
+                    antiguedad: diasAntiguedad
                 });
             }
         });
@@ -2191,7 +2192,56 @@
         resultados.sort((a, b) => a.diasFaltantes - b.diasFaltantes);
 
         // Identificar el más crítico (el primero de la lista ordenada)
-        const masCritico =
+        const masCritico = resultados[0];
+        
+        // Renderizar Resumen Crítico
+        const resumenDiv = document.getElementById('resumen-fechas');
+        if (masCritico.diasFaltantes < 0) {
+            resumenDiv.style.borderLeftColor = '#e74c3c'; // Rojo
+            resumenDiv.innerHTML = `<strong style="color:#e74c3c; font-size:16px;">⚠️ ¡ALERTA CRÍTICA!</strong>  
+
+                                    La fecha más antigua es <strong>${masCritico.original}</strong>.  
+
+                                    Ya caducó hace ${Math.abs(masCritico.diasFaltantes)} días (tiene ${masCritico.antiguedad} días de antigüedad).`;
+        } else if (masCritico.diasFaltantes <= 8) {
+            resumenDiv.style.borderLeftColor = '#f39c12'; // Naranja
+            resumenDiv.innerHTML = `<strong style="color:#f39c12; font-size:16px;">⚠️ PRIORIDAD ALTA</strong>  
+
+                                    La fecha más urgente es <strong>${masCritico.original}</strong>.  
+
+                                    Le faltan solo <strong>${masCritico.diasFaltantes} días</strong> para caducar.`;
+        } else {
+            resumenDiv.style.borderLeftColor = '#2ecc71'; // Verde
+            resumenDiv.innerHTML = `<strong style="color:#2ecc71; font-size:16px;">✅ TODO EN ORDEN</strong>  
+
+                                    La fecha más antigua es <strong>${masCritico.original}</strong>.  
+
+                                    Aún le faltan ${masCritico.diasFaltantes} días para caducar.`;
+        }
+
+        // Renderizar Lista Detallada
+        const ulResultados = document.getElementById('lista-fechas-resultado');
+        let htmlLista = '';
+        
+        resultados.forEach(item => {
+            let color = '#2ecc71'; // Verde por defecto
+            let textoFaltante = `Faltan ${item.diasFaltantes} días`;
+            
+            if (item.diasFaltantes < 0) {
+                color = '#e74c3c'; // Rojo si ya caducó
+                textoFaltante = `¡Caducó hace ${Math.abs(item.diasFaltantes)} días!`;
+            } else if (item.diasFaltantes <= 8) {
+                color = '#f39c12'; // Naranja si faltan 8 días o menos
+            }
+            
+            htmlLista += `<li style="color: ${color}; display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding-bottom: 4px;">
+                            <span>📅 ${item.original}</span>
+                            <strong>${textoFaltante}</strong>
+                          </li>`;
+        });
+        
+        ulResultados.innerHTML = htmlLista;
+    }
 
 
 
